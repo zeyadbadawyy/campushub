@@ -2,6 +2,7 @@ package routes
 
 import (
 	"campushub/internal/handlers"
+	"campushub/internal/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -23,6 +24,35 @@ func RegisterRoutes() http.Handler {
 	r.Post(
 		"/login",
 		handlers.Login,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/me",
+		handlers.Me,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/posts",
+		handlers.CreatePost,
+	)
+
+	r.Get(
+		"/posts",
+		handlers.GetPosts,
+	)
+
+	r.Get(
+		"/users/{id}",
+		handlers.GetUserProfile,
+	)
+
+	r.Get(
+		"/users/{id}/posts",
+		handlers.GetUserPosts,
 	)
 
 	return r

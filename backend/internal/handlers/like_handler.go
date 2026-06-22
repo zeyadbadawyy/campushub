@@ -1,0 +1,121 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"campushub/internal/database"
+
+	"github.com/go-chi/chi/v5"
+)
+
+func ToggleLike(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	postIDParam := chi.URLParam(
+		r,
+		"id",
+	)
+
+	postID, err := strconv.Atoi(
+		postIDParam,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid post ID",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	userID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	var existingLikeID int
+
+	err = database.DB.QueryRow(
+		`
+		SELECT id
+		FROM likes
+		WHERE post_id=$1
+		AND user_id=$2
+		`,
+		postID,
+		userID,
+	).Scan(
+		&existingLikeID,
+	)
+
+	// Like already exists
+	if err == nil {
+
+		_, err = database.DB.Exec(
+			`
+			DELETE FROM likes
+			WHERE id=$1
+			`,
+			existingLikeID,
+		)
+
+		if err != nil {
+
+			http.Error(
+				w,
+				"Could not remove like",
+				http.StatusInternalServerError,
+			)
+
+			return
+		}
+
+		json.NewEncoder(
+			w,
+		).Encode(
+			map[string]string{
+				"message": "Like removed",
+			},
+		)
+
+		return
+	}
+
+	// Create like
+	_, err = database.DB.Exec(
+		`
+		INSERT INTO likes
+		(post_id,user_id)
+		VALUES ($1,$2)
+		`,
+		postID,
+		userID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not like post",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		map[string]string{
+			"message": "Post liked",
+		},
+	)
+}

@@ -146,3 +146,71 @@ func GetUserProfile(
 		user,
 	)
 }
+
+func SearchUsers(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	query :=
+		r.URL.Query().Get(
+			"q",
+		)
+
+	rows, err := database.DB.Query(
+		`
+		SELECT
+			id,
+			name,
+			faculty
+		FROM users
+		WHERE LOWER(name)
+		LIKE LOWER($1)
+		`,
+		"%"+query+"%",
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Search failed",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	defer rows.Close()
+
+	var users []map[string]interface{}
+
+	for rows.Next() {
+
+		var id int
+		var name string
+		var faculty string
+
+		rows.Scan(
+			&id,
+			&name,
+			&faculty,
+		)
+
+		users =
+			append(
+				users,
+				map[string]interface{}{
+					"id":      id,
+					"name":    name,
+					"faculty": faculty,
+				},
+			)
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		users,
+	)
+}

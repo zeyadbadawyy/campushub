@@ -46,6 +46,11 @@ func RegisterRoutes() http.Handler {
 	)
 
 	r.Get(
+		"/users/search",
+		handlers.SearchUsers,
+	)
+
+	r.Get(
 		"/users/{id}",
 		handlers.GetUserProfile,
 	)
@@ -53,6 +58,44 @@ func RegisterRoutes() http.Handler {
 	r.Get(
 		"/users/{id}/posts",
 		handlers.GetUserPosts,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Delete(
+		"/posts/{id}",
+		handlers.DeletePost,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Put(
+		"/posts/{id}",
+		handlers.UpdatePost,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/posts/{id}/comments",
+		handlers.CreateComment,
+	)
+
+	r.Get(
+		"/posts/{id}/comments",
+		handlers.GetComments,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/posts/{id}/like",
+		handlers.ToggleLike,
+	)
+
+	r.Get(
+		"/stats",
+		handlers.GetStats,
 	)
 
 	return r

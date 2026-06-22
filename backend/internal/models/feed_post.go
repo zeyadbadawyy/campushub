@@ -6,4 +6,6 @@ type FeedPost struct {
 	Faculty   string `json:"faculty"`
 	Content   string `json:"content"`
 	CreatedAt string `json:"created_at"`
+	Likes     int    `json:"likes"`
+	Comments  int    `json:"comments"`
 }

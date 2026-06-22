@@ -111,10 +111,20 @@ func GetPosts(
 					users.name,
 					users.faculty,
 					posts.content,
-					posts.created_at
+					posts.created_at,
+					COUNT(DISTINCT likes.id) AS likes,
+					COUNT(DISTINCT comments.id) AS comments
 			FROM posts
 			JOIN users
-			ON posts.user_id = users.id
+					ON posts.user_id = users.id
+			LEFT JOIN likes
+					ON likes.post_id = posts.id
+			LEFT JOIN comments
+					ON comments.post_id = posts.id
+			GROUP BY
+					posts.id,
+					users.name,
+					users.faculty
 			ORDER BY posts.created_at DESC
 			`,
 		)
@@ -144,6 +154,8 @@ func GetPosts(
 			&post.Faculty,
 			&post.Content,
 			&post.CreatedAt,
+			&post.Likes,
+			&post.Comments,
 		)
 
 		if err != nil {
@@ -238,5 +250,227 @@ func GetUserPosts(
 		w,
 	).Encode(
 		posts,
+	)
+}
+
+func DeletePost(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	postIDParam := chi.URLParam(
+		r,
+		"id",
+	)
+
+	postID, err := strconv.Atoi(
+		postIDParam,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid post ID",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	var ownerID int
+
+	err = database.DB.QueryRow(
+		`
+		SELECT user_id
+		FROM posts
+		WHERE id=$1
+		`,
+		postID,
+	).Scan(
+		&ownerID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Post not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
+	if ownerID != currentUserID {
+
+		http.Error(
+			w,
+			"Forbidden",
+			http.StatusForbidden,
+		)
+
+		return
+	}
+
+	_, err = database.DB.Exec(
+		`
+		DELETE FROM posts
+		WHERE id=$1
+		`,
+		postID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not delete post",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		map[string]string{
+			"message": "Post deleted",
+		},
+	)
+}
+
+func UpdatePost(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	postIDParam := chi.URLParam(
+		r,
+		"id",
+	)
+
+	postID, err := strconv.Atoi(
+		postIDParam,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid post ID",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	var ownerID int
+
+	err = database.DB.QueryRow(
+		`
+		SELECT user_id
+		FROM posts
+		WHERE id=$1
+		`,
+		postID,
+	).Scan(
+		&ownerID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Post not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
+	if ownerID != currentUserID {
+
+		http.Error(
+			w,
+			"Forbidden",
+			http.StatusForbidden,
+		)
+
+		return
+	}
+
+	var request struct {
+		Content string `json:"content"`
+	}
+
+	err = json.NewDecoder(
+		r.Body,
+	).Decode(
+		&request,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid JSON",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	if request.Content == "" {
+
+		http.Error(
+			w,
+			"Content is required",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	_, err = database.DB.Exec(
+		`
+		UPDATE posts
+		SET content=$1
+		WHERE id=$2
+		`,
+		request.Content,
+		postID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not update post",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		map[string]string{
+			"message": "Post updated",
+		},
 	)
 }

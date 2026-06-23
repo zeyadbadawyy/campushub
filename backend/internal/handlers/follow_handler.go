@@ -198,6 +198,43 @@ func GetFollowStats(
 		return
 	}
 
+	var exists bool
+
+	err = database.DB.QueryRow(
+		`
+	SELECT EXISTS(
+		SELECT 1
+		FROM users
+		WHERE id=$1
+	)
+	`,
+		userID,
+	).Scan(
+		&exists,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Database error",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	if !exists {
+
+		http.Error(
+			w,
+			"User not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
 	var followers int
 	var following int
 

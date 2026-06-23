@@ -192,3 +192,97 @@ func GetComments(
 		comments,
 	)
 }
+
+func DeleteComment(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	commentIDParam := chi.URLParam(
+		r,
+		"id",
+	)
+
+	commentID, err := strconv.Atoi(
+		commentIDParam,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid comment ID",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	var ownerID int
+
+	err = database.DB.QueryRow(
+		`
+		SELECT user_id
+		FROM comments
+		WHERE id=$1
+		`,
+		commentID,
+	).Scan(
+		&ownerID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Comment not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
+	if ownerID != currentUserID {
+
+		http.Error(
+			w,
+			"Forbidden",
+			http.StatusForbidden,
+		)
+
+		return
+	}
+
+	_, err = database.DB.Exec(
+		`
+		DELETE FROM comments
+		WHERE id=$1
+		`,
+		commentID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not delete comment",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		map[string]string{
+			"message": "Comment deleted",
+		},
+	)
+}

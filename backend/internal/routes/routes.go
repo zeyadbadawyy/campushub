@@ -88,6 +88,13 @@ func RegisterRoutes() http.Handler {
 
 	r.With(
 		middleware.Auth,
+	).Delete(
+		"/comments/{id}",
+		handlers.DeleteComment,
+	)
+
+	r.With(
+		middleware.Auth,
 	).Post(
 		"/posts/{id}/like",
 		handlers.ToggleLike,

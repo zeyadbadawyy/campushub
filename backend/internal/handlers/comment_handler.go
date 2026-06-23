@@ -36,6 +36,43 @@ func CreateComment(
 		return
 	}
 
+	var exists bool
+
+	err = database.DB.QueryRow(
+		`
+	SELECT EXISTS(
+		SELECT 1
+		FROM posts
+		WHERE id=$1
+	)
+	`,
+		postID,
+	).Scan(
+		&exists,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Database error",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	if !exists {
+
+		http.Error(
+			w,
+			"Post not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
 	userID :=
 		r.Context().
 			Value(

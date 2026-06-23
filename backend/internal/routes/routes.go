@@ -105,5 +105,17 @@ func RegisterRoutes() http.Handler {
 		handlers.GetStats,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/users/{id}/follow",
+		handlers.ToggleFollow,
+	)
+
+	r.Get(
+		"/users/{id}/follow-stats",
+		handlers.GetFollowStats,
+	)
+
 	return r
 }

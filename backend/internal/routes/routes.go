@@ -117,5 +117,26 @@ func RegisterRoutes() http.Handler {
 		handlers.GetFollowStats,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/messages/{id}",
+		handlers.SendMessage,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/messages/{id}",
+		handlers.GetConversation,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/conversations",
+		handlers.GetConversations,
+	)
+
 	return r
 }

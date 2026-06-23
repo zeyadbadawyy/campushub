@@ -103,6 +103,33 @@ func GetPosts(
 	r *http.Request,
 ) {
 
+	page, _ := strconv.Atoi(
+		r.URL.Query().Get(
+			"page",
+		),
+	)
+
+	limit, _ := strconv.Atoi(
+		r.URL.Query().Get(
+			"limit",
+		),
+	)
+
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 10
+	}
+
+	if limit > 50 {
+		limit = 50
+	}
+
+	offset :=
+		(page - 1) * limit
+
 	rows, err :=
 		database.DB.Query(
 			`
@@ -126,7 +153,11 @@ func GetPosts(
 					users.name,
 					users.faculty
 			ORDER BY posts.created_at DESC
+			LIMIT $1
+			OFFSET $2
 			`,
+			limit,
+			offset,
 		)
 
 	if err != nil {

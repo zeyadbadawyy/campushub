@@ -138,5 +138,14 @@ func RegisterRoutes() http.Handler {
 		handlers.GetConversations,
 	)
 
+	r.Get(
+		"/swagger/*",
+		httpSwagger.Handler(
+			httpSwagger.URL(
+				"/swagger/doc.json",
+			),
+		),
+	)
+
 	return r
 }

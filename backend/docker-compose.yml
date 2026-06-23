@@ -1,0 +1,35 @@
+services:
+
+  postgres:
+    image: postgres:17
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: campushub
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: campushub
+      DB_SSLMODE: disable
+
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

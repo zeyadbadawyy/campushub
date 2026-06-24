@@ -13,14 +13,15 @@ import (
 
 // Register godoc
 //
-//	@Summary		Register a new user
-//	@Description	Create a CampusHub account
-//	@Tags			Auth
-//	@Accept			json
-//	@Produce		json
-//	@Success		201
-//	@Failure		400
-//	@Router			/register [post]
+// @Summary Register a new user
+// @Description Create a CampusHub account
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param user body models.User true "User Registration Data"
+// @Success 201 {string} string "User Registered"
+// @Failure 400 {string} string "Invalid request"
+// @Router /register [post]
 func Register(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -119,14 +120,15 @@ func Register(
 
 // Login godoc
 //
-//	@Summary		User Login
-//	@Description	Authenticate user and return JWT token
-//	@Tags			Auth
-//	@Accept			json
-//	@Produce		json
-//	@Success		200
-//	@Failure		401
-//	@Router			/login [post]
+// @Summary User Login
+// @Description Authenticate user and return JWT token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param credentials body models.User true "Login Credentials"
+// @Success 200 {object} map[string]string
+// @Failure 401 {string} string
+// @Router /login [post]
 func Login(
 	w http.ResponseWriter,
 	r *http.Request,

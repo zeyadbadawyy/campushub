@@ -13,15 +13,15 @@ import (
 
 // SendMessage godoc
 //
-//	@Summary		Send message
-//	@Description	Send a direct message to another user
-//	@Tags			Messages
-//	@Accept			json
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			id	path	int	true	"Receiver ID"
-//	@Success		201
-//	@Router			/messages/{id} [post]
+// @Summary Send message
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Receiver User ID"
+// @Param message body models.Message true "Message Data"
+// @Success 201 {object} models.Message
+// @Router /messages/{id} [post]
 func SendMessage(
 	w http.ResponseWriter,
 	r *http.Request,

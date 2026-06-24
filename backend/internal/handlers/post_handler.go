@@ -13,14 +13,16 @@ import (
 
 // CreatePost godoc
 //
-//	@Summary		Create a post
-//	@Description	Create a new CampusHub post
-//	@Tags			Posts
-//	@Accept			json
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Success		201
-//	@Router			/posts [post]
+// @Summary Create a post
+// @Description Create a new CampusHub post
+// @Tags Posts
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param post body models.Post true "Post Content"
+// @Success 201 {object} models.Post
+// @Failure 400 {string} string
+// @Router /posts [post]
 func CreatePost(
 	w http.ResponseWriter,
 	r *http.Request,

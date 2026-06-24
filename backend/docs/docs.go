@@ -76,12 +76,32 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "User Login",
+                "parameters": [
+                    {
+                        "description": "Login Credentials",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
@@ -150,7 +170,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Send a direct message to another user",
                 "consumes": [
                     "application/json"
                 ],
@@ -164,15 +183,27 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Receiver ID",
+                        "description": "Receiver User ID",
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Message Data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Message"
+                        }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created"
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Message"
+                        }
                     }
                 }
             }
@@ -210,9 +241,29 @@ const docTemplate = `{
                     "Posts"
                 ],
                 "summary": "Create a post",
+                "parameters": [
+                    {
+                        "description": "Post Content",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Post"
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
-                        "description": "Created"
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Post"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
@@ -224,7 +275,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Add comment to post",
                 "consumes": [
                     "application/json"
                 ],
@@ -242,11 +292,23 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Comment Data",
+                        "name": "comment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Comment"
+                        }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created"
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Comment"
+                        }
                     }
                 }
             }
@@ -295,12 +357,29 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "User Registration Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
-                        "description": "Created"
+                        "description": "User Registered",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
@@ -463,6 +542,88 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found"
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Comment": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "post_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Message": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "receiver_id": {
+                    "type": "integer"
+                },
+                "sender_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Post": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "faculty": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
                 }
             }
         }

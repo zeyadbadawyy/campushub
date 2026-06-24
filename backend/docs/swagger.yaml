@@ -1,4 +1,57 @@
 basePath: /
+definitions:
+  models.Comment:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      post_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  models.Message:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      receiver_id:
+        type: integer
+      sender_id:
+        type: integer
+    type: object
+  models.Post:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      bio:
+        type: string
+      email:
+        type: string
+      faculty:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -41,13 +94,26 @@ paths:
       consumes:
       - application/json
       description: Authenticate user and return JWT token
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "401":
           description: Unauthorized
+          schema:
+            type: string
       summary: User Login
       tags:
       - Auth
@@ -90,18 +156,25 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send a direct message to another user
       parameters:
-      - description: Receiver ID
+      - description: Receiver User ID
         in: path
         name: id
         required: true
         type: integer
+      - description: Message Data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/models.Message'
       produces:
       - application/json
       responses:
         "201":
           description: Created
+          schema:
+            $ref: '#/definitions/models.Message'
       security:
       - BearerAuth: []
       summary: Send message
@@ -122,11 +195,24 @@ paths:
       consumes:
       - application/json
       description: Create a new CampusHub post
+      parameters:
+      - description: Post Content
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.Post'
       produces:
       - application/json
       responses:
         "201":
           description: Created
+          schema:
+            $ref: '#/definitions/models.Post'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
       security:
       - BearerAuth: []
       summary: Create a post
@@ -136,18 +222,25 @@ paths:
     post:
       consumes:
       - application/json
-      description: Add comment to post
       parameters:
       - description: Post ID
         in: path
         name: id
         required: true
         type: integer
+      - description: Comment Data
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
       produces:
       - application/json
       responses:
         "201":
           description: Created
+          schema:
+            $ref: '#/definitions/models.Comment'
       security:
       - BearerAuth: []
       summary: Create comment
@@ -177,13 +270,24 @@ paths:
       consumes:
       - application/json
       description: Create a CampusHub account
+      parameters:
+      - description: User Registration Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
       produces:
       - application/json
       responses:
         "201":
-          description: Created
+          description: User Registered
+          schema:
+            type: string
         "400":
-          description: Bad Request
+          description: Invalid request
+          schema:
+            type: string
       summary: Register a new user
       tags:
       - Auth

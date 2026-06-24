@@ -13,15 +13,15 @@ import (
 
 // CreateComment godoc
 //
-//	@Summary		Create comment
-//	@Description	Add comment to post
-//	@Tags			Comments
-//	@Accept			json
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			id	path	int	true	"Post ID"
-//	@Success		201
-//	@Router			/posts/{id}/comments [post]
+// @Summary Create comment
+// @Tags Comments
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Post ID"
+// @Param comment body models.Comment true "Comment Data"
+// @Success 201 {object} models.Comment
+// @Router /posts/{id}/comments [post]
 func CreateComment(
 	w http.ResponseWriter,
 	r *http.Request,

@@ -1,4 +1,314 @@
+basePath: /
+host: localhost:8080
 info:
   contact: {}
-paths: {}
+  description: CampusHub backend server.
+  title: CampusHub API
+  version: "1.0"
+paths:
+  /conversations:
+    get:
+      description: Get all users the current user has exchanged messages with
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Get conversations list
+      tags:
+      - Messages
+  /health:
+    get:
+      description: Check if API is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health Check
+      tags:
+      - System
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      summary: User Login
+      tags:
+      - Auth
+  /me:
+    get:
+      description: Get the authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Users
+  /messages/{id}:
+    get:
+      description: Get all messages exchanged with another user
+      parameters:
+      - description: Other User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Get conversation
+      tags:
+      - Messages
+    post:
+      consumes:
+      - application/json
+      description: Send a direct message to another user
+      parameters:
+      - description: Receiver ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      security:
+      - BearerAuth: []
+      summary: Send message
+      tags:
+      - Messages
+  /posts:
+    get:
+      description: Retrieve feed posts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Get all posts
+      tags:
+      - Posts
+    post:
+      consumes:
+      - application/json
+      description: Create a new CampusHub post
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      security:
+      - BearerAuth: []
+      summary: Create a post
+      tags:
+      - Posts
+  /posts/{id}/comments:
+    post:
+      consumes:
+      - application/json
+      description: Add comment to post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      security:
+      - BearerAuth: []
+      summary: Create comment
+      tags:
+      - Comments
+  /posts/{id}/like:
+    post:
+      description: Toggle like status
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BearerAuth: []
+      summary: Like or unlike a post
+      tags:
+      - Likes
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Create a CampusHub account
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+      summary: Register a new user
+      tags:
+      - Auth
+  /stats:
+    get:
+      description: Return total users, posts, comments and likes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Get platform statistics
+      tags:
+      - Stats
+  /users/{id}:
+    get:
+      description: Get a user's public profile by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+      summary: Get user profile
+      tags:
+      - Users
+  /users/{id}/follow:
+    post:
+      description: Toggle follow status
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BearerAuth: []
+      summary: Follow or unfollow user
+      tags:
+      - Follows
+  /users/{id}/follow-stats:
+    get:
+      description: Get followers and following counts for a user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+      summary: Get follow statistics
+      tags:
+      - Follows
+  /users/{id}/posts:
+    get:
+      description: Get all posts created by a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+      summary: Get user's posts
+      tags:
+      - Users
+  /users/search:
+    get:
+      description: Search users by name or email
+      parameters:
+      - description: Search term
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Search users
+      tags:
+      - Users
+schemes:
+- http
+- https
 swagger: "2.0"
+tags:
+- description: User authentication and registration
+  name: Auth
+- description: Campus feed and post management
+  name: Posts
+- description: Post comments
+  name: Comments
+- description: Like and unlike posts
+  name: Likes
+- description: Follow system
+  name: Follows
+- description: Direct messaging between users
+  name: Messages
+- description: User profiles and search
+  name: Users
+- description: Platform statistics
+  name: Stats

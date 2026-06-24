@@ -11,6 +11,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// CreatePost godoc
+//
+//	@Summary		Create a post
+//	@Description	Create a new CampusHub post
+//	@Tags			Posts
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		201
+//	@Router			/posts [post]
 func CreatePost(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -98,6 +108,14 @@ func CreatePost(
 	)
 }
 
+// GetPosts godoc
+//
+//	@Summary		Get all posts
+//	@Description	Retrieve feed posts
+//	@Tags			Posts
+//	@Produce		json
+//	@Success		200
+//	@Router			/posts [get]
 func GetPosts(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -206,6 +224,16 @@ func GetPosts(
 	)
 }
 
+// GetUserPosts godoc
+//
+//	@Summary		Get user's posts
+//	@Description	Get all posts created by a specific user
+//	@Tags			Users
+//	@Produce		json
+//	@Param			id	path	int	true	"User ID"
+//	@Success		200
+//	@Failure		404
+//	@Router			/users/{id}/posts [get]
 func GetUserPosts(
 	w http.ResponseWriter,
 	r *http.Request,

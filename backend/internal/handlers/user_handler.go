@@ -19,6 +19,16 @@ type UserResponse struct {
 	Faculty string `json:"faculty"`
 }
 
+// Me godoc
+//
+//	@Summary		Get current user
+//	@Description	Get the authenticated user's profile
+//	@Tags			Users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200
+//	@Failure		401
+//	@Router			/me [get]
 func Me(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -74,6 +84,16 @@ func Me(
 	json.NewEncoder(w).Encode(response)
 }
 
+// GetUserProfile godoc
+//
+//	@Summary		Get user profile
+//	@Description	Get a user's public profile by ID
+//	@Tags			Users
+//	@Produce		json
+//	@Param			id	path	int	true	"User ID"
+//	@Success		200
+//	@Failure		404
+//	@Router			/users/{id} [get]
 func GetUserProfile(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -147,6 +167,15 @@ func GetUserProfile(
 	)
 }
 
+// SearchUsers godoc
+//
+//	@Summary		Search users
+//	@Description	Search users by name or email
+//	@Tags			Users
+//	@Produce		json
+//	@Param			q	query	string	true	"Search term"
+//	@Success		200
+//	@Router			/users/search [get]
 func SearchUsers(
 	w http.ResponseWriter,
 	r *http.Request,

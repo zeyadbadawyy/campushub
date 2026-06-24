@@ -11,6 +11,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// SendMessage godoc
+//
+//	@Summary		Send message
+//	@Description	Send a direct message to another user
+//	@Tags			Messages
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path	int	true	"Receiver ID"
+//	@Success		201
+//	@Router			/messages/{id} [post]
 func SendMessage(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -163,6 +174,17 @@ func SendMessage(
 	)
 }
 
+// GetConversation godoc
+//
+//	@Summary		Get conversation
+//	@Description	Get all messages exchanged with another user
+//	@Tags			Messages
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path	int	true	"Other User ID"
+//	@Success		200
+//	@Failure		401
+//	@Router			/messages/{id} [get]
 func GetConversation(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -262,6 +284,16 @@ func GetConversation(
 	)
 }
 
+// GetConversations godoc
+//
+//	@Summary		Get conversations list
+//	@Description	Get all users the current user has exchanged messages with
+//	@Tags			Messages
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200
+//	@Failure		401
+//	@Router			/conversations [get]
 func GetConversations(
 	w http.ResponseWriter,
 	r *http.Request,

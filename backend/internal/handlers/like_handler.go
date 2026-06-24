@@ -10,6 +10,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// ToggleLike godoc
+//
+//	@Summary		Like or unlike a post
+//	@Description	Toggle like status
+//	@Tags			Likes
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path	int	true	"Post ID"
+//	@Success		200
+//	@Router			/posts/{id}/like [post]
 func ToggleLike(
 	w http.ResponseWriter,
 	r *http.Request,

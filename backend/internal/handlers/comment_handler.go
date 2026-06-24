@@ -11,6 +11,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// CreateComment godoc
+//
+//	@Summary		Create comment
+//	@Description	Add comment to post
+//	@Tags			Comments
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path	int	true	"Post ID"
+//	@Success		201
+//	@Router			/posts/{id}/comments [post]
 func CreateComment(
 	w http.ResponseWriter,
 	r *http.Request,

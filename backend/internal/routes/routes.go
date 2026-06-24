@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func RegisterRoutes() http.Handler {
@@ -15,6 +16,11 @@ func RegisterRoutes() http.Handler {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("CampusHub API"))
 	})
+
+	r.Get(
+		"/health",
+		handlers.HealthCheck,
+	)
 
 	r.Post(
 		"/register",
@@ -142,7 +148,7 @@ func RegisterRoutes() http.Handler {
 		"/swagger/*",
 		httpSwagger.Handler(
 			httpSwagger.URL(
-				"/swagger/doc.json",
+				"http://localhost:8080/swagger/doc.json",
 			),
 		),
 	)

@@ -10,6 +10,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// ToggleFollow godoc
+//
+//	@Summary		Follow or unfollow user
+//	@Description	Toggle follow status
+//	@Tags			Follows
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path	int	true	"User ID"
+//	@Success		200
+//	@Router			/users/{id}/follow [post]
 func ToggleFollow(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -171,6 +181,16 @@ func ToggleFollow(
 	)
 }
 
+// GetFollowStats godoc
+//
+//	@Summary		Get follow statistics
+//	@Description	Get followers and following counts for a user
+//	@Tags			Follows
+//	@Produce		json
+//	@Param			id	path	int	true	"User ID"
+//	@Success		200
+//	@Failure		404
+//	@Router			/users/{id}/follow-stats [get]
 func GetFollowStats(
 	w http.ResponseWriter,
 	r *http.Request,

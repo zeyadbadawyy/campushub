@@ -7,6 +7,14 @@ import (
 	"campushub/internal/database"
 )
 
+// GetStats godoc
+//
+//	@Summary		Get platform statistics
+//	@Description	Return total users, posts, comments and likes
+//	@Tags			Stats
+//	@Produce		json
+//	@Success		200
+//	@Router			/stats [get]
 func GetStats(
 	w http.ResponseWriter,
 	r *http.Request,

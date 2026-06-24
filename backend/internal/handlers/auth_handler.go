@@ -11,6 +11,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Register godoc
+//
+//	@Summary		Register a new user
+//	@Description	Create a CampusHub account
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Success		201
+//	@Failure		400
+//	@Router			/register [post]
 func Register(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -107,6 +117,16 @@ func Register(
 	)
 }
 
+// Login godoc
+//
+//	@Summary		User Login
+//	@Description	Authenticate user and return JWT token
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Success		200
+//	@Failure		401
+//	@Router			/login [post]
 func Login(
 	w http.ResponseWriter,
 	r *http.Request,

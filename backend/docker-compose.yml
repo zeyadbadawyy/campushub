@@ -5,7 +5,7 @@ services:
 
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: badawy619
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: campushub
 
     ports:
@@ -25,7 +25,7 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: postgres
-      DB_PASSWORD: badawy619
+      DB_PASSWORD: postgres
       DB_NAME: campushub
       DB_SSLMODE: disable
 

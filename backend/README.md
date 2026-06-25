@@ -211,7 +211,6 @@ This will transform CampusHub from a backend API project into a complete full-st
 - Push Notifications
 - Media Uploads
 - User Avatars
-- Feed Pagination
 - Role-Based Access Control
 - Admin Dashboard
 

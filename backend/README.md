@@ -221,5 +221,3 @@ This will transform CampusHub from a backend API project into a complete full-st
 **Zeyad Badawy**
 
 *Full-Stack Developer | Software Engineer*
-
-Built as a portfolio project to demonstrate backend development, API design, authentication, database management, documentation, and containerized deployment using Go.

@@ -105,3 +105,29 @@ export async function getUserProfile(
   return response.data;
 
 }
+
+export async function getUserPosts(
+  userId
+) {
+
+  const response =
+    await api.get(
+      `/users/${userId}/posts`
+    );
+
+  return response.data;
+
+}
+
+export async function getFollowStats(
+  userId
+) {
+
+  const response =
+    await api.get(
+      `/users/${userId}/follow-stats`
+    );
+
+  return response.data;
+
+}

@@ -264,13 +264,26 @@ func GetUserPosts(
 	rows, err := database.DB.Query(
 		`
 		SELECT
-			id,
-			user_id,
-			content,
-			created_at
+			posts.id,
+			users.name,
+			users.faculty,
+			posts.content,
+			posts.created_at,
+			COUNT(DISTINCT likes.id) AS likes,
+			COUNT(DISTINCT comments.id) AS comments
 		FROM posts
-		WHERE user_id=$1
-		ORDER BY created_at DESC
+		JOIN users
+			ON posts.user_id = users.id
+		LEFT JOIN likes
+			ON likes.post_id = posts.id
+		LEFT JOIN comments
+			ON comments.post_id = posts.id
+		WHERE posts.user_id = $1
+		GROUP BY
+			posts.id,
+			users.name,
+			users.faculty
+		ORDER BY posts.created_at DESC
 		`,
 		userID,
 	)
@@ -288,24 +301,36 @@ func GetUserPosts(
 
 	defer rows.Close()
 
-	var posts []models.Post
+	posts := []models.FeedPost{}
 
 	for rows.Next() {
 
-		var post models.Post
+		var post models.FeedPost
 
-		rows.Scan(
+		err := rows.Scan(
 			&post.ID,
-			&post.UserID,
+			&post.Author,
+			&post.Faculty,
 			&post.Content,
 			&post.CreatedAt,
+			&post.Likes,
+			&post.Comments,
 		)
+
+		if err != nil {
+			continue
+		}
 
 		posts = append(
 			posts,
 			post,
 		)
 	}
+
+	w.Header().Set(
+		"Content-Type",
+		"application/json",
+	)
 
 	json.NewEncoder(
 		w,

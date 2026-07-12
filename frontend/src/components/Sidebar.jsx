@@ -32,7 +32,7 @@ function Sidebar() {
         </NavLink>
 
         <NavLink
-          to="/profile"
+          to="/profile/3"
         >
           Profile
         </NavLink>

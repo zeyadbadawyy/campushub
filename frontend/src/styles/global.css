@@ -643,3 +643,79 @@ button {
   margin-bottom: 6px;
 
 }
+
+.profile-page {
+
+  max-width: 900px;
+
+  margin: 0 auto;
+
+  padding: 30px;
+
+}
+
+.profile-card {
+
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 30px;
+
+  margin-bottom: 30px;
+
+  box-shadow: var(--shadow);
+
+  text-align: center;
+
+}
+
+.large-avatar {
+
+  width: 80px;
+
+  height: 80px;
+
+  font-size: 1.8rem;
+
+  margin: 0 auto 20px;
+
+}
+
+.profile-stats {
+
+  display: flex;
+
+  justify-content: center;
+
+  gap: 50px;
+
+  margin-top: 25px;
+
+}
+
+.profile-stats strong {
+
+  display: block;
+
+  font-size: 1.5rem;
+
+}
+
+.empty-posts {
+
+  background: white;
+
+  padding: 24px;
+
+  border-radius: 16px;
+
+  box-shadow: var(--shadow);
+
+  text-align: center;
+
+  color: var(--text-secondary);
+
+  margin-top: 20px;
+
+}

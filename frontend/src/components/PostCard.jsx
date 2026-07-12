@@ -2,6 +2,9 @@ import {
   useState
 } from "react";
 
+import { useNavigate }
+  from "react-router-dom";
+  
 import CommentSection
   from "./CommentSection";
 
@@ -16,6 +19,9 @@ function PostCard({ post, onLike }) {
     showComments,
     setShowComments
   ] = useState(false);
+
+  const navigate =
+    useNavigate();
 
   async function handleLike() {
 
@@ -41,7 +47,14 @@ function PostCard({ post, onLike }) {
 
       <div className="post-header">
 
-        <div className="avatar">
+        <div
+          className="avatar clickable"
+          onClick={() =>
+            navigate(
+              `/profile/${post.user_id}`
+            )
+          }
+        >
 
           {post.author?.charAt(0)}
 
@@ -49,8 +62,17 @@ function PostCard({ post, onLike }) {
 
         <div>
 
-          <h3>
+          <h3
+            className="clickable-name"
+            onClick={() =>
+              navigate(
+                `/profile/${post.user_id}`
+              )
+            }
+          >
+
             {post.author}
+
           </h3>
 
           <p>
@@ -93,6 +115,7 @@ function PostCard({ post, onLike }) {
 
           <CommentSection
             postId={post.id}
+            onCommentAdded={onLike}
           />
 
         )

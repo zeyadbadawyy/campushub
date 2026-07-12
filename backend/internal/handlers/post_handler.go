@@ -155,6 +155,7 @@ func GetPosts(
 			`
 			SELECT
 					posts.id,
+					posts.user_id,
 					users.name,
 					users.faculty,
 					posts.content,
@@ -170,6 +171,7 @@ func GetPosts(
 					ON comments.post_id = posts.id
 			GROUP BY
 					posts.id,
+					posts.user_id,
 					users.name,
 					users.faculty
 			ORDER BY posts.created_at DESC
@@ -201,6 +203,7 @@ func GetPosts(
 
 		err := rows.Scan(
 			&post.ID,
+			&post.UserID,
 			&post.Author,
 			&post.Faculty,
 			&post.Content,
@@ -265,6 +268,7 @@ func GetUserPosts(
 		`
 		SELECT
 			posts.id,
+			posts.user_id,
 			users.name,
 			users.faculty,
 			posts.content,
@@ -281,6 +285,7 @@ func GetUserPosts(
 		WHERE posts.user_id = $1
 		GROUP BY
 			posts.id,
+			posts.user_id,
 			users.name,
 			users.faculty
 		ORDER BY posts.created_at DESC
@@ -309,6 +314,7 @@ func GetUserPosts(
 
 		err := rows.Scan(
 			&post.ID,
+			&post.UserID,
 			&post.Author,
 			&post.Faculty,
 			&post.Content,

@@ -1,7 +1,49 @@
-import { Link } from "react-router-dom";
-import { NavLink } from "react-router-dom";
+import {
+  NavLink
+} from "react-router-dom";
+
+import {
+  useEffect,
+  useState
+} from "react";
+
+import {
+  getCurrentUser
+} from "../services/postService";
 
 function Sidebar() {
+
+  const [
+    currentUser,
+    setCurrentUser
+  ] = useState(null);
+
+  useEffect(() => {
+
+    async function loadUser() {
+
+      try {
+
+        const user =
+          await getCurrentUser();
+
+        setCurrentUser(
+          user
+        );
+
+      } catch (error) {
+
+        console.error(
+          error
+        );
+
+      }
+
+    }
+
+    loadUser();
+
+  }, []);
 
   return (
 
@@ -24,7 +66,7 @@ function Sidebar() {
         >
           Feed
         </NavLink>
-    
+
         <NavLink
           to="/messages"
         >
@@ -32,7 +74,11 @@ function Sidebar() {
         </NavLink>
 
         <NavLink
-          to="/profile/3"
+          to={
+            currentUser
+              ? `/profile/${currentUser.id}`
+              : "#"
+          }
         >
           Profile
         </NavLink>

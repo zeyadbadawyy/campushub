@@ -1,5 +1,27 @@
 import api from "./api";
 
+export async function getCurrentUser() {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.get(
+      "/me",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
 export async function getPosts() {
 
   const response = await api.get(
@@ -126,6 +148,19 @@ export async function getFollowStats(
   const response =
     await api.get(
       `/users/${userId}/follow-stats`
+    );
+
+  return response.data;
+
+}
+
+export async function searchUsers(
+  query
+) {
+
+  const response =
+    await api.get(
+      `/users/search?q=${query}`
     );
 
   return response.data;

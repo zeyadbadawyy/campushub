@@ -33,52 +33,52 @@ function Profile() {
   const [stats, setStats] =
     useState(null);
 
-  useEffect(() => {
+async function loadProfile() {
 
-    async function loadProfile() {
+  try {
 
-      try {
+    const profile =
+      await getUserProfile(
+        id
+      );
 
-        const profile =
-          await getUserProfile(
-            id
-          );
+    const userPosts =
+      await getUserPosts(
+        id
+      );
 
-        const userPosts =
-          await getUserPosts(
-            id
-          );
+    const followStats =
+      await getFollowStats(
+        id
+      );
 
-        const followStats =
-          await getFollowStats(
-            id
-          );
+    setUser(
+      profile
+    );
 
-        setUser(
-          profile
-        );
+    setPosts(
+      userPosts
+    );
 
-        setPosts(
-          userPosts
-        );
+    setStats(
+      followStats
+    );
 
-        setStats(
-          followStats
-        );
+  } catch (error) {
 
-      } catch (error) {
+    console.error(
+      error
+    );
 
-        console.error(
-          error
-        );
+  }
 
-      }
+}
 
-    }
+useEffect(() => {
 
-    loadProfile();
+  loadProfile();
 
-  }, [id]);
+}, [id]);
 
   if (!user) {
 
@@ -178,7 +178,7 @@ function Profile() {
                 <PostCard
                   key={post.id}
                   post={post}
-                  onLike={() => {}}
+                  onLike={loadProfile}
                 />
 
               )

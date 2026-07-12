@@ -212,7 +212,7 @@ func SearchUsers(
 
 	defer rows.Close()
 
-	var users []map[string]interface{}
+	users := []map[string]interface{}{}
 
 	for rows.Next() {
 

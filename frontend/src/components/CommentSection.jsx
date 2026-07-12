@@ -10,7 +10,8 @@ import {
 } from "../services/postService";
 
 function CommentSection({
-  postId
+  postId,
+  onCommentAdded
 }) {
 
   const [comments, setComments] =
@@ -83,6 +84,14 @@ function CommentSection({
       setContent("");
 
       loadComments();
+
+      if (
+        onCommentAdded
+      ) {
+
+        onCommentAdded();
+
+      }
 
     } catch (error) {
 

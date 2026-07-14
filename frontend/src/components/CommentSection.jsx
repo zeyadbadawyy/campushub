@@ -6,8 +6,13 @@ import {
 import {
   getComments,
   createComment,
-  getUserProfile
+  getUserProfile,
+  deleteComment
 } from "../services/postService";
+
+import {
+  getCurrentUser
+} from "../services/auth";
 
 function CommentSection({
   postId,
@@ -19,6 +24,39 @@ function CommentSection({
 
   const [content, setContent] =
     useState("");
+
+  const [
+    currentUser,
+    setCurrentUser
+  ] = useState(null);
+
+  const [
+    openMenu,
+    setOpenMenu
+  ] = useState(null);
+
+  useEffect(() => {
+
+    async function loadUser() {
+
+      try {
+
+        const user =
+          await getCurrentUser();
+
+        setCurrentUser(user);
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }
+
+    loadUser();
+
+  }, []);
 
   async function loadComments() {
 
@@ -42,8 +80,7 @@ function CommentSection({
 
               return {
                 ...comment,
-                author:
-                  user.name
+                author: user.name
               };
 
             }
@@ -67,7 +104,7 @@ function CommentSection({
 
     loadComments();
 
-  }, []);
+  }, [postId]);
 
   async function handleComment() {
 
@@ -82,6 +119,44 @@ function CommentSection({
       );
 
       setContent("");
+
+      loadComments();
+
+      if (
+        onCommentAdded
+      ) {
+
+        onCommentAdded();
+
+      }
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+  async function handleDeleteComment(
+    commentId
+  ) {
+
+    const confirmed =
+      window.confirm(
+        "Delete this comment?"
+      );
+
+    if (!confirmed)
+      return;
+
+    try {
+
+      await deleteComment(
+        commentId
+      );
+
+      setOpenMenu(null);
 
       loadComments();
 
@@ -135,9 +210,56 @@ function CommentSection({
               className="comment-item"
             >
 
-              <strong>
-                {comment.author}
-              </strong>
+              <div className="comment-header">
+
+                <strong>
+                  {comment.author}
+                </strong>
+
+                {
+                  currentUser?.id === comment.user_id && (
+
+                    <div className="comment-menu-wrapper">
+
+                      <button
+                        className="comment-menu-btn"
+                        onClick={() =>
+                          setOpenMenu(
+                            openMenu === comment.id
+                              ? null
+                              : comment.id
+                          )
+                        }
+                      >
+                        ⋮
+                      </button>
+
+                      {
+                        openMenu === comment.id && (
+
+                          <div className="comment-dropdown">
+
+                            <button
+                              onClick={() =>
+                                handleDeleteComment(
+                                  comment.id
+                                )
+                              }
+                            >
+                              Delete
+                            </button>
+
+                          </div>
+
+                        )
+                      }
+
+                    </div>
+
+                  )
+                }
+
+              </div>
 
               <p>
                 {comment.content}

@@ -289,3 +289,85 @@ func GetFollowStats(
 		},
 	)
 }
+
+// IsFollowing godoc
+//
+//	@Summary		Check follow status
+//	@Description	Check if current user follows a specific user
+//	@Tags			Follows
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path	int	true	"User ID"
+//	@Success		200
+//	@Failure		401
+//	@Failure		404
+//	@Router			/users/{id}/follow-status [get]
+func IsFollowing(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	targetUserParam :=
+		chi.URLParam(
+			r,
+			"id",
+		)
+
+	targetUserID, err :=
+		strconv.Atoi(
+			targetUserParam,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid user ID",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	var isFollowing bool
+
+	err = database.DB.QueryRow(
+		`
+		SELECT EXISTS(
+			SELECT 1
+			FROM follows
+			WHERE follower_id=$1
+			AND following_id=$2
+		)
+		`,
+		currentUserID,
+		targetUserID,
+	).Scan(
+		&isFollowing,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Database error",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		map[string]bool{
+			"isFollowing": isFollowing,
+		},
+	)
+}

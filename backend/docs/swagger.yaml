@@ -359,6 +359,29 @@ paths:
       summary: Get follow statistics
       tags:
       - Follows
+  /users/{id}/follow-status:
+    get:
+      description: Check if current user follows a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+      security:
+      - BearerAuth: []
+      summary: Check follow status
+      tags:
+      - Follows
   /users/{id}/posts:
     get:
       description: Get all posts created by a specific user

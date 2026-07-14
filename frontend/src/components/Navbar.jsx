@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getCurrentUser } from "../services/auth";
 import {
   logoutUser
@@ -35,6 +35,9 @@ function Navbar() {
     setResults
   ] = useState([]);
 
+  const searchRef =
+    useRef(null);
+
   useEffect(() => {
 
     async function performSearch() {
@@ -49,9 +52,12 @@ function Navbar() {
 
       try {
 
+        const cleanedSearch =
+          search.replace(/\s+/g, "");
+
         const data =
           await searchUsers(
-            search
+            cleanedSearch
           );
 
         setResults(
@@ -71,13 +77,6 @@ function Navbar() {
     performSearch();
 
   }, [search]);
-
-  function handleLogout() {
-
-    logoutUser();
-    navigate("/login");
-
-  }
 
   useEffect(() => {
 
@@ -102,6 +101,63 @@ function Navbar() {
 
   }, []);
 
+  useEffect(() => {
+
+    function handleClickOutside(
+      event
+    ) {
+
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(
+          event.target
+        )
+      ) {
+
+        setResults([]);
+        setSearch("");
+
+      }
+
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+
+    };
+
+  }, []);
+
+   function handleLogout() {
+
+    logoutUser();
+    navigate("/login");
+
+  }
+
+  function handleSearch() {
+
+    if (!search.trim())
+      return;
+
+    const query = search;
+
+    setSearch("");
+    setResults([]);
+
+    navigate(`/search?q=${query}`);
+
+  }
+
   return (
 
     <header className="navbar">
@@ -116,19 +172,44 @@ function Navbar() {
 
       <div className="navbar-right">
 
-        <div className="search-container">
+        <div
+          className="search-container"
+          ref={searchRef}
+        >
 
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
-            className="search-input"
-          />
+          <div className="search-box">
+
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
+              onKeyDown={(e) => {
+
+                if (
+                  e.key === "Enter"
+                ) {
+
+                  handleSearch();
+
+                }
+
+              }}
+              className="search-input"
+            />
+
+            <button
+              className="search-btn"
+              onClick={handleSearch}
+            >
+              🔍
+            </button>
+
+          </div>
 
           {search && (
 

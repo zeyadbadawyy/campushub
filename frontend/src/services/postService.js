@@ -166,3 +166,116 @@ export async function searchUsers(
   return response.data;
 
 }
+
+export async function getFollowStatus(userId) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await fetch(
+      `http://localhost:8080/users/${userId}/follow-status`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.json();
+
+}
+
+export async function toggleFollow(userId) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await fetch(
+      `http://localhost:8080/users/${userId}/follow`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.json();
+
+}
+
+export async function updatePost(
+  postId,
+  content
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.put(
+      `/posts/${postId}`,
+      {
+        content
+      },
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function deletePost(
+  postId
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.delete(
+      `/posts/${postId}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function deleteComment(
+  commentId
+) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.delete(
+      `/comments/${commentId}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}

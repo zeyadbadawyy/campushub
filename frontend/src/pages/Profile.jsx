@@ -16,8 +16,14 @@ import PostCard
 import {
   getUserProfile,
   getUserPosts,
-  getFollowStats
+  getFollowStats,
+  getFollowStatus,
+  toggleFollow
 } from "../services/postService";
+
+import {
+  getCurrentUser
+} from "../services/auth";
 
 function Profile() {
 
@@ -33,52 +39,98 @@ function Profile() {
   const [stats, setStats] =
     useState(null);
 
-async function loadProfile() {
+  const [
+    currentUser,
+    setCurrentUser
+  ] = useState(null);
 
-  try {
+  const [
+    isFollowing,
+    setIsFollowing
+  ] = useState(false);
 
-    const profile =
-      await getUserProfile(
-        id
+  async function loadProfile() {
+
+    try {
+
+      const profile =
+        await getUserProfile(
+          id
+        );
+
+      const userPosts =
+        await getUserPosts(
+          id
+        );
+
+      const followStats =
+        await getFollowStats(
+          id
+        );
+
+      const me =
+        await getCurrentUser();
+
+      const followStatus =
+        await getFollowStatus(
+          id
+        );
+
+      setUser(
+        profile
       );
 
-    const userPosts =
-      await getUserPosts(
-        id
+      setPosts(
+        userPosts
       );
 
-    const followStats =
-      await getFollowStats(
-        id
+      setStats(
+        followStats
       );
 
-    setUser(
-      profile
-    );
+      setCurrentUser(
+        me
+      );
 
-    setPosts(
-      userPosts
-    );
+      setIsFollowing(
+        followStatus.isFollowing
+      );
 
-    setStats(
-      followStats
-    );
+    } catch (error) {
 
-  } catch (error) {
+      console.error(
+        error
+      );
 
-    console.error(
-      error
-    );
+    }
 
   }
 
-}
+  async function handleFollow() {
 
-useEffect(() => {
+    try {
 
-  loadProfile();
+      await toggleFollow(
+        id
+      );
 
-}, [id]);
+      loadProfile();
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+    }
+
+  }
+
+  useEffect(() => {
+
+    loadProfile();
+
+  }, [id]);
 
   if (!user) {
 
@@ -121,6 +173,21 @@ useEffect(() => {
           <p>
             {user.faculty}
           </p>
+
+          {currentUser?.id !== user.id && (
+
+            <button
+              className="follow-btn"
+              onClick={handleFollow}
+            >
+
+              {isFollowing
+                ? "Unfollow"
+                : "Follow"}
+
+            </button>
+
+          )}
 
           {stats && (
 

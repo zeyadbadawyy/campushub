@@ -155,6 +155,13 @@ func RegisterRoutes() http.Handler {
 
 	r.With(
 		middleware.Auth,
+	).Get(
+		"/users/{id}/follow-status",
+		handlers.IsFollowing,
+	)
+
+	r.With(
+		middleware.Auth,
 	).Post(
 		"/messages/{id}",
 		handlers.SendMessage,

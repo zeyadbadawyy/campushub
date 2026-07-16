@@ -218,6 +218,29 @@ func GetConversation(
 				"userID",
 			).(int)
 
+	_, err = database.DB.Exec(
+		`
+		UPDATE messages
+		SET is_read = TRUE
+		WHERE receiver_id = $1
+		AND sender_id = $2
+		AND is_read = FALSE
+		`,
+		currentUserID,
+		targetUserID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not update read status",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
 	rows, err := database.DB.Query(
 		`
 		SELECT
@@ -307,19 +330,61 @@ func GetConversations(
 
 	rows, err := database.DB.Query(
 		`
-		SELECT DISTINCT
+		SELECT
 			u.id,
-			u.name
+			u.name,
+			m.content,
+			m.created_at,
+
+			(
+				SELECT COUNT(*)
+				FROM messages unread
+				WHERE unread.sender_id = u.id
+				AND unread.receiver_id = $1
+				AND unread.is_read = FALSE
+			) AS unread_count
+
 		FROM users u
-		JOIN messages m
+
+		JOIN (
+			SELECT DISTINCT ON (
+				CASE
+					WHEN sender_id = $1
+					THEN receiver_id
+					ELSE sender_id
+				END
+			)
+				id,
+				sender_id,
+				receiver_id,
+				content,
+				created_at
+
+			FROM messages
+
+			WHERE
+				sender_id = $1
+				OR receiver_id = $1
+
+			ORDER BY
+				CASE
+					WHEN sender_id = $1
+					THEN receiver_id
+					ELSE sender_id
+				END,
+				created_at DESC
+		) m
+
 		ON (
-			(u.id = m.sender_id
-				AND m.receiver_id = $1)
-			OR
-			(u.id = m.receiver_id
-				AND m.sender_id = $1)
+			u.id =
+			CASE
+				WHEN m.sender_id = $1
+				THEN m.receiver_id
+				ELSE m.sender_id
+			END
 		)
-		WHERE u.id != $1
+
+		ORDER BY m.created_at DESC
 		`,
 		currentUserID,
 	)
@@ -337,7 +402,8 @@ func GetConversations(
 
 	defer rows.Close()
 
-	var conversations []models.Conversation
+	conversations :=
+		[]models.Conversation{}
 
 	for rows.Next() {
 
@@ -346,6 +412,9 @@ func GetConversations(
 		rows.Scan(
 			&conversation.UserID,
 			&conversation.Name,
+			&conversation.LastMessage,
+			&conversation.LastMessageTime,
+			&conversation.UnreadCount,
 		)
 
 		conversations =
@@ -360,4 +429,44 @@ func GetConversations(
 	).Encode(
 		conversations,
 	)
+}
+
+func GetUnreadMessagesCount(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	currentUserID :=
+		r.Context().
+			Value("userID").(int)
+
+	var count int
+
+	err := database.DB.QueryRow(
+		`
+		SELECT COUNT(DISTINCT sender_id)
+		FROM messages
+		WHERE receiver_id = $1
+		AND is_read = FALSE
+		`,
+		currentUserID,
+	).Scan(&count)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Database error",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	json.NewEncoder(w).Encode(
+		map[string]int{
+			"count": count,
+		},
+	)
+
 }

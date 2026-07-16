@@ -81,7 +81,9 @@ func RegisterRoutes() http.Handler {
 		handlers.GetPosts,
 	)
 
-	r.Get(
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/users/search",
 		handlers.SearchUsers,
 	)
@@ -179,6 +181,13 @@ func RegisterRoutes() http.Handler {
 	).Get(
 		"/conversations",
 		handlers.GetConversations,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/messages/unread-count",
+		handlers.GetUnreadMessagesCount,
 	)
 
 	r.Get(

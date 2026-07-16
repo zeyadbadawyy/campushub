@@ -8,7 +8,8 @@ import {
 } from "react";
 
 import {
-  getCurrentUser
+  getCurrentUser,
+  getUnreadMessagesCount
 } from "../services/postService";
 
 function Sidebar() {
@@ -17,6 +18,11 @@ function Sidebar() {
     currentUser,
     setCurrentUser
   ] = useState(null);
+
+  const [
+    unreadCount,
+    setUnreadCount
+  ] = useState(0);
 
   useEffect(() => {
 
@@ -29,6 +35,13 @@ function Sidebar() {
 
         setCurrentUser(
           user
+        );
+
+        const unreadData =
+          await getUnreadMessagesCount();
+
+        setUnreadCount(
+          unreadData.count
         );
 
       } catch (error) {
@@ -71,6 +84,19 @@ function Sidebar() {
           to="/messages"
         >
           Messages
+
+          {
+            unreadCount > 0 && (
+
+              <span
+                className="sidebar-badge"
+              >
+                {unreadCount}
+              </span>
+
+            )
+          }
+
         </NavLink>
 
         <NavLink
@@ -82,6 +108,7 @@ function Sidebar() {
         >
           Profile
         </NavLink>
+
 
       </nav>
 

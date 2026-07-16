@@ -158,9 +158,18 @@ export async function searchUsers(
   query
 ) {
 
+  const token =
+    localStorage.getItem("token");
+
   const response =
     await api.get(
-      `/users/search?q=${query}`
+      `/users/search?q=${query}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
     );
 
   return response.data;
@@ -268,6 +277,94 @@ export async function deleteComment(
   const response =
     await api.delete(
       `/comments/${commentId}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getConversations() {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      "/conversations",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getConversation(
+  userId
+) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      `/messages/${userId}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function sendMessage(
+  userId,
+  content
+) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.post(
+      `/messages/${userId}`,
+      {
+        content
+      },
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getUnreadMessagesCount() {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      "/messages/unread-count",
       {
         headers: {
           Authorization:

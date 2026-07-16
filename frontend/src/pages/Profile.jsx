@@ -4,6 +4,10 @@ import {
 } from "react";
 
 import {
+  useNavigate
+} from "react-router-dom";
+
+import {
   useParams
 } from "react-router-dom";
 
@@ -48,6 +52,9 @@ function Profile() {
     isFollowing,
     setIsFollowing
   ] = useState(false);
+
+  const navigate =
+    useNavigate();
 
   async function loadProfile() {
 
@@ -176,16 +183,35 @@ function Profile() {
 
           {currentUser?.id !== user.id && (
 
-            <button
-              className="follow-btn"
-              onClick={handleFollow}
+            <div
+              className="profile-actions"
             >
 
-              {isFollowing
-                ? "Unfollow"
-                : "Follow"}
+              <button
+                className="follow-btn"
+                onClick={handleFollow}
+              >
 
-            </button>
+                {isFollowing
+                  ? "Unfollow"
+                  : "Follow"}
+
+              </button>
+
+              <button
+                className="message-btn"
+                onClick={() =>
+                  navigate(
+                    `/messages/${user.id}`
+                  )
+                }
+              >
+
+                Message
+
+              </button>
+
+            </div>
 
           )}
 
@@ -231,7 +257,7 @@ function Profile() {
 
           {posts?.length === 0 ? (
 
-            <p className="empty-posts">
+            <p className="empty-state">
 
               No posts yet.
 

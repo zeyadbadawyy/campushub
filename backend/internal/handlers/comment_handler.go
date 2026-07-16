@@ -213,7 +213,8 @@ func GetComments(
 
 	defer rows.Close()
 
-	var comments []models.Comment
+	comments :=
+		[]models.Comment{}
 
 	for rows.Next() {
 

@@ -186,6 +186,24 @@ func SearchUsers(
 			"q",
 		)
 
+	if query == "" {
+
+		json.NewEncoder(
+			w,
+		).Encode(
+			[]map[string]interface{}{},
+		)
+
+		return
+
+	}
+
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
 	rows, err := database.DB.Query(
 		`
 		SELECT
@@ -193,9 +211,11 @@ func SearchUsers(
 			name,
 			faculty
 		FROM users
-		WHERE LOWER(name)
-		LIKE LOWER($1)
+		WHERE id != $1
+		AND LOWER(name)
+		LIKE LOWER($2)
 		`,
+		currentUserID,
 		"%"+query+"%",
 	)
 

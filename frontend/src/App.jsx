@@ -11,7 +11,8 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Search from "./pages/Search";
-
+import Chat from "./pages/Chat";
+  
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
@@ -76,6 +77,24 @@ function App() {
           }
         />
 
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/messages/:id"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+        
       </Routes>
 
     </BrowserRouter>

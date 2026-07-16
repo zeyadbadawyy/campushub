@@ -231,7 +231,7 @@ function Navbar() {
 
               ) : (
 
-                <div className="search-empty">
+                <div className="empty-state">
 
                   No users found
 

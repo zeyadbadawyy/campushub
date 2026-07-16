@@ -118,7 +118,7 @@ function Search() {
 
             ) : (
 
-              <p>
+              <p className="empty-state">
 
                 No users found.
 

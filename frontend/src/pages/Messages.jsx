@@ -1,14 +1,310 @@
-import MainLayout from "../layouts/MainLayout";
+import {
+  useEffect,
+  useState
+} from "react";
+
+import {
+  Link
+} from "react-router-dom";
+
+import MainLayout
+  from "../layouts/MainLayout";
+
+import {
+  getConversations,
+  searchUsers
+} from "../services/postService";
+
+
 
 function Messages() {
+
+  const [
+    conversations,
+    setConversations
+  ] = useState([]);
+
+  const [
+    showSearch,
+    setShowSearch
+  ] = useState(false);
+
+  const [
+    search,
+    setSearch
+  ] = useState("");
+
+  const [
+    users,
+    setUsers
+  ] = useState([]);
+
+  useEffect(() => {
+
+    async function loadData() {
+
+      try {
+
+        const data =
+          await getConversations();
+
+        setConversations(data);
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }
+
+    loadData();
+
+  }, []);
+
+  useEffect(() => {
+
+    async function loadUsers() {
+
+      if (!search.trim()) {
+
+        setUsers([]);
+
+        return;
+
+      }
+
+      try {
+
+        const data =
+          await searchUsers(
+            search
+          );
+
+        setUsers(
+          data || []
+        );
+
+      } catch (error) {
+
+        console.error(
+          error
+        );
+
+      }
+
+    }
+
+    loadUsers();
+
+  }, [search]);
+
+  function formatTime(date) {
+
+    const now =
+      new Date();
+
+    const time =
+      new Date(date);
+
+    const diff =
+      Math.floor(
+        (now - time) / 1000
+      );
+
+    if (diff < 60)
+      return "Just now";
+
+    if (diff < 3600)
+      return `${Math.floor(diff / 60)}m ago`;
+
+    if (diff < 86400)
+      return `${Math.floor(diff / 3600)}h ago`;
+
+    return time.toLocaleDateString();
+
+  }
+
 
   return (
 
     <MainLayout>
 
-      <h1>
-        Messages
-      </h1>
+      <div className="messages-page">
+
+        <div className="messages-header">
+
+          <h1>
+            Messages
+          </h1>
+
+          <button
+            className="new-chat-btn"
+            onClick={() =>
+              setShowSearch(
+                !showSearch
+              )
+            }
+          >
+            + New Chat
+          </button>
+
+        </div>
+
+        {
+          showSearch && (
+
+            <div className="new-chat-search">
+
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
+              />
+
+              <div className="search-users-list">
+
+                {users.map(
+                  (user) => (
+
+                    <Link
+                      key={user.id}
+                      to={`/messages/${user.id}`}
+                      className="search-user-card"
+                    >
+
+                      <div className="avatar">
+
+                        {
+                          user.name?.charAt(0)
+                        }
+
+                      </div>
+
+                      <span>
+
+                        {user.name}
+
+                      </span>
+
+                    </Link>
+
+                  )
+                )}
+
+              </div>
+
+            </div>
+
+          )
+        }
+
+        <div className="conversation-list">
+
+          {
+            conversations.length === 0 ? (
+
+              <div className="empty-state">
+
+                <h3>
+                  No conversations yet
+                </h3>
+
+                <p>
+                  Start chatting with
+                  other students.
+                </p>
+
+                <button
+                  className="new-chat-btn"
+                  onClick={() =>
+                    setShowSearch(true)
+                  }
+                >
+                  Start New Chat
+                </button>
+
+              </div>
+
+            ) : (
+
+              conversations.map(
+                (user) => (
+
+                  <Link
+                    key={user.user_id}
+                    to={`/messages/${user.user_id}`}
+                    className="conversation-card"
+                  >
+
+                    <div className="avatar">
+
+                      {
+                        user.name?.charAt(0)
+                      }
+
+                    </div>
+
+                    <div className="conversation-content">
+
+                      <div className="conversation-top">
+
+                        <strong>
+                          {user.name}
+                        </strong>
+
+                        <div className="conversation-meta">
+
+                          {
+                            user.unread_count > 0 && (
+
+                              <span className="unread-badge">
+
+                                {user.unread_count}
+
+                              </span>
+
+                            )
+                          }
+
+                          <span className="conversation-time">
+
+                            {
+                              formatTime(
+                                user.last_message_time
+                              )
+                            }
+
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                      <p className="conversation-preview">
+
+                        {user.last_message}
+
+                      </p>
+
+                    </div>
+
+                  </Link>
+
+                )
+              )
+
+            )
+          }
+
+        </div>
+
+      </div>
 
     </MainLayout>
 

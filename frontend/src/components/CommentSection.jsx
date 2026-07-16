@@ -201,8 +201,18 @@ function CommentSection({
       </div>
 
       <div className="comments-list">
+        
+        {comments.length === 0 ? (
 
-        {comments.map(
+          <p className="empty-state">
+
+            No comments yet.
+
+          </p>
+
+        ) : (
+
+          comments.map(
           (comment) => (
 
             <div
@@ -268,6 +278,7 @@ function CommentSection({
             </div>
 
           )
+        )
         )}
 
       </div>

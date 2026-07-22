@@ -137,7 +137,47 @@ function Profile() {
 
     loadProfile();
 
+    const interval =
+      setInterval(
+        loadProfile,
+        30000
+      );
+
+    return () =>
+      clearInterval(
+        interval
+      );
+
   }, [id]);
+
+  function getLastSeenText(lastSeen) {
+
+    if (!lastSeen)
+      return "Offline";
+
+    const now =
+      new Date();
+
+    const time =
+      new Date(lastSeen);
+
+    const diff =
+      Math.floor(
+        (now - time) / 1000
+      );
+
+    if (diff < 120)
+      return "● Online";;
+
+    if (diff < 3600)
+      return `Last seen ${Math.floor(diff / 60)}m ago`;
+
+    if (diff < 86400)
+      return `Last seen ${Math.floor(diff / 3600)}h ago`;
+
+    return `Last seen ${Math.floor(diff / 86400)}d ago`;
+
+  }
 
   if (!user) {
 
@@ -163,15 +203,39 @@ function Profile() {
 
         <div className="profile-card">
 
-          <div className="avatar large-avatar">
+          <div className="profile-avatar-container">
 
-            {user.name?.charAt(0)}
+            <div className="avatar large-avatar">
+
+              {user.name?.charAt(0)}
+
+            </div>
+
+            {
+              getLastSeenText(
+                user.last_seen
+              ) === "● Online" && (
+
+                <span className="online-dot"></span>
+
+              )
+            }
 
           </div>
 
           <h1>
             {user.name}
           </h1>
+
+          <div className="last-seen">
+
+            {
+              getLastSeenText(
+                user.last_seen
+              )
+            }
+
+          </div>
 
           <p>
             {user.bio}

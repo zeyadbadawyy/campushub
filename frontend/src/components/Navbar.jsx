@@ -247,11 +247,23 @@ function Navbar() {
 
         <div className="navbar-user">
 
-          {
-            user
-              ? user.name
-              : "Loading..."
-          }
+          <div className="navbar-avatar">
+
+            {
+              user?.name?.charAt(0)
+            }
+
+          </div>
+
+          <span>
+
+            {
+              user
+                ? user.name
+                : "Loading..."
+            }
+
+          </span>
 
         </div>
 

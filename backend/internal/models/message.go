@@ -6,4 +6,5 @@ type Message struct {
 	ReceiverID int    `json:"receiver_id"`
 	Content    string `json:"content"`
 	CreatedAt  string `json:"created_at"`
+	IsRead     bool   `json:"is_read"`
 }

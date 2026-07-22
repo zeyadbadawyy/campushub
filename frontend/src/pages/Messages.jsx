@@ -60,6 +60,17 @@ function Messages() {
 
     loadData();
 
+    const interval =
+      setInterval(
+        loadData,
+        5000
+      );
+
+    return () =>
+      clearInterval(
+        interval
+      );
+
   }, []);
 
   useEffect(() => {
@@ -239,7 +250,11 @@ function Messages() {
                   <Link
                     key={user.user_id}
                     to={`/messages/${user.user_id}`}
-                    className="conversation-card"
+                    className={
+                      user.unread_count > 0
+                        ? "conversation-card unread"
+                        : "conversation-card"
+                    }
                   >
 
                     <div className="avatar">

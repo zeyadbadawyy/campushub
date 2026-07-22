@@ -190,6 +190,30 @@ func RegisterRoutes() http.Handler {
 		handlers.GetUnreadMessagesCount,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/typing/{id}",
+		handlers.UpdateTypingStatus,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/typing/{id}",
+		handlers.GetTypingStatus,
+	)
+
+	r.Get(
+		"/ws",
+		handlers.WebSocketHandler,
+	)
+
+	r.Get(
+		"/users/{id}/online",
+		handlers.GetOnlineStatus,
+	)
+
 	r.Get(
 		"/swagger/*",
 		httpSwagger.Handler(

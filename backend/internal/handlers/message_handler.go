@@ -5,8 +5,11 @@ import (
 	"net/http"
 	"strconv"
 
+	gorilla "github.com/gorilla/websocket"
+
 	"campushub/internal/database"
 	"campushub/internal/models"
+	"campushub/internal/websocket"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -163,6 +166,18 @@ func SendMessage(
 	message.SenderID = senderID
 	message.ReceiverID = receiverID
 
+	messageJSON, _ :=
+		json.Marshal(message)
+
+	if client, exists :=
+		websocket.WSHub.Clients[receiverID]; exists {
+
+		client.Conn.WriteMessage(
+			gorilla.TextMessage,
+			messageJSON,
+		)
+	}
+
 	w.WriteHeader(
 		http.StatusCreated,
 	)
@@ -248,7 +263,8 @@ func GetConversation(
 			sender_id,
 			receiver_id,
 			content,
-			created_at
+			created_at,
+			is_read
 		FROM messages
 		WHERE
 		(
@@ -291,6 +307,7 @@ func GetConversation(
 			&message.ReceiverID,
 			&message.Content,
 			&message.CreatedAt,
+			&message.IsRead,
 		)
 
 		messages =

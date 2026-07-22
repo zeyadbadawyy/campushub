@@ -5,7 +5,8 @@ import {
 } from "react";
 
 import {
-  useParams
+  useParams,
+  useNavigate
 } from "react-router-dom";
 
 import MainLayout
@@ -13,7 +14,11 @@ import MainLayout
 
 import {
   getConversation,
-  sendMessage
+  sendMessage,
+  updateTypingStatus,
+  getTypingStatus,
+  getUserProfile,
+  getOnlineStatus
 } from "../services/postService";
 
 import {
@@ -26,6 +31,9 @@ function Chat() {
   const { id } =
     useParams();
 
+  const navigate = 
+    useNavigate();
+
   const [
     messages,
     setMessages
@@ -37,6 +45,11 @@ function Chat() {
   ] = useState("");
 
   const [
+    chatUser,
+    setChatUser
+  ] = useState(null);
+
+  const [
     currentUser,
     setCurrentUser
   ] = useState(null);
@@ -44,7 +57,22 @@ function Chat() {
   const bottomRef =
     useRef(null);
 
-  
+  const wsRef =
+    useRef(null);
+
+  const typingTimeout =
+    useRef(null);
+
+  const [
+    isTyping,
+    setIsTyping
+  ] = useState(false);
+
+  const [
+    isOnline,
+    setIsOnline
+  ] = useState(false);
+
   useEffect(() => {
 
     bottomRef.current?.scrollIntoView({
@@ -81,14 +109,34 @@ function Chat() {
 
     try {
 
-      await sendMessage(
-        id,
-        content
+      const response =
+        await sendMessage(
+          id,
+          content
+        );
+      
+      setMessages(
+        (prev) => [
+          ...prev,
+          response
+        ]
       );
 
       setContent("");
 
-      loadMessages();
+      updateTypingStatus(
+        id,
+        false
+      );
+
+      const typingData =
+        await getTypingStatus(
+          id
+        );
+
+      setIsTyping(
+        typingData.is_typing
+      );
 
     } catch (error) {
 
@@ -102,16 +150,42 @@ function Chat() {
 
     loadMessages();
 
-    const interval =
+    async function loadTyping() {
+
+      try {
+
+        const typingData =
+          await getTypingStatus(
+            id
+          );
+
+        setIsTyping(
+          typingData.is_typing
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }
+
+    loadTyping();
+
+    const typingInterval =
       setInterval(
-        loadMessages,
-        3000
+        loadTyping,
+        1000
       );
 
-    return () =>
+    return () => {
+
       clearInterval(
-        interval
+        typingInterval
       );
+
+    };
 
   }, [id]);
 
@@ -140,15 +214,176 @@ function Chat() {
 
   }, []);
 
+  useEffect(() => {
+
+    if (!currentUser)
+      return;
+
+    const ws =
+      new WebSocket(
+        `ws://localhost:8080/ws?userId=${currentUser.id}`
+      );
+
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+
+      const newMessage =
+        JSON.parse(
+          event.data
+        );
+
+      setMessages(
+        (prev) => [
+          ...prev,
+          newMessage
+        ]
+      );
+
+    };
+
+    return () => {
+
+      ws.close();
+
+    };
+
+  }, [currentUser]);
+
+  useEffect(() => {
+
+    async function loadChatUser() {
+
+      try {
+
+        const user =
+          await getUserProfile(
+            id
+          );
+
+        setChatUser(
+          user
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }
+
+    loadChatUser();
+
+  }, [id]);
+
+  useEffect(() => {
+
+    async function loadStatus() {
+
+      try {
+
+        const data =
+          await getOnlineStatus(
+            id
+          );
+
+        setIsOnline(
+          data.online
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }
+
+    loadStatus();
+
+    const interval =
+      setInterval(
+        loadStatus,
+        5000
+      );
+
+    return () =>
+      clearInterval(
+        interval
+      );
+
+  }, [id]);
+
+  function getLastSeen(lastSeen) {
+
+    if (!lastSeen)
+      return "Offline";
+
+    const diff =
+      Math.floor(
+        (
+          Date.now() -
+          new Date(lastSeen)
+        ) / 1000
+      );
+
+    if (diff < 60)
+      return "Online";
+
+    if (diff < 3600)
+      return `Last seen ${Math.floor(diff / 60)}m ago`;
+
+    if (diff < 86400)
+      return `Last seen ${Math.floor(diff / 3600)}h ago`;
+
+    return `Last seen ${Math.floor(diff / 86400)}d ago`;
+
+  }
+
+
   return (
 
     <MainLayout>
 
       <div className="chat-page">
 
-        <h1 className="chat-header">
-          Chat
-        </h1>
+        <div
+          className="chat-header"
+          onClick={() =>
+            navigate(`/profile/${id}`)
+          }
+        >
+
+          <div className="chat-avatar">
+            {chatUser?.name?.charAt(0)}
+          </div>
+
+          <div className="chat-user-details">
+
+            <h2>
+              {chatUser?.name}
+            </h2>
+
+            <p>
+              {isOnline
+                ? "🟢 Online"
+                : getLastSeen(chatUser?.last_seen)}
+            </p>
+
+          </div>
+
+          <div className="chat-header-arrow">
+            ›
+          </div>
+
+        </div>
+
+          <div className="chat-header-arrow">
+            ›
+          </div>
+
+        </div>
 
         <div className="chat-messages">
 
@@ -200,22 +435,41 @@ function Chat() {
 
                       </div>
 
-                      <span className="message-time">
+                      <div className="message-meta">
+
+                        <span className="message-time">
+
+                          {
+                            new Date(
+                              message.created_at
+                            ).toLocaleTimeString(
+                              [],
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit"
+                              }
+                            )
+                          }
+
+                        </span>
 
                         {
-                          new Date(
-                            message.created_at
-                          ).toLocaleTimeString(
-                            [],
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit"
-                            }
+                          isMine && (
+
+                            <span
+                              className={
+                                message.is_read
+                                  ? "message-checks seen"
+                                  : "message-checks"
+                              }
+                            >
+                              ✔✔
+                            </span>
+
                           )
                         }
 
-                      </span>
-
+                      </div>
                     </div>
 
                   </div>
@@ -227,6 +481,28 @@ function Chat() {
 
           )}
 
+          {
+            isTyping && (
+
+              <div className="typing-container">
+
+                <div className="typing-bubble">
+
+                  <span></span>
+                  <span></span>
+                  <span></span>
+
+                </div>
+
+                <p className="typing-text">
+                  {currentUser?.name} is typing...
+                </p>
+
+              </div>
+
+            )
+          }
+
           <div ref={bottomRef} />
 
         </div>
@@ -236,12 +512,32 @@ function Chat() {
 
           <textarea
             value={content}
-            onChange={(e) =>
+            onChange={(e) => {
+
               setContent(
                 e.target.value
-              )
-              
-            }
+              );
+
+              updateTypingStatus(
+                id,
+                true
+              );
+
+              clearTimeout(
+                typingTimeout.current
+              );
+
+              typingTimeout.current =
+                setTimeout(() => {
+
+                  updateTypingStatus(
+                    id,
+                    false
+                  );
+
+                }, 2000);
+
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();

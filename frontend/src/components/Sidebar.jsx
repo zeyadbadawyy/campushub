@@ -58,6 +58,44 @@ function Sidebar() {
 
   }, []);
 
+  useEffect(() => {
+
+    async function loadUnread() {
+
+      try {
+
+        const data =
+          await getUnreadMessagesCount();
+
+        setUnreadCount(
+          data.count
+        );
+
+      } catch (error) {
+
+        console.error(
+          error
+        );
+
+      }
+
+    }
+
+    loadUnread();
+
+    const interval =
+      setInterval(
+        loadUnread,
+        5000
+      );
+
+    return () =>
+      clearInterval(
+        interval
+      );
+
+  }, []);
+
   return (
 
     <aside className="sidebar">

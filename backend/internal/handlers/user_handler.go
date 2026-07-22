@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"campushub/internal/database"
+	"campushub/internal/models"
+	"campushub/internal/websocket"
 	"encoding/json"
 	"net/http"
 	"strconv"
-
-	"campushub/internal/database"
-	"campushub/internal/models"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -120,11 +121,12 @@ func GetUserProfile(
 	}
 
 	type UserProfile struct {
-		ID      int    `json:"id"`
-		Name    string `json:"name"`
-		Email   string `json:"email"`
-		Bio     string `json:"bio"`
-		Faculty string `json:"faculty"`
+		ID       int       `json:"id"`
+		Name     string    `json:"name"`
+		Email    string    `json:"email"`
+		Bio      string    `json:"bio"`
+		Faculty  string    `json:"faculty"`
+		LastSeen time.Time `json:"last_seen"`
 	}
 
 	var user UserProfile
@@ -132,13 +134,14 @@ func GetUserProfile(
 	err = database.DB.QueryRow(
 		`
 		SELECT
-			id,
-			name,
-			email,
-			bio,
-			faculty
-		FROM users
-		WHERE id=$1
+		id,
+		name,
+		email,
+		bio,
+		faculty,
+		last_seen
+	FROM users
+	WHERE id=$1
 		`,
 		id,
 	).Scan(
@@ -147,6 +150,7 @@ func GetUserProfile(
 		&user.Email,
 		&user.Bio,
 		&user.Faculty,
+		&user.LastSeen,
 	)
 
 	if err != nil {
@@ -262,4 +266,33 @@ func SearchUsers(
 	).Encode(
 		users,
 	)
+}
+
+func GetOnlineStatus(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	idParam :=
+		chi.URLParam(
+			r,
+			"id",
+		)
+
+	userID, _ :=
+		strconv.Atoi(
+			idParam,
+		)
+
+	_, online :=
+		websocket.WSHub.Clients[userID]
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		map[string]bool{
+			"online": online,
+		},
+	)
+
 }

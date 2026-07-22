@@ -376,3 +376,68 @@ export async function getUnreadMessagesCount() {
   return response.data;
 
 }
+
+export async function updateTypingStatus(
+  userId,
+  isTyping
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.post(
+      `/typing/${userId}`,
+      {
+        is_typing: isTyping
+      },
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getTypingStatus(
+  userId
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.get(
+      `/typing/${userId}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getOnlineStatus(
+  userId
+) {
+
+  const response =
+    await api.get(
+      `/users/${userId}/online`
+    );
+
+  return response.data;
+
+}

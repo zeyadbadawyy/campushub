@@ -171,6 +171,43 @@ func ToggleFollow(
 
 		return
 	}
+	_, err =
+		database.DB.Exec(
+			`
+		INSERT INTO notifications
+		(
+			user_id,
+			sender_id,
+			type,
+			message,
+			target_id
+		)
+		VALUES
+		(
+			$1,
+			$2,
+			$3,
+			$4,
+			$5
+		)
+		`,
+			targetUserID,
+			currentUserID,
+			"follow",
+			"started following you",
+			currentUserID,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not create notification",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
 
 	json.NewEncoder(
 		w,

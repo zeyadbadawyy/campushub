@@ -1,20 +1,17 @@
 import { useEffect, useState, useRef } from "react";
-import { getCurrentUser } from "../services/auth";
-import {
-  logoutUser
-} from "../services/auth";
+import { getCurrentUser, logoutUser } from "../services/auth";
 
 import {
-  useNavigate
-} from "react-router-dom";
-
-import {
-  searchUsers
-} from "../services/postService";
-
-import {
+  useNavigate,
   Link
 } from "react-router-dom";
+
+import {
+  searchUsers,
+  getUnreadNotificationsCount,
+  getNotifications,
+  markNotificationRead
+} from "../services/postService";
 
 
 function Navbar() {
@@ -37,6 +34,29 @@ function Navbar() {
 
   const searchRef =
     useRef(null);
+
+  const notificationRef =
+    useRef(null);
+
+  const [
+    notifications,
+    setNotifications
+  ] = useState([]);
+
+  const [
+    unreadNotifications,
+    setUnreadNotifications
+  ] = useState(0);
+
+  const [
+    showNotifications,
+    setShowNotifications
+  ] = useState(false);
+
+  const [
+    recentNotifications,
+    setRecentNotifications
+  ] = useState([]);
 
   useEffect(() => {
 
@@ -116,9 +136,15 @@ function Navbar() {
 
         setResults([]);
         setSearch("");
+      }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+
+        setShowNotifications(false);
 
       }
-
     }
 
     document.addEventListener(
@@ -134,6 +160,42 @@ function Navbar() {
       );
 
     };
+
+  }, []);
+
+  useEffect(() => {
+
+    async function loadUnreadCount() {
+
+      try {
+
+        const data =
+          await getUnreadNotificationsCount();
+
+        setUnreadNotifications(
+          data.count || 0
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }
+
+    loadUnreadCount();
+
+    const interval =
+      setInterval(
+        loadUnreadCount,
+        5000
+      );
+
+    return () =>
+      clearInterval(
+        interval
+      );
 
   }, []);
 
@@ -155,6 +217,121 @@ function Navbar() {
     setResults([]);
 
     navigate(`/search?q=${query}`);
+
+  }
+
+  async function loadNotificationsPreview() {
+
+    try {
+
+      const data =
+        await getNotifications();
+
+      setRecentNotifications(
+        (data || []).slice(0, 5)
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
+  
+  function formatTime(dateString) {
+
+    const date =
+      new Date(dateString);
+
+    const now =
+      new Date();
+
+    const diff =
+      Math.floor(
+        (now - date) / 1000
+      );
+
+    if (diff < 60)
+      return "Just now";
+
+    if (diff < 3600)
+      return `${Math.floor(diff / 60)}m ago`;
+
+    if (diff < 86400)
+      return `${Math.floor(diff / 3600)}h ago`;
+
+    return `${Math.floor(diff / 86400)}d ago`;
+
+  }
+
+    function getNotificationRoute(
+    notification
+  ) {
+
+    switch (
+      notification.type
+    ) {
+
+      case "like":
+        return `/posts/${notification.target_id}`;
+
+      case "comment":
+        return `/posts/${notification.target_id}`;
+
+      case "message":
+        return `/messages/${notification.sender_id}`;
+
+      case "follow":
+        return `/profile/${notification.sender_id}`;
+
+      default:
+        return "/";
+    }
+
+  }
+
+  async function handleNotificationClick(
+    notification
+  ) {
+
+    try {
+
+      if (
+        !notification.is_read
+      ) {
+
+        await markNotificationRead(
+          notification.id
+        );
+
+        setNotifications(
+          (prev) =>
+            prev.map(
+              (item) =>
+                item.id ===
+                notification.id
+                  ? {
+                      ...item,
+                      is_read: true
+                    }
+                  : item
+            )
+        );
+
+      }
+
+      navigate(
+        getNotificationRoute(
+          notification
+        )
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
 
   }
 
@@ -242,6 +419,159 @@ function Navbar() {
             </div>
 
           )}
+
+        </div>
+
+        <div
+          className="notification-wrapper"
+          ref={notificationRef}
+        >
+
+          <div
+            className="notification-icon"
+            onClick={async () => {
+
+              if (!showNotifications) {
+
+                await loadNotificationsPreview();
+
+              }
+
+              setShowNotifications(
+                !showNotifications
+              );
+
+            }}
+          >
+
+            <span className="notification-bell">
+
+              🔔
+
+            </span>
+
+            {unreadNotifications > 0 && (
+
+              <span className="notification-badge">
+
+                {unreadNotifications}
+
+              </span>
+
+            )}
+
+          </div>
+
+          {
+            showNotifications && (
+
+              <div className="notifications-dropdown">
+
+                {
+                  recentNotifications.length === 0 ? (
+
+                    <div className="dropdown-empty">
+
+                      No notifications
+
+                    </div>
+
+                  ) : (
+
+                    recentNotifications.map(
+                      (notification) => (
+
+                        <div
+                          key={notification.id}
+                          className={
+                            notification.is_read
+                              ? "dropdown-notification"
+                              : "dropdown-notification unread"
+                          }
+                          onClick={() =>
+                            handleNotificationClick(notification)
+                          }
+                        >
+
+                          <div className="dropdown-notification-top">
+
+                            <span className="avatar">
+
+                              {
+                                notification.sender_name?.charAt(0)
+                              }
+
+                            </span>
+
+                            {!notification.is_read && (
+
+                              <span className="dropdown-dot">
+
+                                ●
+
+                              </span>
+
+                            )}
+                            
+                            <div>
+
+                              <strong>
+
+                                {
+                                  notification.sender_name
+                                }
+
+                              </strong>
+
+                              <p>
+
+                                {
+                                  notification.message
+                                }
+
+                              </p>
+
+                              <small className="notification-time">
+
+                                {
+                                  formatTime(
+                                    notification.created_at
+                                  )
+                                }
+
+                              </small>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                      )
+                    )
+
+                  )
+                }
+
+                <button
+                  className="view-all-btn"
+                  onClick={() => {
+
+                    setShowNotifications(false);
+
+                    navigate("/notifications");
+
+                  }}
+                >
+
+                  View All Notifications
+
+                </button>
+
+              </div>
+
+            )
+          }
 
         </div>
 

@@ -566,3 +566,91 @@ func UpdatePost(
 		},
 	)
 }
+
+func GetPost(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	postIDParam := chi.URLParam(
+		r,
+		"id",
+	)
+
+	postID, err := strconv.Atoi(
+		postIDParam,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid post ID",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	var post models.FeedPost
+
+	err = database.DB.QueryRow(
+		`
+		SELECT
+			posts.id,
+			posts.user_id,
+			users.name,
+			users.faculty,
+			posts.content,
+			posts.created_at,
+			COUNT(DISTINCT likes.id) AS likes,
+			COUNT(DISTINCT comments.id) AS comments
+		FROM posts
+		JOIN users
+			ON posts.user_id = users.id
+		LEFT JOIN likes
+			ON likes.post_id = posts.id
+		LEFT JOIN comments
+			ON comments.post_id = posts.id
+		WHERE posts.id = $1
+		GROUP BY
+			posts.id,
+			posts.user_id,
+			users.name,
+			users.faculty
+		`,
+		postID,
+	).Scan(
+		&post.ID,
+		&post.UserID,
+		&post.Author,
+		&post.Faculty,
+		&post.Content,
+		&post.CreatedAt,
+		&post.Likes,
+		&post.Comments,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Post not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
+	w.Header().Set(
+		"Content-Type",
+		"application/json",
+	)
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		post,
+	)
+
+}

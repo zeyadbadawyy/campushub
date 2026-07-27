@@ -149,6 +149,59 @@ func CreateComment(
 	comment.PostID = postID
 	comment.UserID = userID
 
+	var postOwnerID int
+
+	err = database.DB.QueryRow(
+		`
+	SELECT user_id
+	FROM posts
+	WHERE id = $1
+	`,
+		postID,
+	).Scan(
+		&postOwnerID,
+	)
+
+	if err == nil &&
+		postOwnerID != userID {
+
+		_, err = database.DB.Exec(
+			`
+			INSERT INTO notifications
+			(
+				user_id,
+				sender_id,
+				type,
+				message,
+				target_id
+			)
+			VALUES
+			(
+				$1,
+				$2,
+				$3,
+				$4,
+				$5
+			)
+			`,
+			postOwnerID,
+			userID,
+			"comment",
+			"commented on your post",
+			postID,
+		)
+
+		if err != nil {
+
+			http.Error(
+				w,
+				"Could not create notification",
+				http.StatusInternalServerError,
+			)
+
+			return
+		}
+	}
 	w.WriteHeader(
 		http.StatusCreated,
 	)

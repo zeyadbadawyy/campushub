@@ -215,6 +215,19 @@ export async function toggleFollow(userId) {
 
 }
 
+export async function getPost(
+  postId
+) {
+
+  const response =
+    await api.get(
+      `/posts/${postId}`
+    );
+
+  return response.data;
+
+}
+
 export async function updatePost(
   postId,
   content
@@ -433,9 +446,106 @@ export async function getOnlineStatus(
   userId
 ) {
 
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
   const response =
     await api.get(
-      `/users/${userId}/online`
+      `/users/${userId}/online`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getNotifications() {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      "/notifications",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getUnreadNotificationsCount() {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      "/notifications/unread-count",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function markNotificationsRead() {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.put(
+      "/notifications/read",
+      {},
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function markNotificationRead(
+  notificationId
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.put(
+      `/notifications/${notificationId}/read`,
+      {},
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
     );
 
   return response.data;

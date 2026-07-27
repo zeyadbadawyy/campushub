@@ -12,6 +12,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Search from "./pages/Search";
 import Chat from "./pages/Chat";
+import Notifications from "./pages/Notifications";
+import PostDetails from "./pages/PostDetails";
   
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -46,6 +48,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Feed />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/posts/:id"
+          element={
+            <ProtectedRoute>
+              <PostDetails />
             </ProtectedRoute>
           }
         />
@@ -95,6 +106,14 @@ function App() {
           }
         />
         
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
 
     </BrowserRouter>

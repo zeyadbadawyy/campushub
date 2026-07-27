@@ -177,6 +177,42 @@ func SendMessage(
 			messageJSON,
 		)
 	}
+	_, err = database.DB.Exec(
+		`
+	INSERT INTO notifications
+	(
+		user_id,
+		sender_id,
+		type,
+		message,
+		target_id
+	)
+	VALUES
+	(
+		$1,
+		$2,
+		$3,
+		$4,
+		$5
+	)
+	`,
+		receiverID,
+		senderID,
+		"message",
+		"sent you a message",
+		senderID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not create notification",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
 
 	w.WriteHeader(
 		http.StatusCreated,

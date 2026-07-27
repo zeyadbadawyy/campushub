@@ -81,6 +81,11 @@ func RegisterRoutes() http.Handler {
 		handlers.GetPosts,
 	)
 
+	r.Get(
+		"/posts/{id}",
+		handlers.GetPost,
+	)
+
 	r.With(
 		middleware.Auth,
 	).Get(
@@ -209,11 +214,40 @@ func RegisterRoutes() http.Handler {
 		handlers.WebSocketHandler,
 	)
 
-	r.Get(
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/users/{id}/online",
 		handlers.GetOnlineStatus,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/notifications",
+		handlers.GetNotifications,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/notifications/unread-count",
+		handlers.GetUnreadNotificationsCount,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Put(
+		"/notifications/read",
+		handlers.MarkNotificationsAsRead,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Put(
+		"/notifications/{id}/read",
+		handlers.MarkNotificationRead,
+	)
 	r.Get(
 		"/swagger/*",
 		httpSwagger.Handler(

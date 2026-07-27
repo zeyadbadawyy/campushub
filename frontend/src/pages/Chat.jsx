@@ -57,8 +57,6 @@ function Chat() {
   const bottomRef =
     useRef(null);
 
-  const wsRef =
-    useRef(null);
 
   const typingTimeout =
     useRef(null);
@@ -216,42 +214,6 @@ function Chat() {
 
   useEffect(() => {
 
-    if (!currentUser)
-      return;
-
-    const ws =
-      new WebSocket(
-        `ws://localhost:8080/ws?userId=${currentUser.id}`
-      );
-
-    wsRef.current = ws;
-
-    ws.onmessage = (event) => {
-
-      const newMessage =
-        JSON.parse(
-          event.data
-        );
-
-      setMessages(
-        (prev) => [
-          ...prev,
-          newMessage
-        ]
-      );
-
-    };
-
-    return () => {
-
-      ws.close();
-
-    };
-
-  }, [currentUser]);
-
-  useEffect(() => {
-
     async function loadChatUser() {
 
       try {
@@ -284,9 +246,7 @@ function Chat() {
       try {
 
         const data =
-          await getOnlineStatus(
-            id
-          );
+          await getOnlineStatus(id);
 
         setIsOnline(
           data.online
@@ -301,17 +261,6 @@ function Chat() {
     }
 
     loadStatus();
-
-    const interval =
-      setInterval(
-        loadStatus,
-        5000
-      );
-
-    return () =>
-      clearInterval(
-        interval
-      );
 
   }, [id]);
 
@@ -348,7 +297,7 @@ function Chat() {
 
       <div className="chat-page">
 
-        <div
+        <div 
           className="chat-header"
           onClick={() =>
             navigate(`/profile/${id}`)
@@ -356,28 +305,36 @@ function Chat() {
         >
 
           <div className="chat-avatar">
-            {chatUser?.name?.charAt(0)}
+
+            {
+              chatUser?.name?.charAt(0)
+            }
+
           </div>
 
           <div className="chat-user-details">
 
             <h2>
-              {chatUser?.name}
+
+              {
+                chatUser?.name
+              }
+
             </h2>
 
             <p>
-              {isOnline
-                ? "🟢 Online"
-                : getLastSeen(chatUser?.last_seen)}
+
+              {
+                isOnline
+                  ? <span>online</span>
+                  : getLastSeen(
+                      chatUser?.last_seen
+                    )
+              }
+
             </p>
 
           </div>
-
-          <div className="chat-header-arrow">
-            ›
-          </div>
-
-        </div>
 
           <div className="chat-header-arrow">
             ›

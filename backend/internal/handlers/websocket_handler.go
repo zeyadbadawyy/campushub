@@ -43,11 +43,24 @@ func WebSocketHandler(
 			Conn:   conn,
 		}
 
+	websocket.Broadcast(
+		map[string]interface{}{
+			"type":   "online",
+			"userId": userID,
+		},
+	)
+
 	defer func() {
 
 		delete(
 			websocket.WSHub.Clients,
 			userID,
+		)
+		websocket.Broadcast(
+			map[string]interface{}{
+				"type":   "offline",
+				"userId": userID,
+			},
 		)
 
 		conn.Close()

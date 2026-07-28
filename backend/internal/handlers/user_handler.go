@@ -122,12 +122,13 @@ func GetUserProfile(
 	}
 
 	type UserProfile struct {
-		ID       int       `json:"id"`
-		Name     string    `json:"name"`
-		Email    string    `json:"email"`
-		Bio      string    `json:"bio"`
-		Faculty  string    `json:"faculty"`
-		LastSeen time.Time `json:"last_seen"`
+		ID        int       `json:"id"`
+		Name      string    `json:"name"`
+		Email     string    `json:"email"`
+		Bio       string    `json:"bio"`
+		Faculty   string    `json:"faculty"`
+		LastSeen  time.Time `json:"last_seen"`
+		CreatedAt time.Time `json:"created_at"`
 	}
 
 	var user UserProfile
@@ -140,9 +141,10 @@ func GetUserProfile(
 		email,
 		bio,
 		faculty,
-		last_seen
-	FROM users
-	WHERE id=$1
+		last_seen,
+		created_at
+		FROM users
+		WHERE id=$1
 		`,
 		id,
 	).Scan(
@@ -152,6 +154,7 @@ func GetUserProfile(
 		&user.Bio,
 		&user.Faculty,
 		&user.LastSeen,
+		&user.CreatedAt,
 	)
 
 	if err != nil {

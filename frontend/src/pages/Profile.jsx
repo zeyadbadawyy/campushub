@@ -56,6 +56,27 @@ function Profile() {
   const navigate =
     useNavigate();
 
+  const avatarColors = [
+    "#4f46e5",
+    "#06b6d4",
+    "#22c55e",
+    "#f97316",
+    "#ec4899"
+  ];
+
+  const avatarColor =
+    avatarColors[
+      (user?.id || 0) %
+      avatarColors.length
+    ];
+
+  const [
+    activeTab,
+    setActiveTab
+  ] = useState(
+    "posts"
+  );
+
   async function loadProfile() {
 
     try {
@@ -179,6 +200,25 @@ function Profile() {
 
   }
 
+  // completion progress bar
+  const completionItems = [
+    !!user?.bio,
+    !!user?.faculty,
+    false
+  ];
+
+  const completedCount =
+    completionItems.filter(Boolean).length;
+
+  const completionPercentage =
+    Math.round(
+      (completedCount /
+        completionItems.length) * 100
+    );
+
+  const profileComplete =
+    completionPercentage === 100;
+
   if (!user) {
 
     return (
@@ -203,148 +243,327 @@ function Profile() {
 
         <div className="profile-card">
 
-          <div className="profile-avatar-container">
+          <div className="profile-banner"></div>
 
-            <div className="avatar large-avatar">
+          <div className="profile-header">
 
-              {user.name?.charAt(0)}
-
-            </div>
-
-            {
-              getLastSeenText(
-                user.last_seen
-              ) === "● Online" && (
-
-                <span className="online-dot"></span>
-
-              )
-            }
-
-          </div>
-
-          <h1>
-            {user.name}
-          </h1>
-
-          <div className="last-seen">
-
-            {
-              getLastSeenText(
-                user.last_seen
-              )
-            }
-
-          </div>
-
-          <p>
-            {user.bio}
-          </p>
-
-          <p>
-            {user.faculty}
-          </p>
-
-          {currentUser?.id !== user.id && (
-
-            <div
-              className="profile-actions"
-            >
-
+             {currentUser?.id === user.id && (
               <button
-                className="follow-btn"
-                onClick={handleFollow}
+                className="edit-profile-btn"
               >
-
-                {isFollowing
-                  ? "Unfollow"
-                  : "Follow"}
-
+                Edit Profile
               </button>
+            )}
 
-              <button
-                className="message-btn"
-                onClick={() =>
-                  navigate(
-                    `/messages/${user.id}`
-                  )
-                }
+            <div className="profile-avatar-container">
+
+              <div
+                className="avatar large-avatar"
+                style={{
+                  background:
+                    avatarColor
+                }}
               >
-
-                Message
-
-              </button>
-
-            </div>
-
-          )}
-
-          {stats && (
-
-            <div className="profile-stats">
-
-              <div>
-
-                <strong>
-                  {stats.followers}
-                </strong>
-
-                <p>
-                  Followers
-                </p>
-
+                {user.name?.charAt(0)}
               </div>
 
-              <div>
+              {
+                getLastSeenText(
+                  user.last_seen
+                ) === "● Online" && (
 
-                <strong>
-                  {stats.following}
-                </strong>
+                  <span className="online-dot"></span>
 
-                <p>
-                  Following
-                </p>
-
-              </div>
+                )
+              }
 
             </div>
 
-          )}
+            <h1 className="profile-name">
+              {user.name}
+            </h1>
 
-        </div>
+            <div className="last-seen">
 
-        <div>
+              {
+                getLastSeenText(
+                  user.last_seen
+                )
+              }
 
-          <h2>
-            Posts
-          </h2>
+            </div>
 
-          {posts?.length === 0 ? (
+            <div className="profile-role">
 
-            <p className="empty-state">
+              {user.faculty}
 
-              No posts yet.
-
+            </div>
+            
+            <p>
+              {user.bio}
             </p>
 
-          ) : (
+            {
+              currentUser?.id === user.id && (
 
-            posts.map(
-              (post) => (
+                <div
+                  className="profile-progress-card"
+                  onClick={() =>
+                    navigate("/edit-profile")
+                  }
+                >
 
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onLike={loadProfile}
-                />
+                  <div className="progress-header">
+
+                    <h4>
+                      Profile Completion
+                    </h4>
+
+                    <div>
+
+                      <span>
+                        {completionPercentage}%
+                      </span>
+                      
+                      {
+                        profileComplete && (
+                          <span className="profile-complete-badge">
+                            ✓ Complete
+                          </span>
+                        )
+                      }
+
+                    </div>
+
+                  </div>
+
+                  <div className="progress-bar">
+
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width:
+                          `${completionPercentage}%`
+                      }}
+                    ></div>
+
+                  </div>
+
+                  <p>
+                    Add a profile picture
+                    to complete your profile.
+                  </p>
+
+                </div>
 
               )
-            )
+            }
+            
+            {currentUser?.id !== user.id && (
 
-          )}
+              <div
+                className="profile-actions"
+              >
+                
+                <button
+                  className="follow-btn"
+                  onClick={handleFollow}
+                >
+
+                  {isFollowing
+                    ? "Unfollow"
+                    : "Follow"}
+
+                </button>
+
+                <button
+                  className="message-btn"
+                  onClick={() =>
+                    navigate(
+                      `/messages/${user.id}`
+                    )
+                  }
+                >
+
+                  Message
+
+                </button>
+
+              </div>
+
+            )}
+
+            {stats && (
+
+              <div className="profile-stats">
+
+                <div>
+
+                  <strong>
+                    {stats.followers}
+                  </strong>
+
+                  <p>
+                    Followers
+                  </p>
+
+                </div>
+
+                <div>
+
+                  <strong>
+                    {stats.following}
+                  </strong>
+
+                  <p>
+                    Following
+                  </p>
+
+                </div>
+
+                <div>
+
+                  <strong>
+                    {posts.length}
+                  </strong>
+
+                  <p>
+                    Posts
+                  </p>
+
+                </div>
+
+              </div>
+
+            )}
+
+          </div>
+
+        </div> 
+        
+        <div className="profile-tabs">
+
+          <button
+            className={`tab-btn ${
+              activeTab === "posts"
+                ? "active"
+                : ""
+            }`}
+            onClick={() =>
+              setActiveTab("posts")
+            }
+          >
+            Posts
+          </button>
+
+          <button
+            className={`tab-btn ${
+              activeTab === "about"
+                ? "active"
+                : ""
+            }`}
+            onClick={() =>
+              setActiveTab("about")
+            }
+          >
+            About
+          </button>
 
         </div>
 
+        <div
+          key={activeTab}
+          className="tab-content"
+        >    
+          {
+            activeTab === "posts"
+            ? (
+
+              <>
+                <h2 className="profile-section-title">
+
+                  Recent Posts
+
+                </h2>
+
+                {posts.length === 0
+                  ? (
+                    <p className="empty-state">
+                      No posts yet.
+                    </p>
+                  )
+                  : (
+                    posts.map(
+                      (post) => (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          onLike={loadProfile}
+                        />
+                      )
+                    )
+                  )}
+              </>
+
+            )
+            : (
+
+              <div className="about-card">
+
+                <div className="about-item">
+
+                  <h4>
+                    📝 Bio
+                  </h4>
+
+                  <p>
+                    {
+                      user.bio ||
+                      "No bio yet."
+                    }
+                  </p>
+
+                </div>
+
+                <div className="about-item">
+
+                  <h4>
+                    🎓 Faculty
+                  </h4>
+
+                  <p>
+                    {user.faculty}
+                  </p>
+
+                </div>
+
+                <div className="about-item">
+
+                  <h4>
+                    📅 Joined
+                  </h4>
+
+                  <p>
+                    {
+                      new Date(
+                        user.created_at
+                      ).toLocaleDateString(
+                        "en-GB",
+                        {
+                          month: "long",
+                          year: "numeric"
+                        }
+                      )
+                    }
+                  </p>
+
+                </div>
+
+              </div>
+
+            )
+          }
+        </div>
       </div>
 
     </MainLayout>

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"campushub/internal/database"
+	"campushub/internal/models"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -150,13 +151,141 @@ func ToggleFollow(
 		return
 	}
 
+	var requestExists bool
+
+	err = database.DB.QueryRow(
+		`
+	SELECT EXISTS(
+		SELECT 1
+		FROM follow_requests
+		WHERE requester_id=$1
+		AND target_user_id=$2
+	)
+	`,
+		currentUserID,
+		targetUserID,
+	).Scan(
+		&requestExists,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Database error",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	if requestExists {
+
+		json.NewEncoder(w).Encode(
+			map[string]string{
+				"message": "Request already sent",
+			},
+		)
+
+		return
+	}
+
+	if IsPrivateAccount(
+		targetUserID,
+	) {
+
+		_, err =
+			database.DB.Exec(
+				`
+			INSERT INTO follow_requests
+			(
+				requester_id,
+				target_user_id
+			)
+			VALUES
+			(
+				$1,
+				$2
+			)
+			`,
+				currentUserID,
+				targetUserID,
+			)
+
+		if err != nil {
+
+			http.Error(
+				w,
+				"Could not create follow request",
+				http.StatusInternalServerError,
+			)
+
+			return
+		}
+
+		_, err =
+			database.DB.Exec(
+				`
+			INSERT INTO notifications
+			(
+				user_id,
+				sender_id,
+				type,
+				message,
+				target_id
+			)
+			VALUES
+			(
+				$1,
+				$2,
+				$3,
+				$4,
+				$5
+			)
+			`,
+				targetUserID,
+				currentUserID,
+				"follow_request",
+				"sent you a follow request",
+				currentUserID,
+			)
+
+		if err != nil {
+
+			http.Error(
+				w,
+				"Could not create notification",
+				http.StatusInternalServerError,
+			)
+
+			return
+		}
+
+		json.NewEncoder(
+			w,
+		).Encode(
+			map[string]string{
+				"message": "Follow request sent",
+			},
+		)
+
+		return
+	}
+
 	_, err =
 		database.DB.Exec(
 			`
-			INSERT INTO follows
-			(follower_id,following_id)
-			VALUES ($1,$2)
-			`,
+		INSERT INTO follows
+		(
+			follower_id,
+			following_id
+		)
+		VALUES
+		(
+			$1,
+			$2
+		)
+		`,
 			currentUserID,
 			targetUserID,
 		)
@@ -171,9 +300,36 @@ func ToggleFollow(
 
 		return
 	}
-	_, err =
-		database.DB.Exec(
-			`
+
+	var allowFollowNotifications bool
+
+	err = database.DB.QueryRow(
+		`
+	SELECT follow_notifications
+	FROM user_settings
+	WHERE user_id = $1
+	`,
+		targetUserID,
+	).Scan(
+		&allowFollowNotifications,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Settings not found",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	if allowFollowNotifications {
+
+		_, err =
+			database.DB.Exec(
+				`
 		INSERT INTO notifications
 		(
 			user_id,
@@ -191,22 +347,23 @@ func ToggleFollow(
 			$5
 		)
 		`,
-			targetUserID,
-			currentUserID,
-			"follow",
-			"started following you",
-			currentUserID,
-		)
+				targetUserID,
+				currentUserID,
+				"follow",
+				"started following you",
+				currentUserID,
+			)
 
-	if err != nil {
+		if err != nil {
 
-		http.Error(
-			w,
-			"Could not create notification",
-			http.StatusInternalServerError,
-		)
+			http.Error(
+				w,
+				err.Error(),
+				http.StatusInternalServerError,
+			)
 
-		return
+			return
+		}
 	}
 
 	json.NewEncoder(
@@ -405,6 +562,285 @@ func IsFollowing(
 	).Encode(
 		map[string]bool{
 			"isFollowing": isFollowing,
+		},
+	)
+}
+
+func GetFollowRequests(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	rows, err :=
+		database.DB.Query(
+			`
+			SELECT
+				fr.requester_id,
+				u.name,
+				fr.created_at
+			FROM follow_requests fr
+			JOIN users u
+				ON u.id = fr.requester_id
+			WHERE fr.target_user_id = $1
+			ORDER BY fr.created_at DESC
+			`,
+			currentUserID,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not fetch requests",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	defer rows.Close()
+
+	requests :=
+		[]models.FollowRequest{}
+
+	for rows.Next() {
+
+		var request models.FollowRequest
+
+		rows.Scan(
+			&request.RequesterID,
+			&request.Name,
+			&request.CreatedAt,
+		)
+
+		requests =
+			append(
+				requests,
+				request,
+			)
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		requests,
+	)
+}
+
+func AcceptFollowRequest(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	requesterParam :=
+		chi.URLParam(
+			r,
+			"id",
+		)
+
+	requesterID, err :=
+		strconv.Atoi(
+			requesterParam,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid user ID",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	result, err :=
+		database.DB.Exec(
+			`
+			DELETE FROM follow_requests
+			WHERE requester_id=$1
+			AND target_user_id=$2
+			`,
+			requesterID,
+			currentUserID,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not accept request",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	rowsAffected, _ :=
+		result.RowsAffected()
+
+	if rowsAffected == 0 {
+
+		http.Error(
+			w,
+			"Follow request not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
+	_, err =
+		database.DB.Exec(
+			`
+			INSERT INTO follows
+			(
+				follower_id,
+				following_id
+			)
+			VALUES
+			(
+				$1,
+				$2
+			)
+			`,
+			requesterID,
+			currentUserID,
+		)
+
+	_, err =
+		database.DB.Exec(
+			`
+		INSERT INTO notifications
+		(
+			user_id,
+			sender_id,
+			type,
+			message,
+			target_id
+		)
+		VALUES
+		(
+			$1,
+			$2,
+			$3,
+			$4,
+			$5
+		)
+		`,
+			requesterID,
+			currentUserID,
+			"follow_accepted",
+			"accepted your follow request",
+			currentUserID,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not create notification",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		map[string]string{
+			"message": "Request accepted",
+		},
+	)
+}
+
+func RejectFollowRequest(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	requesterParam :=
+		chi.URLParam(
+			r,
+			"id",
+		)
+
+	requesterID, err :=
+		strconv.Atoi(
+			requesterParam,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid user ID",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	result, err :=
+		database.DB.Exec(
+			`
+			DELETE FROM follow_requests
+			WHERE requester_id=$1
+			AND target_user_id=$2
+			`,
+			requesterID,
+			currentUserID,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not reject request",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	rowsAffected, _ :=
+		result.RowsAffected()
+
+	if rowsAffected == 0 {
+
+		http.Error(
+			w,
+			"Follow request not found",
+			http.StatusNotFound,
+		)
+
+		return
+	}
+
+	json.NewEncoder(
+		w,
+	).Encode(
+		map[string]string{
+			"message": "Request rejected",
 		},
 	)
 }

@@ -14,8 +14,12 @@ import Search from "./pages/Search";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
 import PostDetails from "./pages/PostDetails";
-  
+import EditProfile from "./pages/EditProfile";
+import Settings from "./pages/Settings";
+import ChangePassword from "./pages/ChangePassword";
+
 import ProtectedRoute from "./routes/ProtectedRoute";
+
 
 function App() {
 
@@ -114,8 +118,37 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+         path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+      
+        <Route
+         path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+         path="/change-password"
+          element={
+            <ProtectedRoute>
+              <ChangePassword />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
 
+          
     </BrowserRouter>
   );
 

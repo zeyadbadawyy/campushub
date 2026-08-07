@@ -58,6 +58,14 @@ function Navbar() {
     setRecentNotifications
   ] = useState([]);
 
+  const [
+    showAccountMenu,
+    setShowAccountMenu
+  ] = useState(false);
+
+  const accountMenuRef =
+    useRef(null); 
+
   useEffect(() => {
 
     async function performSearch() {
@@ -145,6 +153,18 @@ function Navbar() {
         setShowNotifications(false);
 
       }
+
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(
+          event.target
+        )
+      ) {
+
+        setShowAccountMenu(false);
+
+      }
+
     }
 
     document.addEventListener(
@@ -285,6 +305,12 @@ function Navbar() {
       case "follow":
         return `/profile/${notification.sender_id}`;
 
+      case "follow_request":
+        return "/notifications";
+
+      case "follow_accepted":
+        return `/profile/${notification.sender_id}`;
+        
       default:
         return "/";
     }
@@ -512,7 +538,7 @@ function Navbar() {
                               </span>
 
                             )}
-                            
+
                             <div>
 
                               <strong>
@@ -575,34 +601,93 @@ function Navbar() {
 
         </div>
 
-        <div className="navbar-user">
+        <div
+          className="account-menu"
+          ref={accountMenuRef}
+        >
 
-          <div className="navbar-avatar">
-
-            {
-              user?.name?.charAt(0)
+          <button
+            className="account-trigger"
+            onClick={() =>
+              setShowAccountMenu(
+                !showAccountMenu
+              )
             }
+          >
 
-          </div>
+            <div className="navbar-avatar">
 
-          <span>
+              {user?.name?.charAt(0)}
 
-            {
-              user
-                ? user.name
-                : "Loading..."
-            }
+            </div>
 
-          </span>
+            <span>
+
+              {user?.name}
+
+            </span>
+
+            <span>
+
+              ▼
+
+            </span>
+
+          </button>
+
+          {showAccountMenu && (
+
+            <div className="account-dropdown">
+
+              <button
+                onClick={() =>
+                  navigate(
+                    `/profile/${user.id}`
+                  )
+                }
+              >
+                My Profile
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate(
+                    "/edit-profile"
+                  )
+                }
+              >
+                Edit Profile
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate(
+                    "/settings"
+                  )
+                }
+              >
+                Settings
+              </button>
+
+              <button>
+
+                Dark Mode
+
+              </button>
+
+              <hr />
+
+              <button
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+
+            </div>
+
+          )}
 
         </div>
-
-        <button
-          onClick={handleLogout}
-          className="logout-btn"
-        >
-          Logout
-        </button>
 
       </div>
         

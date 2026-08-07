@@ -170,8 +170,22 @@ func ToggleLike(
 		&postOwnerID,
 	)
 
+	var allowLikeNotifications bool
+
+	err = database.DB.QueryRow(
+		`
+		SELECT like_notifications
+		FROM user_settings
+		WHERE user_id = $1
+	`,
+		postOwnerID,
+	).Scan(
+		&allowLikeNotifications,
+	)
+
 	if err == nil &&
-		postOwnerID != userID {
+		postOwnerID != userID &&
+		allowLikeNotifications {
 
 		_, err = database.DB.Exec(
 			`

@@ -24,11 +24,24 @@ export async function getCurrentUser() {
 
 export async function getPosts() {
 
-  const response = await api.get(
-    "/posts?page=1&limit=10"
-  );
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.get(
+      "/posts?page=1&limit=10",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
 
   return response.data;
+
 }
 
 export async function createPost(content) {
@@ -132,9 +145,20 @@ export async function getUserPosts(
   userId
 ) {
 
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
   const response =
     await api.get(
-      `/users/${userId}/posts`
+      `/users/${userId}/posts`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
     );
 
   return response.data;
@@ -164,6 +188,28 @@ export async function searchUsers(
   const response =
     await api.get(
       `/users/search?q=${query}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function searchUsersForChats(
+  query
+) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      `/users/search-chats?q=${query}`,
       {
         headers: {
           Authorization:
@@ -442,6 +488,30 @@ export async function getTypingStatus(
 
 }
 
+export async function getMessageStatus(
+  id
+) {
+
+  const token =
+  localStorage.getItem(
+    "token"
+  );
+
+  const response =
+    await api.get(
+       `/users/${id}/message-status`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
 export async function getOnlineStatus(
   userId
 ) {
@@ -540,6 +610,294 @@ export async function markNotificationRead(
     await api.put(
       `/notifications/${notificationId}/read`,
       {},
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function updateProfile(
+  profileData
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.put(
+      "/me",
+      profileData,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function changePassword(
+  currentPassword,
+  newPassword
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.put(
+      "/change-password",
+      {
+        currentPassword,
+        newPassword
+      },
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getUserActivity() {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.get(
+      "/activity",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getSettings() {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.get(
+      "/settings",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function updateSettings(
+  settings
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.put(
+      "/settings",
+      settings,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function deleteAccount() {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.delete(
+      "/delete-account",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getFollowRequestStatus(
+  userId
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.get(
+      `/users/${userId}/follow-request-status`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function cancelFollowRequest(
+  userId
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.delete(
+      `/users/${userId}/follow-request`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getUserVisibility(
+  userId
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.get(
+      `/users/${userId}/visibility`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function getFollowRequests() {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.get(
+      "/follow-requests",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function acceptFollowRequest(
+  userId
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.post(
+      `/follow-requests/${userId}/accept`,
+      {},
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function rejectFollowRequest(
+  userId
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.delete(
+      `/follow-requests/${userId}/reject`,
       {
         headers: {
           Authorization:

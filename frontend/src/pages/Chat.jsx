@@ -264,21 +264,30 @@ function Chat() {
 
   }, [id]);
 
-  function getLastSeen(lastSeen) {
+  function getLastSeen(
+    lastSeen,
+    showOnlineStatus
+  )
+  {
+    if (!showOnlineStatus)
+      return "offline";
 
     if (!lastSeen)
-      return "Offline";
+      return "offline";
+
+    const now =
+      new Date();
+
+    const time =
+      new Date(lastSeen);
 
     const diff =
       Math.floor(
-        (
-          Date.now() -
-          new Date(lastSeen)
-        ) / 1000
+        (now - time) / 1000
       );
 
-    if (diff < 60)
-      return "Online";
+    if (diff < 120)
+      return "● Online";
 
     if (diff < 3600)
       return `Last seen ${Math.floor(diff / 60)}m ago`;
@@ -287,9 +296,7 @@ function Chat() {
       return `Last seen ${Math.floor(diff / 3600)}h ago`;
 
     return `Last seen ${Math.floor(diff / 86400)}d ago`;
-
   }
-
 
   return (
 
@@ -328,7 +335,8 @@ function Chat() {
                 isOnline
                   ? <span>online</span>
                   : getLastSeen(
-                      chatUser?.last_seen
+                      chatUser?.last_seen,
+                      chatUser?.show_online_status
                     )
               }
 

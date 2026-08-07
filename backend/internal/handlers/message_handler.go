@@ -107,6 +107,78 @@ func SendMessage(
 		return
 	}
 
+	var allowMessages bool
+
+	err = database.DB.QueryRow(
+		`
+	SELECT allow_messages
+	FROM user_settings
+	WHERE user_id = $1
+	`,
+		receiverID,
+	).Scan(
+		&allowMessages,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Settings not found",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	var hasConversation bool
+
+	err = database.DB.QueryRow(
+		`
+	SELECT EXISTS(
+		SELECT 1
+		FROM messages
+		WHERE
+		(
+			sender_id = $1
+			AND receiver_id = $2
+		)
+		OR
+		(
+			sender_id = $2
+			AND receiver_id = $1
+		)
+	)
+	`,
+		senderID,
+		receiverID,
+	).Scan(
+		&hasConversation,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Database error",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	if !allowMessages &&
+		!hasConversation {
+
+		http.Error(
+			w,
+			"This user is not accepting new messages",
+			http.StatusForbidden,
+		)
+
+		return
+	}
+
 	var message models.Message
 
 	err = json.NewDecoder(
@@ -177,8 +249,35 @@ func SendMessage(
 			messageJSON,
 		)
 	}
-	_, err = database.DB.Exec(
+
+	var allowMessageNotifications bool
+
+	err = database.DB.QueryRow(
 		`
+		SELECT message_notifications
+		FROM user_settings
+		WHERE user_id = $1
+	`,
+		receiverID,
+	).Scan(
+		&allowMessageNotifications,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Settings not found",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	if allowMessageNotifications {
+
+		_, err = database.DB.Exec(
+			`
 	INSERT INTO notifications
 	(
 		user_id,
@@ -196,22 +295,23 @@ func SendMessage(
 		$5
 	)
 	`,
-		receiverID,
-		senderID,
-		"message",
-		"sent you a message",
-		senderID,
-	)
-
-	if err != nil {
-
-		http.Error(
-			w,
-			"Could not create notification",
-			http.StatusInternalServerError,
+			receiverID,
+			senderID,
+			"message",
+			"sent you a message",
+			senderID,
 		)
 
-		return
+		if err != nil {
+
+			http.Error(
+				w,
+				"Could not create notification",
+				http.StatusInternalServerError,
+			)
+
+			return
+		}
 	}
 
 	w.WriteHeader(

@@ -1224,6 +1224,13 @@ button {
 
 }
 
+.message-btn.disabled {
+
+  opacity: 0.6;
+  cursor: default;
+
+}
+
 .chat-page {
 
   max-width: 900px;
@@ -1671,7 +1678,7 @@ button {
   height: 36px;
 
   border-radius: 50%;
-
+  margin-left: 8px;
   background: var(--primary);
 
   color: white;
@@ -1684,7 +1691,7 @@ button {
 
 }
 
-.last-seen {
+.last-seen.online {
 
   margin-top: 10px;
   margin-bottom: 18px;
@@ -1695,6 +1702,19 @@ button {
   color: #22c55e;
 
 }
+
+.last-seen.offline{
+
+  margin-top: 10px;
+  margin-bottom: 18px;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  color: #9ca3af;
+
+}
+
 
 .profile-avatar-container {
 
@@ -2596,4 +2616,590 @@ button {
       #4f46e5,
       #7c3aed
     );
+}
+
+.account-menu {
+  position: relative;
+}
+
+.account-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: 110%;
+  right: 0;
+
+  width: 220px;
+
+  background: white;
+  border-radius: 16px;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.12);
+
+  overflow: hidden;
+  z-index: 1000;
+
+  animation: dropdownFade 0.2s ease;
+}
+
+.account-dropdown button {
+  width: 100%;
+
+  border: none;
+  background: transparent;
+
+  padding: 1rem 1.25rem;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  font-size: 0.95rem;
+
+  transition: 0.2s;
+}
+
+.account-dropdown button:hover {
+  background: #f5f3ff;
+  color: #4f46e5;
+}
+
+.account-dropdown hr {
+  margin: 0;
+  border: none;
+  border-top: 1px solid #eee;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.edit-profile-page {
+
+  display: flex;
+  justify-content: center;
+
+  padding: 2rem;
+}
+
+.edit-profile-card {
+
+  width: 100%;
+  max-width: 760px;
+
+  background: white;
+
+  border-radius: 28px;
+
+  padding: 2rem;
+
+  box-shadow:
+    0 20px 50px rgba(0,0,0,0.08);
+
+  animation:
+    editProfileFade .35s ease;
+}
+
+@keyframes editProfileFade {
+
+  from {
+
+    opacity: 0;
+    transform:
+      translateY(20px);
+
+  }
+
+  to {
+
+    opacity: 1;
+    transform:
+      translateY(0);
+
+  }
+}
+
+.edit-profile-header {
+
+  margin-bottom: 2rem;
+}
+
+.edit-profile-header h1 {
+
+  font-size: 2rem;
+  margin-bottom: .4rem;
+}
+
+.edit-profile-header p {
+
+  color: #6b7280;
+}
+
+.form-group {
+
+  display: flex;
+  flex-direction: column;
+
+  gap: .7rem;
+
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+
+  font-weight: 600;
+
+  color: #374151;
+}
+
+.form-group input,
+.form-group textarea {
+
+  width: 100%;
+
+  border: none;
+
+  background: #f8fafc;
+
+  padding: 1rem 1.1rem;
+
+  border-radius: 16px;
+
+  font-size: .95rem;
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease,
+    background .2s ease;
+}
+
+.form-group textarea {
+
+  min-height: 160px;
+
+  resize: vertical;
+}
+
+.form-group input:hover,
+.form-group textarea:hover {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 10px 25px rgba(0,0,0,0.08);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+
+  outline: none;
+
+  background: white;
+
+  box-shadow:
+    0 0 0 4px rgba(79,70,229,.12),
+    0 10px 25px rgba(0,0,0,0.08);
+}
+
+.edit-profile-actions {
+
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 1rem;
+
+  margin-top: 2rem;
+}
+
+.cancel-btn {
+
+  border: none;
+
+  background: #f3f4f6;
+
+  padding: .9rem 1.5rem;
+
+  border-radius: 14px;
+
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+.save-btn {
+
+  border: none;
+
+  padding: .9rem 1.7rem;
+
+  border-radius: 14px;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-weight: 600;
+
+  background:
+    linear-gradient(
+      135deg,
+      #4f46e5,
+      #7c3aed
+    );
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+.save-btn:hover {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 12px 30px rgba(79,70,229,.35);
+}
+
+.settings-page {
+
+  display: flex;
+  justify-content: center;
+
+  padding: 2rem;
+}
+
+.settings-card {
+
+  width: 100%;
+  max-width: 800px;
+
+  background: white;
+
+  border-radius: 24px;
+
+  padding: 2rem;
+
+  box-shadow:
+    0 15px 40px rgba(0,0,0,.08);
+}
+
+.settings-card h1 {
+
+  margin-bottom: .5rem;
+}
+
+.settings-card > p {
+
+  color: #6b7280;
+
+  margin-bottom: 2rem;
+}
+
+.settings-section {
+
+  background: white;
+
+  padding: 1.5rem;
+
+  border-radius: 20px;
+
+  margin-bottom: 1.5rem;
+
+  box-shadow:
+    0 10px 25px rgba(0,0,0,.06);
+}
+
+.settings-section h2 {
+
+  margin-bottom: 1rem;
+}
+
+.setting-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: .9rem 0;
+
+  border-bottom:
+    1px solid #f1f5f9;
+}
+
+.setting-row:last-child {
+
+  border-bottom: none;
+}
+
+.settings-section button {
+
+  border: none;
+
+  padding: .8rem 1.2rem;
+
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+.danger-zone {
+
+  border:
+    2px solid rgba(239,68,68,.2);
+}
+
+.delete-btn {
+
+  background: #ef4444;
+
+  color: white;
+}
+
+.password-message {
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  animation: fadeIn .25s ease;
+}
+
+.password-message.success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.password-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.password-message.warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+@keyframes fadeIn {
+
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(120px,1fr)
+    );
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.activity-grid div {
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  background: #f8fafc;
+  transition: 0.3s ease;
+}
+
+.activity-grid div:hover {
+  transform:
+    translateY(-4px);
+}
+
+.activity-grid strong {
+  display: block;
+  font-size: 1.4rem;
+  margin-bottom: 6px;
+}
+
+.activity-grid span {
+  color: #64748b;
+  font-size: .9rem;
+}
+
+.private-account-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+  animation: fadeUp .35s ease;
+  transition: all .25s ease;
+}
+
+.private-account-card:hover {
+  transform: translateY(-4px);
+}
+
+.private-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: floatLock 2s ease-in-out infinite;
+}
+
+.private-account-card h3 {
+  margin-bottom: 10px;
+}
+
+.private-account-card p {
+  color: #666;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatLock {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.follow-requests-section {
+  margin-bottom: 2rem;
+}
+
+.follow-requests-section h2 {
+  margin-bottom: 1rem;
+}
+
+.follow-request-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 10px;
+  background: var(--card-bg);
+}
+
+.follow-request-card:hover {
+  transform: translateY(-2px);
+}
+
+.follow-request-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.follow-request-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.accept-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.reject-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/*----------------------------------------     DARK MODE     -----------------------------------------*/
+body.dark-mode {
+
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+body.dark-mode .navbar,
+body.dark-mode .post-card,
+body.dark-mode .profile-card,
+body.dark-mode .about-card,
+body.dark-mode .settings-card,
+body.dark-mode .edit-profile-card,
+body.dark-mode .notifications-dropdown {
+
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+body.dark-mode input,
+body.dark-mode textarea {
+
+  background: #334155;
+  color: white;
+
+  border-color: #475569;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+
+  color: #94a3b8;
+}
+
+body.dark-mode .setting-row,
+body.dark-mode .about-item {
+
+  border-color: #334155;
+}
+
+body.dark-mode .profile-role,
+body.dark-mode .last-seen,
+body.dark-mode .notification-time {
+
+  color: #94a3b8;
 }

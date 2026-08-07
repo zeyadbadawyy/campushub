@@ -14,7 +14,10 @@ import MainLayout
 import {
   getNotifications,
   markNotificationsRead,
-  markNotificationRead
+  markNotificationRead,
+  getFollowRequests,
+  acceptFollowRequest,
+  rejectFollowRequest
 } from "../services/postService";
 
 function Notifications() {
@@ -25,6 +28,11 @@ function Notifications() {
   const [
     notifications,
     setNotifications
+  ] = useState([]);
+
+  const [
+    followRequests,
+    setFollowRequests
   ] = useState([]);
 
   const [
@@ -40,6 +48,13 @@ function Notifications() {
 
         const data =
           await getNotifications();
+
+        const requests =
+          await getFollowRequests();
+
+        setFollowRequests(
+          requests || []
+        );
 
         setNotifications(
           data || []
@@ -129,6 +144,9 @@ function Notifications() {
 
       case "message":
         return "✉️";
+      
+      case "follow_accepted":
+        return "✅";
 
       default:
         return "🔔";
@@ -157,6 +175,12 @@ function Notifications() {
       case "follow":
         return `/profile/${notification.sender_id}`;
 
+      case "follow_request":
+        return "/notifications";
+
+      case "follow_accepted":
+        return `/profile/${notification.sender_id}`;
+        
       default:
         return "/";
     }
@@ -207,6 +231,58 @@ function Notifications() {
 
   }
 
+  async function handleAcceptRequest(
+    requesterId
+  ) {
+
+    try {
+
+      await acceptFollowRequest(
+        requesterId
+      );
+
+      setFollowRequests(
+        prev =>
+          prev.filter(
+            request =>
+              request.requester_id !== requesterId
+          )
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+  async function handleRejectRequest(
+    requesterId
+  ) {
+
+    try {
+
+      await rejectFollowRequest(
+        requesterId
+      );
+
+      setFollowRequests(
+        prev =>
+          prev.filter(
+            request =>
+              request.requester_id !== requesterId
+          )
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
+
   const unreadCount =
     notifications.filter(
       (n) => !n.is_read
@@ -217,6 +293,98 @@ function Notifications() {
     <MainLayout>
 
       <div className="notifications-page">
+        {
+          followRequests.length > 0 && (
+
+            <div className="follow-requests-section">
+
+              <h2>
+                Follow Requests
+              </h2>
+
+              <div className="follow-requests-list">
+
+                {
+                  followRequests.map(
+                    (request) => (
+
+                      <div
+                        key={request.requester_id}
+                        className="follow-request-card"
+                        onClick={() =>
+                          navigate(
+                            `/profile/${request.requester_id}`
+                          )
+                        }
+                      >
+
+                        <div className="follow-request-info">
+
+                          <div className="notification-avatar">
+
+                            {
+                              request.name?.charAt(0)
+                            }
+
+                          </div>
+
+                          <div>
+
+                            <strong>
+                              {request.name}
+                            </strong>
+
+                            <p>
+                              Wants to follow you
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                        <div
+                          className="follow-request-actions"
+                          onClick={(e) =>
+                            e.stopPropagation()
+                          }
+                        >
+
+                          <button
+                            className="accept-btn"
+                            onClick={() =>
+                              handleAcceptRequest(
+                                request.requester_id
+                              )
+                            }
+                          >
+                            Accept
+                          </button>
+
+                          <button
+                            className="reject-btn"
+                            onClick={() =>
+                              handleRejectRequest(
+                                request.requester_id
+                              )
+                            }
+                          >
+                            Reject
+                          </button>
+
+                        </div>
+
+                      </div>
+
+                    )
+                  )
+                }
+
+              </div>
+
+            </div>
+
+          )
+        }
 
         <div className="notifications-header">
 

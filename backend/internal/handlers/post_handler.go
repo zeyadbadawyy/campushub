@@ -7,6 +7,7 @@ import (
 
 	"campushub/internal/database"
 	"campushub/internal/models"
+	"campushub/internal/utils"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -150,34 +151,62 @@ func GetPosts(
 	offset :=
 		(page - 1) * limit
 
+	currentUserID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
 	rows, err :=
 		database.DB.Query(
 			`
-			SELECT
-					posts.id,
-					posts.user_id,
-					users.name,
-					users.faculty,
-					posts.content,
-					posts.created_at,
-					COUNT(DISTINCT likes.id) AS likes,
-					COUNT(DISTINCT comments.id) AS comments
-			FROM posts
-			JOIN users
-					ON posts.user_id = users.id
-			LEFT JOIN likes
-					ON likes.post_id = posts.id
-			LEFT JOIN comments
-					ON comments.post_id = posts.id
-			GROUP BY
-					posts.id,
-					posts.user_id,
-					users.name,
-					users.faculty
-			ORDER BY posts.created_at DESC
-			LIMIT $1
-			OFFSET $2
+					SELECT
+				posts.id,
+				posts.user_id,
+				users.name,
+				users.faculty,
+				posts.content,
+				posts.created_at,
+				COUNT(DISTINCT likes.id) AS likes,
+				COUNT(DISTINCT comments.id) AS comments
+		FROM posts
+		JOIN users
+				ON posts.user_id = users.id
+
+		JOIN user_settings s
+				ON s.user_id = users.id
+
+		LEFT JOIN follows f
+				ON f.following_id = users.id
+				AND f.follower_id = $1
+
+		LEFT JOIN likes
+				ON likes.post_id = posts.id
+
+		LEFT JOIN comments
+				ON comments.post_id = posts.id
+
+		WHERE
+		(
+				s.private_account = FALSE
+				OR users.id = $1
+				OR f.id IS NOT NULL
+		)
+
+		GROUP BY
+				posts.id,
+				posts.user_id,
+				users.name,
+				users.faculty,
+				s.private_account,
+				f.id
+
+		ORDER BY posts.created_at DESC
+
+		LIMIT $2
+		OFFSET $3
 			`,
+			currentUserID,
 			limit,
 			offset,
 		)
@@ -259,6 +288,45 @@ func GetUserPosts(
 			w,
 			"Invalid user ID",
 			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	viewerID :=
+		r.Context().
+			Value(
+				"userID",
+			).(int)
+
+	canView, err :=
+		utils.CanViewUser(
+			viewerID,
+			userID,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Database error",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	// PRIVATE ACCOUNT:
+	// Return empty posts instead of 403
+	if !canView {
+
+		w.Header().Set(
+			"Content-Type",
+			"application/json",
+		)
+
+		json.NewEncoder(w).Encode(
+			[]models.FeedPost{},
 		)
 
 		return

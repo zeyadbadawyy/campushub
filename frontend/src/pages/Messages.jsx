@@ -12,7 +12,7 @@ import MainLayout
 
 import {
   getConversations,
-  searchUsers
+  searchUsersForChats
 } from "../services/postService";
 
 
@@ -88,7 +88,7 @@ function Messages() {
       try {
 
         const data =
-          await searchUsers(
+          await searchUsersForChats(
             search
           );
 
@@ -136,6 +136,16 @@ function Messages() {
 
   }
 
+  function truncateMessage(text) {
+
+    if (!text)
+      return "";
+
+    if (text.length <= 40)
+      return text;
+
+    return text.slice(0, 40) + "...";
+  }
 
   return (
 
@@ -303,7 +313,7 @@ function Messages() {
 
                       <p className="conversation-preview">
 
-                        {user.last_message}
+                        {truncateMessage(user.last_message)}
 
                       </p>
 

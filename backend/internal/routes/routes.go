@@ -64,9 +64,23 @@ func RegisterRoutes() http.Handler {
 
 	r.With(
 		middleware.Auth,
+	).Put(
+		"/change-password",
+		handlers.ChangePassword,
+	)
+
+	r.With(
+		middleware.Auth,
 	).Get(
 		"/me",
 		handlers.Me,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Put(
+		"/me",
+		handlers.UpdateProfile,
 	)
 
 	r.With(
@@ -76,7 +90,9 @@ func RegisterRoutes() http.Handler {
 		handlers.CreatePost,
 	)
 
-	r.Get(
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/posts",
 		handlers.GetPosts,
 	)
@@ -93,12 +109,21 @@ func RegisterRoutes() http.Handler {
 		handlers.SearchUsers,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/users/search-chats",
+		handlers.SearchUsersForChats,
+	)
+
 	r.Get(
 		"/users/{id}",
 		handlers.GetUserProfile,
 	)
 
-	r.Get(
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/users/{id}/posts",
 		handlers.GetUserPosts,
 	)
@@ -146,6 +171,13 @@ func RegisterRoutes() http.Handler {
 	r.Get(
 		"/stats",
 		handlers.GetStats,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/activity",
+		handlers.GetUserActivity,
 	)
 
 	r.With(
@@ -217,6 +249,13 @@ func RegisterRoutes() http.Handler {
 	r.With(
 		middleware.Auth,
 	).Get(
+		"/users/{id}/message-status",
+		handlers.GetMessageStatus,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/users/{id}/online",
 		handlers.GetOnlineStatus,
 	)
@@ -248,6 +287,70 @@ func RegisterRoutes() http.Handler {
 		"/notifications/{id}/read",
 		handlers.MarkNotificationRead,
 	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/settings",
+		handlers.GetSettings,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Put(
+		"/settings",
+		handlers.UpdateSettings,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Delete(
+		"/delete-account",
+		handlers.DeleteAccount,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/users/{id}/follow-request-status",
+		handlers.GetFollowRequestStatus,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Delete(
+		"/users/{id}/follow-request",
+		handlers.CancelFollowRequest,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/follow-requests",
+		handlers.GetFollowRequests,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/follow-requests/{id}/accept",
+		handlers.AcceptFollowRequest,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Delete(
+		"/follow-requests/{id}/reject",
+		handlers.RejectFollowRequest,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/users/{id}/visibility",
+		handlers.GetUserVisibility,
+	)
+
 	r.Get(
 		"/swagger/*",
 		httpSwagger.Handler(

@@ -37,11 +37,15 @@ func WebSocketHandler(
 		return
 	}
 
+	websocket.WSHub.Mutex.Lock()
+
 	websocket.WSHub.Clients[userID] =
 		&websocket.Client{
 			UserID: userID,
 			Conn:   conn,
 		}
+
+	websocket.WSHub.Mutex.Unlock()
 
 	websocket.Broadcast(
 		map[string]interface{}{
@@ -52,10 +56,15 @@ func WebSocketHandler(
 
 	defer func() {
 
+		websocket.WSHub.Mutex.Lock()
+
 		delete(
 			websocket.WSHub.Clients,
 			userID,
 		)
+
+		websocket.WSHub.Mutex.Unlock()
+
 		websocket.Broadcast(
 			map[string]interface{}{
 				"type":   "offline",

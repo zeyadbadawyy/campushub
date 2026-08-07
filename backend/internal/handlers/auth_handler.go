@@ -83,17 +83,28 @@ func Register(
 		return
 	}
 
-	_, err = database.DB.Exec(
+	var userID int
+
+	err = database.DB.QueryRow(
 		`
-		INSERT INTO users
-		(name,email,password,bio,faculty)
-		VALUES ($1,$2,$3,$4,$5)
-		`,
+	INSERT INTO users
+	(name,email,password,bio,faculty)
+	VALUES ($1,$2,$3,$4,$5)
+	RETURNING id
+	`,
 		user.Name,
 		user.Email,
 		string(hashedPassword),
 		user.Bio,
 		user.Faculty,
+	).Scan(&userID)
+
+	_, err = database.DB.Exec(
+		`
+	INSERT INTO user_settings (user_id)
+	VALUES ($1)
+	`,
+		userID,
 	)
 
 	if err != nil {

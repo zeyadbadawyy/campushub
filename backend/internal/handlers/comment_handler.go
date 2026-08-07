@@ -162,8 +162,22 @@ func CreateComment(
 		&postOwnerID,
 	)
 
+	var allowCommentNotifications bool
+
+	err = database.DB.QueryRow(
+		`
+		SELECT comment_notifications
+		FROM user_settings
+		WHERE user_id = $1
+	`,
+		postOwnerID,
+	).Scan(
+		&allowCommentNotifications,
+	)
+
 	if err == nil &&
-		postOwnerID != userID {
+		postOwnerID != userID &&
+		allowCommentNotifications {
 
 		_, err = database.DB.Exec(
 			`

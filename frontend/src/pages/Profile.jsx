@@ -22,7 +22,11 @@ import {
   getUserPosts,
   getFollowStats,
   getFollowStatus,
-  toggleFollow
+  toggleFollow,
+  getMessageStatus,
+  getFollowRequestStatus,
+  cancelFollowRequest,
+  getUserVisibility
 } from "../services/postService";
 
 import {
@@ -53,6 +57,11 @@ function Profile() {
     setIsFollowing
   ] = useState(false);
 
+  const [
+    isRequested,
+    setIsRequested
+  ] = useState(false);
+
   const navigate =
     useNavigate();
 
@@ -70,6 +79,25 @@ function Profile() {
       avatarColors.length
     ];
 
+    // completion progress bar
+  const completionItems = [
+    !!user?.bio,
+    !!user?.faculty,
+    false
+  ];
+
+  const completedCount =
+    completionItems.filter(Boolean).length;
+
+  const completionPercentage =
+    Math.round(
+      (completedCount /
+        completionItems.length) * 100
+    );
+
+  const profileComplete =
+    completionPercentage === 100;
+
   const [
     activeTab,
     setActiveTab
@@ -77,6 +105,16 @@ function Profile() {
     "posts"
   );
 
+  const [
+    canReceiveMessages,
+    setCanReceiveMessages
+  ] = useState(true);
+
+  const [
+    canViewContent,
+    setCanViewContent
+  ] = useState(true);
+  
   async function loadProfile() {
 
     try {
@@ -103,6 +141,29 @@ function Profile() {
         await getFollowStatus(
           id
         );
+      
+      const requestStatus =
+        await getFollowRequestStatus(
+          id
+        );
+
+      const messageStatus =
+        await getMessageStatus(
+          id
+        );
+        
+      const visibility =
+        await getUserVisibility(
+          id
+        );
+
+      setCanViewContent(
+        visibility.canViewContent
+      );
+
+      setCanReceiveMessages(
+        messageStatus.allow_messages
+      );
 
       setUser(
         profile
@@ -124,6 +185,10 @@ function Profile() {
         followStatus.isFollowing
       );
 
+      setIsRequested(
+        requestStatus.requested
+      );
+
     } catch (error) {
 
       console.error(
@@ -138,9 +203,19 @@ function Profile() {
 
     try {
 
-      await toggleFollow(
-        id
-      );
+      if (isRequested) {
+
+        await cancelFollowRequest(
+          id
+        );
+
+      } else {
+
+        await toggleFollow(
+          id
+        );
+
+      }
 
       loadProfile();
 
@@ -171,10 +246,16 @@ function Profile() {
 
   }, [id]);
 
-  function getLastSeenText(lastSeen) {
+  function getLastSeenText(
+    lastSeen,
+    showOnlineStatus
+  )
+  {
+    if (!showOnlineStatus)
+      return "offline";
 
     if (!lastSeen)
-      return "Offline";
+      return "offline";
 
     const now =
       new Date();
@@ -188,7 +269,7 @@ function Profile() {
       );
 
     if (diff < 120)
-      return "● Online";;
+      return "● Online";
 
     if (diff < 3600)
       return `Last seen ${Math.floor(diff / 60)}m ago`;
@@ -197,27 +278,8 @@ function Profile() {
       return `Last seen ${Math.floor(diff / 3600)}h ago`;
 
     return `Last seen ${Math.floor(diff / 86400)}d ago`;
-
   }
 
-  // completion progress bar
-  const completionItems = [
-    !!user?.bio,
-    !!user?.faculty,
-    false
-  ];
-
-  const completedCount =
-    completionItems.filter(Boolean).length;
-
-  const completionPercentage =
-    Math.round(
-      (completedCount /
-        completionItems.length) * 100
-    );
-
-  const profileComplete =
-    completionPercentage === 100;
 
   if (!user) {
 
@@ -250,6 +312,11 @@ function Profile() {
              {currentUser?.id === user.id && (
               <button
                 className="edit-profile-btn"
+                onClick={() =>
+                  navigate(
+                    "/edit-profile"
+                  )
+                }
               >
                 Edit Profile
               </button>
@@ -282,15 +349,20 @@ function Profile() {
             <h1 className="profile-name">
               {user.name}
             </h1>
-
-            <div className="last-seen">
-
+            
+            <div
+              className={
+                getLastSeenText(user.last_seen,user.show_online_status) === "● Online"
+                  ? "last-seen online"
+                  : "last-seen offline"
+              }
+            >
               {
                 getLastSeenText(
-                  user.last_seen
+                  user.last_seen,
+                  user.show_online_status
                 )
               }
-
             </div>
 
             <div className="profile-role">
@@ -371,23 +443,39 @@ function Profile() {
                 >
 
                   {isFollowing
-                    ? "Unfollow"
-                    : "Follow"}
+                    ? "Following"
+                    : isRequested
+                      ? "Requested"
+                      : "Follow"}
 
                 </button>
 
-                <button
-                  className="message-btn"
-                  onClick={() =>
-                    navigate(
-                      `/messages/${user.id}`
-                    )
-                  }
-                >
+                {
+                  canReceiveMessages ? (
 
-                  Message
+                    <button
+                      className="message-btn"
+                      onClick={() =>
+                        navigate(
+                          `/messages/${user.id}`
+                        )
+                      }
+                    >
+                      Message
+                    </button>
 
-                </button>
+                  ) : (
+
+                    <button
+                      className="message-btn disabled"
+                      title="This user is not accepting new messages."
+                      disabled
+                    >
+                      Message
+                    </button>
+
+                  )
+                }
 
               </div>
 
@@ -486,13 +574,27 @@ function Profile() {
 
                 </h2>
 
-                {posts.length === 0
-                  ? (
-                    <p className="empty-state">
-                      No posts yet.
-                    </p>
-                  )
-                  : (
+                {
+                   !canViewContent ? (
+
+                    <div className="private-account-card">
+
+                      <div className="private-icon">
+                        🔒
+                      </div>
+
+                      <h3>
+                        Private Account
+                      </h3>
+
+                      <p>
+                        Follow this user to view profile recent posts.
+                      </p>
+
+                    </div>
+
+                  ) : (
+
                     posts.map(
                       (post) => (
                         <PostCard
@@ -502,64 +604,92 @@ function Profile() {
                         />
                       )
                     )
-                  )}
+
+                  )
+                }
               </>
 
+            
             )
             : (
 
-              <div className="about-card">
+              !canViewContent ? (
 
-                <div className="about-item">
+                <div className="private-account-card">
 
-                  <h4>
-                    📝 Bio
-                  </h4>
+                  <div className="private-icon">
+                    🔒
+                  </div>
+
+                  <h3>
+                    Private Account
+                  </h3>
 
                   <p>
-                    {
-                      user.bio ||
-                      "No bio yet."
-                    }
+                    Follow this user to view profile details.
                   </p>
 
                 </div>
 
-                <div className="about-item">
+              ) : (
 
-                  <h4>
-                    🎓 Faculty
-                  </h4>
+                <div className="about-card">
 
-                  <p>
-                    {user.faculty}
-                  </p>
+                  <div className="about-item">
+
+                    <h4>
+                      📝 Bio
+                    </h4>
+
+                    <p>
+                      {
+                        user.bio ||
+                        "No bio yet."
+                      }
+                    </p>
+
+                  </div>
+
+                  <div className="about-item">
+
+                    <h4>
+                      🎓 Faculty
+                    </h4>
+
+                    <p>
+                      {
+                        user.faculty ||
+                        "No faculty yet"
+                      }
+                    </p>
+
+                  </div>
+
+                  <div className="about-item">
+
+                    <h4>
+                      📅 Joined
+                    </h4>
+
+                    <p>
+                      {
+                        new Date(
+                          user.created_at
+                        ).toLocaleDateString(
+                          "en-GB",
+                          {
+                            month: "long",
+                            year: "numeric"
+                          }
+                        )
+                      }
+                    </p>
+
+                  </div>
 
                 </div>
 
-                <div className="about-item">
-
-                  <h4>
-                    📅 Joined
-                  </h4>
-
-                  <p>
-                    {
-                      new Date(
-                        user.created_at
-                      ).toLocaleDateString(
-                        "en-GB",
-                        {
-                          month: "long",
-                          year: "numeric"
-                        }
-                      )
-                    }
-                  </p>
-
-                </div>
-
-              </div>
+              )
 
             )
           }

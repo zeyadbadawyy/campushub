@@ -1,3 +1,15 @@
+import {
+  FaBell,
+  FaHeart,
+  FaComment,
+  FaUser,
+  FaUserPlus,
+  FaUserCheck,
+  FaEnvelope,
+  FaSearch
+} from "react-icons/fa";
+
+
 import { useEffect, useState, useRef } from "react";
 import { getCurrentUser, logoutUser } from "../services/auth";
 
@@ -39,11 +51,6 @@ function Navbar() {
     useRef(null);
 
   const [
-    notifications,
-    setNotifications
-  ] = useState([]);
-
-  const [
     unreadNotifications,
     setUnreadNotifications
   ] = useState(0);
@@ -65,6 +72,14 @@ function Navbar() {
 
   const accountMenuRef =
     useRef(null); 
+
+  const avatarColors = [
+    "#4f46e5",
+    "#06b6d4",
+    "#22c55e",
+    "#f97316",
+    "#ec4899"
+  ];
 
   useEffect(() => {
 
@@ -285,7 +300,35 @@ function Navbar() {
 
   }
 
-    function getNotificationRoute(
+  function getNotificationIcon(type) {
+
+    switch (type) {
+
+      case "follow":
+        return <FaUser />;
+
+      case "follow_request":
+        return <FaUserPlus />;
+
+      case "follow_request_accepted":
+        return <FaUserCheck />;
+
+      case "like":
+        return <FaHeart />;
+
+      case "comment":
+        return <FaComment />;
+
+      case "message":
+        return <FaEnvelope />;
+
+      default:
+        return <FaBell />;
+    }
+
+  }
+
+  function getNotificationRoute(
     notification
   ) {
 
@@ -310,7 +353,7 @@ function Navbar() {
 
       case "follow_accepted":
         return `/profile/${notification.sender_id}`;
-        
+
       default:
         return "/";
     }
@@ -331,7 +374,7 @@ function Navbar() {
           notification.id
         );
 
-        setNotifications(
+        setRecentNotifications(
           (prev) =>
             prev.map(
               (item) =>
@@ -409,7 +452,7 @@ function Navbar() {
               className="search-btn"
               onClick={handleSearch}
             >
-              🔍
+              <FaSearch />
             </button>
 
           </div>
@@ -427,16 +470,49 @@ function Navbar() {
                     to={`/profile/${user.id}`}
                     className="search-result"
                   >
-                    {user.name}
+
+                    <div
+                      className="search-avatar"
+                      style={{
+                        background:
+                          avatarColors[
+                            user.id %
+                            avatarColors.length
+                          ]
+                      }}
+                    >
+                      {user.name?.charAt(0)}
+                    </div>
+
+                    <div className="search-user-info">
+
+                      <strong>
+
+                        {user.name}
+
+                      </strong>
+
+                      <span>
+
+                        {user.faculty || "CampusHub User"}
+
+                      </span>
+
+                    </div>
+
                   </Link>
 
                 ))
 
               ) : (
 
-                <div className="empty-state">
+                <div className="search-empty">
 
-                  No users found
+                  <FaUser />
+
+                  <p>
+                    No users found
+                  </p>
 
                 </div>
 
@@ -472,7 +548,7 @@ function Navbar() {
 
             <span className="notification-bell">
 
-              🔔
+              <FaBell />
 
             </span>
 
@@ -498,7 +574,11 @@ function Navbar() {
 
                     <div className="dropdown-empty">
 
-                      No notifications
+                      <FaBell />
+ 
+                      <p>
+                        No notifications yet
+                      </p>
 
                     </div>
 
@@ -528,6 +608,16 @@ function Navbar() {
                               }
 
                             </span>
+                             
+                            <div className="dropdown-type-icon">
+
+                              {
+                                getNotificationIcon(
+                                  notification.type
+                                )
+                              }
+
+                            </div> 
 
                             {!notification.is_read && (
 

@@ -39,6 +39,14 @@ function Messages() {
     setUsers
   ] = useState([]);
 
+  const avatarColors = [
+    "#4f46e5",
+    "#06b6d4",
+    "#22c55e",
+    "#f97316",
+    "#ec4899"
+  ];
+
   useEffect(() => {
 
     async function loadData() {
@@ -189,7 +197,19 @@ function Messages() {
               />
 
               <div className="search-users-list">
+                {
+                  users.length === 0 &&
+                  search && (
 
+                    <div className="search-empty">
+
+                      No users found
+
+                    </div>
+
+                  )
+                }
+                
                 {users.map(
                   (user) => (
 
@@ -199,7 +219,16 @@ function Messages() {
                       className="search-user-card"
                     >
 
-                      <div className="avatar">
+                      <div
+                        className="avatar"
+                        style={{
+                          background:
+                            avatarColors[
+                              user.id %
+                              avatarColors.length
+                            ]
+                        }}
+                      >
 
                         {
                           user.name?.charAt(0)
@@ -207,11 +236,24 @@ function Messages() {
 
                       </div>
 
-                      <span>
+                      <div className="search-user-info">
 
-                        {user.name}
+                        <strong>
 
-                      </span>
+                          {user.name}
+
+                        </strong>
+
+                        <span>
+
+                          {
+                            user.faculty ||
+                            "CampusHub User"
+                          }
+
+                        </span>
+
+                      </div>
 
                     </Link>
 

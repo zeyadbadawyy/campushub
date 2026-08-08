@@ -1,4 +1,11 @@
 import {
+  FaHeart,
+  FaComment,
+  FaEdit,
+  FaTrash
+} from "react-icons/fa";
+
+import {
   useState,
   useEffect
 } from "react";
@@ -184,18 +191,24 @@ function PostCard({ post, onLike }) {
                   setIsEditing(true)
                 }
               >
-                Edit
+                <>
+                  <FaEdit />
+                  Edit
+                </>
               </button>
 
               <button
                 className="delete-btn"
                 onClick={handleDelete}
               >
-                Delete
+                <>
+                  <FaTrash />
+                  Delete
+                </>
               </button>
 
             </div>
-          
+
           )
         }
 
@@ -252,7 +265,12 @@ function PostCard({ post, onLike }) {
           className="social-btn"
           onClick={handleLike}
         >
-          👍 {post.likes}
+
+          <>
+            <FaHeart />
+            {post.likes}
+          </>
+
         </span>
 
         <span
@@ -263,7 +281,12 @@ function PostCard({ post, onLike }) {
             )
           }
         >
-          💬 {post.comments}
+
+          <>
+            <FaComment />
+            {post.comments}
+          </>
+
         </span>
 
       </div>

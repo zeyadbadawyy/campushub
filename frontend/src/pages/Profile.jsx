@@ -1,4 +1,14 @@
 import {
+  FaRegNewspaper,
+  FaUser,
+  FaLock,
+  FaPen,
+  FaGraduationCap,
+  FaCalendarAlt,
+  FaCheckCircle
+} from "react-icons/fa";
+
+import {
   useEffect,
   useState
 } from "react";
@@ -287,9 +297,73 @@ function Profile() {
 
       <MainLayout>
 
-        <p>
-          Loading...
-        </p>
+        <div className="profile-page">
+
+          <div className="profile-card profile-skeleton">
+
+            <div className="profile-banner"></div>
+
+            <div className="profile-header">
+
+              <div className="skeleton-avatar-large"></div>
+
+              <div className="skeleton-line profile-name-skeleton"></div>
+
+              <div className="skeleton-line profile-role-skeleton"></div>
+
+              <div className="skeleton-line profile-bio-skeleton"></div>
+
+              <div className="skeleton-line profile-bio-skeleton short"></div>
+
+              <div className="profile-stats">
+
+                <div>
+                  <div className="skeleton-stat"></div>
+                </div>
+
+                <div>
+                  <div className="skeleton-stat"></div>
+                </div>
+
+                <div>
+                  <div className="skeleton-stat"></div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="profile-tabs">
+
+            <div className="skeleton-tab"></div>
+
+            <div className="skeleton-tab"></div>
+
+          </div>
+
+          <div className="post-card">
+
+            <div className="skeleton-line"></div>
+
+            <div className="skeleton-line"></div>
+
+            <div className="skeleton-line short"></div>
+
+          </div>
+
+          <div className="post-card">
+
+            <div className="skeleton-line"></div>
+
+            <div className="skeleton-line"></div>
+
+            <div className="skeleton-line short"></div>
+
+          </div>
+
+        </div>
 
       </MainLayout>
 
@@ -400,7 +474,8 @@ function Profile() {
                       {
                         profileComplete && (
                           <span className="profile-complete-badge">
-                            ✓ Complete
+                            <FaCheckCircle />
+                            Complete
                           </span>
                         )
                       }
@@ -541,6 +616,7 @@ function Profile() {
               setActiveTab("posts")
             }
           >
+            <FaRegNewspaper />
             Posts
           </button>
 
@@ -554,6 +630,7 @@ function Profile() {
               setActiveTab("about")
             }
           >
+            <FaUser />
             About
           </button>
 
@@ -580,7 +657,7 @@ function Profile() {
                     <div className="private-account-card">
 
                       <div className="private-icon">
-                        🔒
+                        <FaLock />
                       </div>
 
                       <h3>
@@ -618,7 +695,7 @@ function Profile() {
                 <div className="private-account-card">
 
                   <div className="private-icon">
-                    🔒
+                    <FaLock />
                   </div>
 
                   <h3>
@@ -638,7 +715,8 @@ function Profile() {
                   <div className="about-item">
 
                     <h4>
-                      📝 Bio
+                      <FaPen />
+                      Bio
                     </h4>
 
                     <p>
@@ -653,7 +731,8 @@ function Profile() {
                   <div className="about-item">
 
                     <h4>
-                      🎓 Faculty
+                      <FaGraduationCap />
+                      Faculty
                     </h4>
 
                     <p>
@@ -668,7 +747,8 @@ function Profile() {
                   <div className="about-item">
 
                     <h4>
-                      📅 Joined
+                      <FaCalendarAlt />
+                      Joined
                     </h4>
 
                     <p>

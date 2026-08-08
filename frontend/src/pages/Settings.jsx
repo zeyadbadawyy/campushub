@@ -1,3 +1,16 @@
+import {
+  FaUser,
+  FaLock,
+  FaBell,
+  FaShieldAlt,
+  FaChartBar,
+  FaExclamationTriangle,
+  FaMoon,
+  FaEdit,
+  FaKey,
+  FaTrash
+} from "react-icons/fa";
+
 import MainLayout from "../layouts/MainLayout";
 import { useNavigate } from "react-router-dom";
 import {
@@ -177,11 +190,17 @@ function Settings() {
 
           <div className="settings-section">
 
-            <h2>👤 Profile</h2>
+            <h2>
+              <FaUser />
+              Profile
+            </h2>
 
             <button onClick={() => navigate("/edit-profile")}>
 
-              Edit Profile
+              <>
+                <FaEdit />
+                Edit Profile
+              </>
 
             </button>
 
@@ -189,11 +208,17 @@ function Settings() {
 
           <div className="settings-section">
 
-            <h2>🔒 Security</h2>
+            <h2>
+              <FaLock />
+              Security
+            </h2>
 
             <button onClick={() => navigate("/change-password")}>
 
-              Change Password
+              <>
+                <FaKey />
+                Change Password
+              </>
 
             </button>
 
@@ -204,24 +229,32 @@ function Settings() {
             <div className="setting-row">
 
               <span>
-
+                <FaMoon />
                 Dark Mode
-
               </span>
 
-              <input
-                type="checkbox"
-                checked={darkMode}
-                onChange={toggleDarkMode}
-              />
+              <label className="switch">
+
+                <input
+                  type="checkbox"
+                  checked={darkMode}
+                  onChange={toggleDarkMode}
+                />
+
+                <span className="slider"></span>
+
+              </label>
 
             </div>
-
+            
           </div>
 
           <div className="settings-section">
 
-            <h2>🔔 Notifications</h2>
+            <h2>
+              <FaBell />
+              Notifications
+            </h2>
 
             <div className="setting-row">
 
@@ -293,7 +326,10 @@ function Settings() {
 
           <div className="settings-section">
 
-            <h2>🔐 Privacy</h2>
+            <h2>
+              <FaShieldAlt />
+              Privacy
+            </h2>
 
             <div className="setting-row">
 
@@ -363,7 +399,10 @@ function Settings() {
 
           <div className="settings-section">
 
-            <h2>📊 Activity</h2>
+            <h2>
+              <FaChartBar />
+              Activity
+            </h2>
 
             {activity && (
 
@@ -437,7 +476,10 @@ function Settings() {
 
           <div className="settings-section danger-zone">
 
-            <h2>🚨 Danger Zone</h2>
+            <h2>
+              <FaExclamationTriangle />
+              Danger Zone
+            </h2>
 
             <button
               className="delete-btn"
@@ -446,7 +488,10 @@ function Settings() {
               }
             >
 
-              Delete Account
+              <>
+                <FaTrash />
+                Delete Account
+              </>
 
             </button>
 

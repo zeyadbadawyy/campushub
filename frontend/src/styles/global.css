@@ -831,25 +831,63 @@ button {
 
   z-index: 1000;
 
+  box-shadow: 0 12px 30px rgba(0,0,0,.12);
+  max-height: 350px;
+  overflow-y: auto;
 }
 
 .search-result {
-
   display: flex;
-  flex-direction: column;
-
-  padding: 10px;
-
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
   text-decoration: none;
-
   color: inherit;
-
+  transition: 0.2s;
 }
 
 .search-result:hover {
 
   background: #f5f5f5;
 
+}
+
+.search-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.search-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-user-info strong {
+  font-size: 0.95rem;
+}
+
+.search-user-info span {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.search-empty {
+  padding: 24px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.search-empty svg {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
 }
 
 .follow-btn {
@@ -915,32 +953,6 @@ button {
   margin-bottom: 14px;
 }
 
-.save-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-right: 8px;
-  transition: 0.2s;
-}
-
-.save-btn:hover {
-  transform: translateY(-1px);
-  opacity: 0.9;
-}
-
-.cancel-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.cancel-btn:hover {
-  transform: translateY(-1px);
-  opacity: 0.9;
-}
 
 .comment-header {
 
@@ -1046,13 +1058,13 @@ button {
 
 .search-user-card {
 
-  background: white;
+  background: transparent;
 
-  padding: 18px;
+  padding: 14px;
 
-  border-radius: 16px;
+  border-radius: 12px;
 
-  box-shadow: var(--shadow);
+  box-shadow: none;
 
   display: flex;
 
@@ -1069,6 +1081,7 @@ button {
   transform:
     translateY(-2px);
 
+  background: #eef2ff;
 }
 
 .search-box {
@@ -1566,6 +1579,15 @@ button {
 
   gap: 10px;
 
+  background: var(--card-bg);
+
+  border: 1px solid var(--border);
+
+  border-radius: 16px;
+
+  padding: 8px;
+
+  box-shadow: var(--shadow);
 }
 
 .conversation-content {
@@ -2503,7 +2525,11 @@ button {
   right: 10px;
 
   background:
-    var(--primary);
+    linear-gradient(
+      135deg,
+      #4f46e5,
+      #7c3aed
+    );
 
   color:
     white;
@@ -2845,6 +2871,12 @@ button {
   font-weight: 600;
 }
 
+.cancel-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+
 .save-btn {
 
   border: none;
@@ -2856,6 +2888,8 @@ button {
   color: white;
 
   cursor: pointer;
+
+  margin-right: 12px;
 
   font-weight: 600;
 
@@ -2875,9 +2909,6 @@ button {
 
   transform:
     translateY(-2px);
-
-  box-shadow:
-    0 12px 30px rgba(79,70,229,.35);
 }
 
 .settings-page {
@@ -3157,7 +3188,319 @@ button {
   cursor: pointer;
 }
 
-/*----------------------------------------     DARK MODE     -----------------------------------------*/
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: 0.3s;
+  background: #d1d5db;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 3px;
+  top: 3px;
+  border-radius: 50%;
+  background: white;
+  transition: 0.3s;
+}
+
+.switch input:checked + .slider {
+  background: #6366f1;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(24px);
+}
+
+
+ /*react icons adjustment*/
+.settings-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-section button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-row span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-btn,
+.delete-btn {
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dropdown-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 50%;
+}
+
+.notification-bell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+}
+
+.tab-btn,
+.about-item h4,
+.profile-complete-badge,
+.private-icon,
+.chat-header-arrow,
+.send-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.send-btn svg {
+  font-size: 16px;
+}
+
+.private-icon svg {
+  font-size: 2rem;
+}
+
+
+
+/* =========================
+   Skeleton Loading System
+========================= */
+
+.skeleton-avatar,
+.skeleton-avatar-large,
+.skeleton-line,
+.skeleton-stat,
+.skeleton-tab {
+
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.05) 25%,
+    rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.05) 75%
+  );
+
+  background-size: 200% 100%;
+
+  animation: shimmer 1.5s linear infinite;
+
+}
+
+@keyframes shimmer {
+
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+
+}
+
+/* =========================
+   Generic Skeleton Elements
+========================= */
+
+.skeleton-line {
+
+  height: 14px;
+
+  border-radius: 10px;
+
+  width: 100%;
+
+  margin-bottom: 10px;
+
+}
+
+.skeleton-line.short {
+
+  width: 60%;
+
+}
+
+.skeleton-line.tiny {
+
+  width: 30%;
+
+}
+
+.skeleton-avatar {
+
+  width: 52px;
+
+  height: 52px;
+
+  border-radius: 50%;
+
+  flex-shrink: 0;
+
+}
+
+.skeleton-avatar-large {
+
+  width: 120px;
+
+  height: 120px;
+
+  border-radius: 50%;
+
+  margin: 0 auto 20px;
+
+}
+
+/* =========================
+   Profile Skeleton
+========================= */
+
+.profile-skeleton {
+
+  overflow: hidden;
+
+}
+
+.profile-name-skeleton {
+
+  width: 220px;
+
+  height: 24px;
+
+  margin: 20px auto 12px;
+
+}
+
+.profile-role-skeleton {
+
+  width: 140px;
+
+  height: 14px;
+
+  margin: 0 auto 16px;
+
+}
+
+.profile-bio-skeleton {
+
+  width: 320px;
+
+  max-width: 90%;
+
+  margin: 8px auto;
+
+}
+
+.profile-bio-skeleton.short {
+
+  width: 220px;
+
+}
+
+.skeleton-stat {
+
+  width: 70px;
+
+  height: 40px;
+
+  border-radius: 12px;
+
+  margin: auto;
+
+}
+
+.skeleton-tab {
+
+  width: 120px;
+
+  height: 42px;
+
+  border-radius: 12px;
+
+}
+
+/* =========================
+   Notifications Skeleton
+========================= */
+
+.notifications-skeleton {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+
+}
+
+.notification-skeleton-card {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 18px;
+
+  border-radius: 16px;
+
+  background: var(--card-bg);
+
+  box-shadow: var(--shadow);
+
+}
+
+.skeleton-content {
+
+  flex: 1;
+
+}
+
+
+/*------------------------------------------     DARK MODE     -----------------------------------------*/
 body.dark-mode {
 
   background: #0f172a;

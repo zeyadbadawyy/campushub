@@ -1,4 +1,14 @@
 import {
+  FaBell,
+  FaHeart,
+  FaComment,
+  FaUser,
+  FaUserPlus,
+  FaUserCheck,
+  FaEnvelope
+} from "react-icons/fa";
+
+import {
   useEffect,
   useState
 } from "react";
@@ -129,28 +139,30 @@ function Notifications() {
 
   }
 
-  function getIcon(type) {
+  function getNotificationIcon(type) {
 
     switch (type) {
 
       case "follow":
-        return "👤";
+        return <FaUser />;
+
+      case "follow_request":
+        return <FaUserPlus />;
+
+      case "follow_request_accepted":
+        return <FaUserCheck />;
 
       case "like":
-        return "❤️";
+        return <FaHeart />;
 
       case "comment":
-        return "💬";
+        return <FaComment />;
 
       case "message":
-        return "✉️";
-      
-      case "follow_accepted":
-        return "✅";
+        return <FaEnvelope />;
 
       default:
-        return "🔔";
-
+        return <FaBell />;
     }
 
   }
@@ -422,9 +434,32 @@ function Notifications() {
         {
           loading ? (
 
-            <p>
-              Loading...
-            </p>
+            <div className="notifications-skeleton">
+
+              {[1, 2, 3, 4, 5].map((item) => (
+
+                <div
+                  key={item}
+                  className="notification-skeleton-card"
+                >
+
+                  <div className="skeleton-avatar"></div>
+
+                  <div className="skeleton-content">
+
+                    <div className="skeleton-line short"></div>
+
+                    <div className="skeleton-line"></div>
+
+                    <div className="skeleton-line tiny"></div>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
 
           ) : notifications.length === 0 ? (
 
@@ -470,7 +505,7 @@ function Notifications() {
                       <div className="notification-icon">
 
                         {
-                          getIcon(
+                          getNotificationIcon(
                             notification.type
                           )
                         }

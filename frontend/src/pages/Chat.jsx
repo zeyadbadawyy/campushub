@@ -1,4 +1,9 @@
 import {
+  FaChevronRight,
+  FaPaperPlane
+} from "react-icons/fa";
+
+import {
   useEffect,
   useState,
   useRef
@@ -345,7 +350,7 @@ function Chat() {
           </div>
 
           <div className="chat-header-arrow">
-            ›
+            <FaChevronRight />
           </div>
 
         </div>
@@ -519,7 +524,7 @@ function Chat() {
             onClick={handleSend}
             className="send-btn"
           >
-            ➤
+            <FaPaperPlane />
           </button>
 
         </div>

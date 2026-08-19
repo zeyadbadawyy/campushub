@@ -17,6 +17,11 @@ import {
   getPost
 } from "../services/postService";
 
+import {
+  useWebSocket
+}
+from "../contexts/WebSocketContext";
+
 function PostDetails() {
 
   const { id } =
@@ -27,6 +32,11 @@ function PostDetails() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const {
+   postLikes,
+   commentCounts
+  } = useWebSocket();
 
   useEffect(() => {
 
@@ -54,6 +64,73 @@ function PostDetails() {
     loadPost();
 
   }, [id]);
+
+  useEffect(() => {
+
+    if (!postLikes.length) {
+      return;
+    }
+
+    const latest =
+      postLikes[0];
+
+    if (
+      Number(id) !== latest.post_id
+    ) {
+      return;
+    }
+
+    setPost(prev => {
+
+      if (!prev) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        likes:
+          prev.likes +
+          latest.delta
+      };
+
+    });
+
+  }, [postLikes, id]);
+
+  useEffect(() => {
+
+    if (!commentCounts.length) {
+      return;
+    }
+
+    const latest =
+      commentCounts[0];
+
+
+    if (
+      Number(id) !== latest.post_id
+    ) {
+      return;
+    }
+
+
+    setPost(prev => {
+
+      if (!prev) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        comments:
+          prev.comments +
+          latest.delta
+      };
+
+    });
+
+
+  }, [commentCounts,id]);
 
   return (
 

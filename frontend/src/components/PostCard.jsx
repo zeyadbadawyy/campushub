@@ -26,6 +26,10 @@ import {
   getCurrentUser
 } from "../services/auth";
 
+import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
+
 function PostCard({ post, onLike }) {
   
   const [
@@ -51,6 +55,17 @@ function PostCard({ post, onLike }) {
     setCurrentUser
   ] = useState(null);
 
+  const [
+    liked,
+    setLiked
+  ] = useState(
+    post.liked_by_me || false
+  );
+
+  const {
+    postLikes
+    } = useWebSocket();
+
   useEffect(() => {
 
     async function loadUser() {
@@ -74,6 +89,7 @@ function PostCard({ post, onLike }) {
 
   }, []);
 
+  
   async function handleLike() {
 
     try {
@@ -82,7 +98,9 @@ function PostCard({ post, onLike }) {
         post.id
       );
 
-      onLike();
+      setLiked(
+        prev => !prev
+      );
 
     } catch (error) {
 
@@ -139,6 +157,38 @@ function PostCard({ post, onLike }) {
     }
 
   }
+
+  useEffect(() => {
+
+    if (!postLikes.length) {
+      return;
+    }
+
+    const latest =
+      postLikes[0];
+
+    if (
+    latest.post_id !== post.id
+    ) {
+      return;
+    }
+
+
+    if (
+    latest.user_id === currentUser?.id
+    ) {
+
+    setLiked(
+      latest.liked
+    );
+
+    }
+
+  }, [
+  postLikes,
+  post.id,
+  currentUser
+  ]);
 
   return (
 
@@ -262,15 +312,15 @@ function PostCard({ post, onLike }) {
       <div className="post-stats">
 
         <span
-          className="social-btn"
+          className={`social-btn ${
+            liked ? "liked" : ""
+          }`}
           onClick={handleLike}
         >
-
           <>
             <FaHeart />
             {post.likes}
           </>
-
         </span>
 
         <span

@@ -14,14 +14,16 @@ import {
   useNavigate
 } from "react-router-dom";
 
+import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
+
 import MainLayout
   from "../layouts/MainLayout";
 
 import {
   getConversation,
   sendMessage,
-  updateTypingStatus,
-  getTypingStatus,
   getUserProfile,
   getOnlineStatus
 } from "../services/postService";
@@ -32,6 +34,14 @@ import {
 
 
 function Chat() {
+
+  const {
+    socket,
+    typingUsers,
+    readReceipts,
+    onlineUsers,
+    lastSeenUsers
+  } = useWebSocket();
 
   const { id } =
     useParams();
@@ -76,13 +86,35 @@ function Chat() {
     setIsOnline
   ] = useState(false);
 
+  const {
+    messages: wsMessages
+  } = useWebSocket();
+  
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+
+    const interval =
+      setInterval(() => {
+
+        forceUpdate(
+          prev => prev + 1
+        );
+
+      }, 60000);
+
+    return () =>
+      clearInterval(interval);
+
+  }, []);
+
   useEffect(() => {
 
     bottomRef.current?.scrollIntoView({
       behavior: "smooth"
     });
 
-  }, [messages]);
+  }, [messages, isTyping]);
 
   async function loadMessages() {
 
@@ -127,20 +159,6 @@ function Chat() {
 
       setContent("");
 
-      updateTypingStatus(
-        id,
-        false
-      );
-
-      const typingData =
-        await getTypingStatus(
-          id
-        );
-
-      setIsTyping(
-        typingData.is_typing
-      );
-
     } catch (error) {
 
       console.error(error);
@@ -148,49 +166,6 @@ function Chat() {
     }
 
   }
-
-  useEffect(() => {
-
-    loadMessages();
-
-    async function loadTyping() {
-
-      try {
-
-        const typingData =
-          await getTypingStatus(
-            id
-          );
-
-        setIsTyping(
-          typingData.is_typing
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
-
-    }
-
-    loadTyping();
-
-    const typingInterval =
-      setInterval(
-        loadTyping,
-        1000
-      );
-
-    return () => {
-
-      clearInterval(
-        typingInterval
-      );
-
-    };
-
-  }, [id]);
 
   useEffect(() => {
 
@@ -246,28 +221,86 @@ function Chat() {
 
   useEffect(() => {
 
-    async function loadStatus() {
-
-      try {
-
-        const data =
-          await getOnlineStatus(id);
-
-        setIsOnline(
-          data.online
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
-
-    }
-
-    loadStatus();
+    loadMessages();
 
   }, [id]);
+
+  useEffect(() => {
+
+    if (!wsMessages.length) {
+      return;
+    }
+
+    const latestMessage =
+      wsMessages[
+        wsMessages.length - 1
+      ];
+
+    const belongsToThisChat =
+      latestMessage.sender_id === Number(id) ||
+      latestMessage.receiver_id === Number(id);
+
+    if (!belongsToThisChat) {
+      return;
+    }
+
+    setMessages(
+      (prev) => {
+
+        const exists =
+          prev.some(
+            (msg) =>
+              msg.id === latestMessage.id
+          );
+
+        if (exists) {
+          return prev;
+        }
+
+        return [
+          ...prev,
+          latestMessage
+        ];
+
+      }
+    );
+
+    if (
+      latestMessage.sender_id === Number(id)
+    ) {
+      loadMessages();
+    }
+
+  }, [
+    wsMessages,
+    id
+  ]);
+
+  useEffect(() => {
+
+    setIsOnline(
+      onlineUsers.includes(
+        Number(id)
+      )
+    );
+
+  }, [
+    onlineUsers,
+    id
+  ]);
+
+  useEffect(() => {
+
+    setIsTyping(
+      typingUsers.includes(
+        Number(id)
+      )
+    );
+
+  }, [
+    typingUsers,
+    id
+  ]);
 
   function getLastSeen(
     lastSeen,
@@ -291,8 +324,8 @@ function Chat() {
         (now - time) / 1000
       );
 
-    if (diff < 120)
-      return "● Online";
+    if (diff < 60)
+      return "Last seen just now";
 
     if (diff < 3600)
       return `Last seen ${Math.floor(diff / 60)}m ago`;
@@ -335,16 +368,14 @@ function Chat() {
             </h2>
 
             <p>
-
               {
                 isOnline
                   ? <span>online</span>
                   : getLastSeen(
-                      chatUser?.last_seen,
+                      lastSeenUsers[id] || chatUser?.last_seen,
                       chatUser?.show_online_status
                     )
               }
-
             </p>
 
           </div>
@@ -380,6 +411,14 @@ function Chat() {
                   currentUser?.id ===
                   message.sender_id;
 
+                const readUntil =
+                  readReceipts[
+                    Number(id)
+                  ] || 0;
+
+                const isSeen =
+                  message.id <= readUntil;
+                  
                 return (
 
                   <div
@@ -428,7 +467,7 @@ function Chat() {
 
                             <span
                               className={
-                                message.is_read
+                                (message.is_read || isSeen)
                                   ? "message-checks seen"
                                   : "message-checks"
                               }
@@ -465,7 +504,7 @@ function Chat() {
                 </div>
 
                 <p className="typing-text">
-                  {currentUser?.name} is typing...
+                  {chatUser?.name} is typing...
                 </p>
 
               </div>
@@ -488,24 +527,19 @@ function Chat() {
                 e.target.value
               );
 
-              updateTypingStatus(
-                id,
-                true
-              );
+              if (
+                socket &&
+                socket.readyState === WebSocket.OPEN
+              ) {
 
-              clearTimeout(
-                typingTimeout.current
-              );
+                socket.send(
+                  JSON.stringify({
+                    type: "typing",
+                    targetUserId: Number(id),
+                  })
+                );
 
-              typingTimeout.current =
-                setTimeout(() => {
-
-                  updateTypingStatus(
-                    id,
-                    false
-                  );
-
-                }, 2000);
+              }
 
             }}
             onKeyDown={(e) => {

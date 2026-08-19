@@ -9,8 +9,11 @@ import {
 
 import {
   getCurrentUser,
-  getUnreadMessagesCount
 } from "../services/postService";
+
+import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
 
 function Sidebar() {
 
@@ -19,10 +22,13 @@ function Sidebar() {
     setCurrentUser
   ] = useState(null);
 
-  const [
-    unreadCount,
-    setUnreadCount
-  ] = useState(0);
+  const {
+    unreadCount
+  } = useWebSocket();
+
+  const {
+    messages: wsMessages
+  } = useWebSocket();
 
   useEffect(() => {
 
@@ -37,13 +43,6 @@ function Sidebar() {
           user
         );
 
-        const unreadData =
-          await getUnreadMessagesCount();
-
-        setUnreadCount(
-          unreadData.count
-        );
-
       } catch (error) {
 
         console.error(
@@ -55,44 +54,6 @@ function Sidebar() {
     }
 
     loadUser();
-
-  }, []);
-
-  useEffect(() => {
-
-    async function loadUnread() {
-
-      try {
-
-        const data =
-          await getUnreadMessagesCount();
-
-        setUnreadCount(
-          data.count
-        );
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-      }
-
-    }
-
-    loadUnread();
-
-    const interval =
-      setInterval(
-        loadUnread,
-        5000
-      );
-
-    return () =>
-      clearInterval(
-        interval
-      );
 
   }, []);
 

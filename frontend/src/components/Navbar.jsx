@@ -11,7 +11,10 @@ import {
 
 
 import { useEffect, useState, useRef } from "react";
-import { getCurrentUser, logoutUser } from "../services/auth";
+
+import {
+  useAuth
+} from "../contexts/AuthContext";
 
 import {
   useNavigate,
@@ -20,16 +23,26 @@ import {
 
 import {
   searchUsers,
-  getUnreadNotificationsCount,
   getNotifications,
   markNotificationRead
 } from "../services/postService";
 
+import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
 
 function Navbar() {
 
-  const [user, setUser] =
-    useState(null);
+  const {
+    notifications,
+    notificationCount,
+    setNotificationCount,
+  } = useWebSocket();
+
+  const {
+    user,
+    logout,
+  } = useAuth();
 
   const navigate =
     useNavigate();
@@ -49,11 +62,6 @@ function Navbar() {
 
   const notificationRef =
     useRef(null);
-
-  const [
-    unreadNotifications,
-    setUnreadNotifications
-  ] = useState(0);
 
   const [
     showNotifications,
@@ -123,29 +131,6 @@ function Navbar() {
 
   useEffect(() => {
 
-    async function loadUser() {
-
-      try {
-
-        const data =
-          await getCurrentUser();
-
-        setUser(data);
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
-
-    }
-
-    loadUser();
-
-  }, []);
-
-  useEffect(() => {
-
     function handleClickOutside(
       event
     ) {
@@ -200,44 +185,29 @@ function Navbar() {
 
   useEffect(() => {
 
-    async function loadUnreadCount() {
-
-      try {
-
-        const data =
-          await getUnreadNotificationsCount();
-
-        setUnreadNotifications(
-          data.count || 0
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
-
+    if (!notifications.length) {
+      return;
     }
 
-    loadUnreadCount();
+    const newest =
+      notifications[0];
 
-    const interval =
-      setInterval(
-        loadUnreadCount,
-        5000
-      );
+    setRecentNotifications(
+      prev => [
+        newest,
+        ...prev
+      ].slice(0, 5)
+    );
 
-    return () =>
-      clearInterval(
-        interval
-      );
+  }, [notifications]);
 
-  }, []);
+  function handleLogout() {
 
-   function handleLogout() {
+    logout();
 
-    logoutUser();
-    navigate("/login");
+    navigate(
+      "/login"
+    );
 
   }
 
@@ -310,7 +280,7 @@ function Navbar() {
       case "follow_request":
         return <FaUserPlus />;
 
-      case "follow_request_accepted":
+      case "follow_accepted":
         return <FaUserCheck />;
 
       case "like":
@@ -372,6 +342,10 @@ function Navbar() {
 
         await markNotificationRead(
           notification.id
+        );
+
+        setNotificationCount(
+          prev => Math.max(0, prev - 1)
         );
 
         setRecentNotifications(
@@ -552,11 +526,11 @@ function Navbar() {
 
             </span>
 
-            {unreadNotifications > 0 && (
+            {notificationCount > 0 && (
 
               <span className="notification-badge">
 
-                {unreadNotifications}
+                {notificationCount}
 
               </span>
 

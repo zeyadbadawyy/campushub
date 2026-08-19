@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"campushub/internal/database"
+	"campushub/internal/websocket"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -125,6 +126,16 @@ func ToggleLike(
 			return
 		}
 
+		websocket.Broadcast(
+			map[string]interface{}{
+				"type":    "post_like",
+				"post_id": postID,
+				"user_id": userID,
+				"liked":   false,
+				"delta":   -1,
+			},
+		)
+
 		json.NewEncoder(
 			w,
 		).Encode(
@@ -157,6 +168,17 @@ func ToggleLike(
 
 		return
 	}
+
+	websocket.Broadcast(
+		map[string]interface{}{
+			"type":    "post_like",
+			"post_id": postID,
+			"user_id": userID,
+			"liked":   true,
+			"delta":   1,
+		},
+	)
+
 	var postOwnerID int
 
 	err = database.DB.QueryRow(
@@ -187,30 +209,37 @@ func ToggleLike(
 		postOwnerID != userID &&
 		allowLikeNotifications {
 
-		_, err = database.DB.Exec(
+		var notificationID int
+		var createdAt string
+
+		err = database.DB.QueryRow(
 			`
-		INSERT INTO notifications
-		(
-			user_id,
-			sender_id,
-			type,
-			message,
-			target_id
-		)
-		VALUES
-		(
-			$1,
-			$2,
-			$3,
-			$4,
-			$5
-		)
-		`,
+	INSERT INTO notifications
+	(
+		user_id,
+		sender_id,
+		type,
+		message,
+		target_id
+	)
+	VALUES
+	(
+		$1,
+		$2,
+		$3,
+		$4,
+		$5
+	)
+	RETURNING id, created_at
+	`,
 			postOwnerID,
 			userID,
 			"like",
 			"liked your post",
 			postID,
+		).Scan(
+			&notificationID,
+			&createdAt,
 		)
 
 		if err != nil {
@@ -223,6 +252,35 @@ func ToggleLike(
 
 			return
 		}
+
+		var senderName string
+
+		database.DB.QueryRow(
+			`
+	SELECT name
+	FROM users
+	WHERE id = $1
+	`,
+			userID,
+		).Scan(&senderName)
+
+		websocket.SendNotification(
+			postOwnerID,
+			map[string]interface{}{
+				"type": "notification",
+				"notification": map[string]interface{}{
+					"id":          notificationID,
+					"created_at":  createdAt,
+					"sender_id":   userID,
+					"sender_name": senderName,
+					"type":        "like",
+					"message":     "liked your post",
+					"is_read":     false,
+					"target_id":   postID,
+				},
+			},
+		)
+
 	}
 	json.NewEncoder(
 		w,

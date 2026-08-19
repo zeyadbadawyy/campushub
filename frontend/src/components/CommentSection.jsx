@@ -14,6 +14,10 @@ import {
   getCurrentUser
 } from "../services/auth";
 
+import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
+
 function CommentSection({
   postId,
   onCommentAdded
@@ -34,6 +38,10 @@ function CommentSection({
     openMenu,
     setOpenMenu
   ] = useState(null);
+
+  const {
+    comments: wsComments
+  } = useWebSocket();
 
   useEffect(() => {
 
@@ -106,6 +114,46 @@ function CommentSection({
 
   }, [postId]);
 
+  useEffect(() => {
+
+    if (!wsComments?.length) {
+      return;
+    }
+
+    const newest =
+      wsComments[0];
+
+    if (
+      newest.post_id !== postId
+    ) {
+      return;
+    }
+
+
+    setComments(prev => {
+
+      const exists =
+        prev.some(
+          comment =>
+            comment.id === newest.id
+        );
+
+
+      if (exists) {
+        return prev;
+      }
+
+
+      return [
+        newest,
+        ...prev
+      ];
+
+    });
+
+
+  }, [wsComments, postId]);
+
   async function handleComment() {
 
     if (!content.trim())
@@ -119,16 +167,6 @@ function CommentSection({
       );
 
       setContent("");
-
-      loadComments();
-
-      if (
-        onCommentAdded
-      ) {
-
-        onCommentAdded();
-
-      }
 
     } catch (error) {
 

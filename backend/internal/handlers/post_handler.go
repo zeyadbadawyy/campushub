@@ -8,6 +8,7 @@ import (
 	"campushub/internal/database"
 	"campushub/internal/models"
 	"campushub/internal/utils"
+	"campushub/internal/websocket"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -94,6 +95,37 @@ func CreatePost(
 
 	post.UserID = userID
 
+	var authorName string
+	var faculty string
+
+	database.DB.QueryRow(
+		`
+SELECT name, faculty
+FROM users
+WHERE id = $1
+`,
+		userID,
+	).Scan(
+		&authorName,
+		&faculty,
+	)
+
+	websocket.Broadcast(
+		map[string]interface{}{
+			"type": "new_post",
+			"post": map[string]interface{}{
+				"id":         post.ID,
+				"user_id":    userID,
+				"author":     authorName,
+				"faculty":    faculty,
+				"content":    post.Content,
+				"created_at": post.CreatedAt,
+				"likes":      0,
+				"comments":   0,
+			},
+		},
+	)
+
 	w.Header().
 		Set(
 			"Content-Type",
@@ -168,7 +200,14 @@ func GetPosts(
 				posts.content,
 				posts.created_at,
 				COUNT(DISTINCT likes.id) AS likes,
-				COUNT(DISTINCT comments.id) AS comments
+				COUNT(DISTINCT comments.id) AS comments,
+
+				EXISTS(
+						SELECT 1
+						FROM likes l2
+						WHERE l2.post_id = posts.id
+						AND l2.user_id = $1
+				) AS liked_by_me
 		FROM posts
 		JOIN users
 				ON posts.user_id = users.id
@@ -239,6 +278,7 @@ func GetPosts(
 			&post.CreatedAt,
 			&post.Likes,
 			&post.Comments,
+			&post.LikedByMe,
 		)
 
 		if err != nil {
@@ -342,7 +382,14 @@ func GetUserPosts(
 			posts.content,
 			posts.created_at,
 			COUNT(DISTINCT likes.id) AS likes,
-			COUNT(DISTINCT comments.id) AS comments
+			COUNT(DISTINCT comments.id) AS comments,
+
+			EXISTS(
+					SELECT 1
+					FROM likes l2
+					WHERE l2.post_id = posts.id
+					AND l2.user_id = $2
+			) AS liked_by_me
 		FROM posts
 		JOIN users
 			ON posts.user_id = users.id
@@ -359,6 +406,7 @@ func GetUserPosts(
 		ORDER BY posts.created_at DESC
 		`,
 		userID,
+		viewerID,
 	)
 
 	if err != nil {
@@ -389,6 +437,7 @@ func GetUserPosts(
 			&post.CreatedAt,
 			&post.Likes,
 			&post.Comments,
+			&post.LikedByMe,
 		)
 
 		if err != nil {
@@ -660,6 +709,10 @@ func GetPost(
 		return
 	}
 
+	currentUserID :=
+		r.Context().
+			Value("userID").(int)
+
 	var post models.FeedPost
 
 	err = database.DB.QueryRow(
@@ -672,7 +725,14 @@ func GetPost(
 			posts.content,
 			posts.created_at,
 			COUNT(DISTINCT likes.id) AS likes,
-			COUNT(DISTINCT comments.id) AS comments
+			COUNT(DISTINCT comments.id) AS comments,
+
+			EXISTS(
+					SELECT 1
+					FROM likes l2
+					WHERE l2.post_id = posts.id
+					AND l2.user_id = $2
+			) AS liked_by_me
 		FROM posts
 		JOIN users
 			ON posts.user_id = users.id
@@ -688,6 +748,7 @@ func GetPost(
 			users.faculty
 		`,
 		postID,
+		currentUserID,
 	).Scan(
 		&post.ID,
 		&post.UserID,
@@ -697,6 +758,7 @@ func GetPost(
 		&post.CreatedAt,
 		&post.Likes,
 		&post.Comments,
+		&post.LikedByMe,
 	)
 
 	if err != nil {

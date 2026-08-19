@@ -30,6 +30,10 @@ import {
   rejectFollowRequest
 } from "../services/postService";
 
+import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
+
 function Notifications() {
 
   const navigate =
@@ -41,14 +45,16 @@ function Notifications() {
   ] = useState([]);
 
   const [
-    followRequests,
-    setFollowRequests
-  ] = useState([]);
-
-  const [
     loading,
     setLoading
   ] = useState(true);
+
+  const {
+    notifications: wsNotifications,
+    setNotificationCount,
+    requests,
+    setRequests,
+  } = useWebSocket();
 
   useEffect(() => {
 
@@ -62,7 +68,7 @@ function Notifications() {
         const requests =
           await getFollowRequests();
 
-        setFollowRequests(
+        setRequests(
           requests || []
         );
 
@@ -86,11 +92,31 @@ function Notifications() {
 
   }, []);
 
+  useEffect(() => {
+
+    if (!wsNotifications.length) {
+      return;
+    }
+
+    const newest =
+      wsNotifications[0];
+
+    setNotifications(
+      prev => [
+        newest,
+        ...prev
+      ]
+    );
+
+  }, [wsNotifications]);
+
   async function handleMarkRead() {
 
     try {
 
       await markNotificationsRead();
+
+      setNotificationCount(0);
 
       setNotifications(
         (prev) =>
@@ -149,7 +175,7 @@ function Notifications() {
       case "follow_request":
         return <FaUserPlus />;
 
-      case "follow_request_accepted":
+      case "follow_accepted":
         return <FaUserCheck />;
 
       case "like":
@@ -213,12 +239,15 @@ function Notifications() {
           notification.id
         );
 
+        setNotificationCount(
+          prev => Math.max(0, prev - 1)
+        );
+
         setNotifications(
-          (prev) =>
+          prev =>
             prev.map(
-              (item) =>
-                item.id ===
-                notification.id
+              item =>
+                item.id === notification.id
                   ? {
                       ...item,
                       is_read: true
@@ -253,7 +282,7 @@ function Notifications() {
         requesterId
       );
 
-      setFollowRequests(
+      setRequests(
         prev =>
           prev.filter(
             request =>
@@ -279,7 +308,7 @@ function Notifications() {
         requesterId
       );
 
-      setFollowRequests(
+      setRequests(
         prev =>
           prev.filter(
             request =>
@@ -306,7 +335,7 @@ function Notifications() {
 
       <div className="notifications-page">
         {
-          followRequests.length > 0 && (
+          requests.length > 0 && (
 
             <div className="follow-requests-section">
 
@@ -317,7 +346,7 @@ function Notifications() {
               <div className="follow-requests-list">
 
                 {
-                  followRequests.map(
+                  requests.map(
                     (request) => (
 
                       <div

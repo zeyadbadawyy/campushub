@@ -250,6 +250,34 @@ func SendMessage(
 		)
 	}
 
+	var unreadCount int
+
+	err = database.DB.QueryRow(
+		`
+	SELECT COUNT(DISTINCT sender_id)
+	FROM messages
+	WHERE receiver_id = $1
+	AND is_read = FALSE
+	`,
+		receiverID,
+	).Scan(
+		&unreadCount,
+	)
+
+	if err == nil {
+
+		if client, exists := websocket.WSHub.Clients[receiverID]; exists {
+
+			client.Conn.WriteJSON(
+				map[string]interface{}{
+					"type":  "unread_count",
+					"count": unreadCount,
+				},
+			)
+
+		}
+	}
+
 	var allowMessageNotifications bool
 
 	err = database.DB.QueryRow(
@@ -276,7 +304,10 @@ func SendMessage(
 
 	if allowMessageNotifications {
 
-		_, err = database.DB.Exec(
+		var notificationID int
+		var createdAt string
+
+		err = database.DB.QueryRow(
 			`
 	INSERT INTO notifications
 	(
@@ -294,12 +325,16 @@ func SendMessage(
 		$4,
 		$5
 	)
+	RETURNING id, created_at
 	`,
 			receiverID,
 			senderID,
 			"message",
 			"sent you a message",
 			senderID,
+		).Scan(
+			&notificationID,
+			&createdAt,
 		)
 
 		if err != nil {
@@ -312,6 +347,35 @@ func SendMessage(
 
 			return
 		}
+
+		var senderName string
+
+		database.DB.QueryRow(
+			`
+	SELECT name
+	FROM users
+	WHERE id = $1
+	`,
+			senderID,
+		).Scan(&senderName)
+
+		websocket.SendNotification(
+			receiverID,
+			map[string]interface{}{
+				"type": "notification",
+				"notification": map[string]interface{}{
+					"id":          notificationID,
+					"created_at":  createdAt,
+					"sender_id":   senderID,
+					"sender_name": senderName,
+					"type":        "message",
+					"message":     "sent you a message",
+					"is_read":     false,
+					"target_id":   senderID,
+				},
+			},
+		)
+
 	}
 
 	w.WriteHeader(
@@ -381,6 +445,45 @@ func GetConversation(
 		targetUserID,
 	)
 
+	var readUntilMessageID int
+
+	err = database.DB.QueryRow(
+		`
+	SELECT COALESCE(MAX(id), 0)
+	FROM messages
+	WHERE receiver_id = $1
+	AND sender_id = $2
+	AND is_read = TRUE
+	`,
+		currentUserID,
+		targetUserID,
+	).Scan(
+		&readUntilMessageID,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Database error",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	if client, exists := websocket.WSHub.Clients[targetUserID]; exists {
+
+		client.Conn.WriteJSON(
+			map[string]interface{}{
+				"type":               "read",
+				"readerId":           currentUserID,
+				"readUntilMessageId": readUntilMessageID,
+			},
+		)
+
+	}
+
 	if err != nil {
 
 		http.Error(
@@ -390,6 +493,34 @@ func GetConversation(
 		)
 
 		return
+	}
+
+	var unreadCount int
+
+	err = database.DB.QueryRow(
+		`
+	SELECT COUNT(DISTINCT sender_id)
+	FROM messages
+	WHERE receiver_id = $1
+	AND is_read = FALSE
+	`,
+		currentUserID,
+	).Scan(
+		&unreadCount,
+	)
+
+	if err == nil {
+
+		if client, exists := websocket.WSHub.Clients[currentUserID]; exists {
+
+			client.Conn.WriteJSON(
+				map[string]interface{}{
+					"type":  "unread_count",
+					"count": unreadCount,
+				},
+			)
+
+		}
 	}
 
 	rows, err := database.DB.Query(

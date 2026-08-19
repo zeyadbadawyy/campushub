@@ -34,10 +34,10 @@ function Settings() {
     setActivity
   ] = useState(null);
 
-  const {
+  /*const {
     darkMode,
     toggleDarkMode
-  } = useTheme();
+  } = useTheme();*/
 
   const [settings, setSettings] = useState({
     like_notifications: true,
@@ -50,7 +50,7 @@ function Settings() {
     allow_messages: true,
     show_in_search: true,
 
-    dark_mode: false
+    //dark_mode: false
   });
 
   useEffect(() => {
@@ -237,8 +237,8 @@ function Settings() {
 
                 <input
                   type="checkbox"
-                  checked={darkMode}
-                  onChange={toggleDarkMode}
+                  //checked={darkMode}
+                  //onChange={toggleDarkMode}
                 />
 
                 <span className="slider"></span>

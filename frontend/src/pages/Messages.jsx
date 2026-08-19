@@ -15,7 +15,9 @@ import {
   searchUsersForChats
 } from "../services/postService";
 
-
+import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
 
 function Messages() {
 
@@ -47,6 +49,10 @@ function Messages() {
     "#ec4899"
   ];
 
+  const {
+    messages: wsMessages
+  } = useWebSocket();
+
   useEffect(() => {
 
     async function loadData() {
@@ -67,17 +73,6 @@ function Messages() {
     }
 
     loadData();
-
-    const interval =
-      setInterval(
-        loadData,
-        5000
-      );
-
-    return () =>
-      clearInterval(
-        interval
-      );
 
   }, []);
 
@@ -117,6 +112,76 @@ function Messages() {
     loadUsers();
 
   }, [search]);
+
+  useEffect(() => {
+
+    if (!wsMessages.length) {
+      return;
+    }
+
+    const latestMessage =
+      wsMessages[
+        wsMessages.length - 1
+      ];
+
+    setConversations(
+      (prev) => {
+
+        const existing =
+          prev.find(
+            (c) =>
+              c.user_id ===
+              latestMessage.sender_id
+          );
+
+        if (!existing) {
+          return prev;
+        }
+
+        const updated =
+          prev.map(
+            (conversation) => {
+
+              if (
+                conversation.user_id !==
+                latestMessage.sender_id
+              ) {
+                return conversation;
+              }
+
+              return {
+                ...conversation,
+                last_message:
+                  latestMessage.content,
+                last_message_time:
+                  latestMessage.created_at,
+                unread_count:
+                  conversation.unread_count + 1,
+              };
+
+            }
+          );
+
+        const updatedConversation =
+          updated.find(
+            (c) =>
+              c.user_id ===
+              latestMessage.sender_id
+          );
+
+        return [
+          updatedConversation,
+          ...updated.filter(
+            (c) =>
+              c.user_id !==
+              latestMessage.sender_id
+          ),
+        ];
+
+      }
+    );
+
+  }, [wsMessages]);
 
   function formatTime(date) {
 

@@ -8,6 +8,10 @@ import { getPosts }
 import CreatePost
   from "../components/CreatePost";
 
+import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
+
 function Feed() {
 
   const [posts, setPosts] =
@@ -15,6 +19,12 @@ function Feed() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const {
+    postLikes,
+    newPosts,
+    commentCounts
+  } = useWebSocket();
 
   async function loadPosts() {
 
@@ -42,6 +52,85 @@ function Feed() {
     loadPosts();
 
   }, []);
+
+  useEffect(() => {
+
+    if (!postLikes.length) {
+      return;
+    }
+
+    const latest =
+      postLikes[0];
+
+    setPosts(prev =>
+      prev.map(post =>
+        post.id === latest.post_id
+          ? {
+              ...post,
+              likes:
+                post.likes +
+                latest.delta,
+            }
+          : post
+      )
+    );
+
+  }, [postLikes]);
+
+  useEffect(() => {
+
+    if (!newPosts.length) {
+      return;
+    }
+
+    const newest =
+      newPosts[0];
+
+    setPosts(prev => {
+
+      const exists =
+        prev.some(
+          post =>
+            post.id === newest.id
+        );
+
+      if (exists) {
+        return prev;
+      }
+
+      return [
+        newest,
+        ...prev,
+      ];
+
+    });
+
+  }, [newPosts]);
+
+  useEffect(() => {
+
+  if (!commentCounts.length) {
+    return;
+  }
+
+  const latest =
+    commentCounts[0];
+
+
+  setPosts(prev =>
+    prev.map(post =>
+      post.id === latest.post_id
+        ? {
+            ...post,
+            comments:
+              post.comments +
+              latest.delta
+          }
+        : post
+    )
+  );
+
+  }, [commentCounts]);
 
   return (
 

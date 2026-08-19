@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
+	"campushub/internal/database"
 	"campushub/internal/websocket"
 
 	gorilla "github.com/gorilla/websocket"
@@ -45,6 +48,27 @@ func WebSocketHandler(
 			Conn:   conn,
 		}
 
+	onlineUsers := []int{}
+
+	for id := range websocket.WSHub.Clients {
+
+		if id == userID {
+			continue
+		}
+
+		onlineUsers = append(
+			onlineUsers,
+			id,
+		)
+	}
+
+	conn.WriteJSON(
+		map[string]interface{}{
+			"type":  "online_users",
+			"users": onlineUsers,
+		},
+	)
+
 	websocket.WSHub.Mutex.Unlock()
 
 	websocket.Broadcast(
@@ -55,6 +79,18 @@ func WebSocketHandler(
 	)
 
 	defer func() {
+
+		lastSeen := time.Now()
+
+		_, _ = database.DB.Exec(
+			`
+UPDATE users
+SET last_seen = $1
+WHERE id = $2
+`,
+			lastSeen,
+			userID,
+		)
 
 		websocket.WSHub.Mutex.Lock()
 
@@ -67,8 +103,9 @@ func WebSocketHandler(
 
 		websocket.Broadcast(
 			map[string]interface{}{
-				"type":   "offline",
-				"userId": userID,
+				"type":     "offline",
+				"userId":   userID,
+				"lastSeen": lastSeen,
 			},
 		)
 
@@ -78,12 +115,41 @@ func WebSocketHandler(
 
 	for {
 
-		_, _, err :=
+		_, message, err :=
 			conn.ReadMessage()
 
 		if err != nil {
 			break
 		}
 
+		var data map[string]interface{}
+
+		err = json.Unmarshal(
+			message,
+			&data,
+		)
+
+		if err != nil {
+			continue
+		}
+
+		if data["type"] == "typing" {
+
+			targetIDFloat, ok :=
+				data["targetUserId"].(float64)
+
+			if !ok {
+				continue
+			}
+
+			websocket.SendToUser(
+				int(targetIDFloat),
+				map[string]interface{}{
+					"type":   "typing",
+					"userId": userID,
+				},
+			)
+
+		}
 	}
 }

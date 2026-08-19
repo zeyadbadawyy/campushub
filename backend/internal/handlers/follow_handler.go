@@ -7,6 +7,7 @@ import (
 
 	"campushub/internal/database"
 	"campushub/internal/models"
+	"campushub/internal/websocket"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -140,6 +141,15 @@ func ToggleFollow(
 			return
 		}
 
+		websocket.Broadcast(
+			map[string]interface{}{
+				"type":        "follow_status",
+				"sender_id":   currentUserID,
+				"receiver_id": targetUserID,
+				"status":      "none",
+			},
+		)
+
 		json.NewEncoder(
 			w,
 		).Encode(
@@ -223,32 +233,38 @@ func ToggleFollow(
 			return
 		}
 
-		_, err =
-			database.DB.Exec(
-				`
-			INSERT INTO notifications
-			(
-				user_id,
-				sender_id,
-				type,
-				message,
-				target_id
-			)
-			VALUES
-			(
-				$1,
-				$2,
-				$3,
-				$4,
-				$5
-			)
-			`,
-				targetUserID,
-				currentUserID,
-				"follow_request",
-				"sent you a follow request",
-				currentUserID,
-			)
+		var notificationID int
+		var createdAt string
+
+		err = database.DB.QueryRow(
+			`
+	INSERT INTO notifications
+	(
+		user_id,
+		sender_id,
+		type,
+		message,
+		target_id
+	)
+	VALUES
+	(
+		$1,
+		$2,
+		$3,
+		$4,
+		$5
+	)
+	RETURNING id, created_at
+	`,
+			targetUserID,
+			currentUserID,
+			"follow_request",
+			"sent you a follow request",
+			currentUserID,
+		).Scan(
+			&notificationID,
+			&createdAt,
+		)
 
 		if err != nil {
 
@@ -260,6 +276,55 @@ func ToggleFollow(
 
 			return
 		}
+
+		var senderName string
+
+		database.DB.QueryRow(
+			`
+	SELECT name
+	FROM users
+	WHERE id = $1
+	`,
+			currentUserID,
+		).Scan(&senderName)
+
+		websocket.SendNotification(
+			targetUserID,
+			map[string]interface{}{
+				"type": "notification",
+				"notification": map[string]interface{}{
+					"id":          notificationID,
+					"sender_id":   currentUserID,
+					"sender_name": senderName,
+					"type":        "follow_request",
+					"message":     "sent you a follow request",
+					"is_read":     false,
+					"target_id":   currentUserID,
+					"created_at":  createdAt,
+				},
+			},
+		)
+
+		websocket.SendToUser(
+			targetUserID,
+			map[string]interface{}{
+				"type": "follow_request",
+				"request": map[string]interface{}{
+					"requester_id": currentUserID,
+					"name":         senderName,
+					"created_at":   createdAt,
+				},
+			},
+		)
+
+		websocket.Broadcast(
+			map[string]interface{}{
+				"type":        "follow_status",
+				"sender_id":   currentUserID,
+				"receiver_id": targetUserID,
+				"status":      "requested",
+			},
+		)
 
 		json.NewEncoder(
 			w,
@@ -327,32 +392,38 @@ func ToggleFollow(
 
 	if allowFollowNotifications {
 
-		_, err =
-			database.DB.Exec(
-				`
-		INSERT INTO notifications
-		(
-			user_id,
-			sender_id,
-			type,
-			message,
-			target_id
+		var notificationID int
+		var createdAt string
+
+		err = database.DB.QueryRow(
+			`
+	INSERT INTO notifications
+	(
+		user_id,
+		sender_id,
+		type,
+		message,
+		target_id
+	)
+	VALUES
+	(
+		$1,
+		$2,
+		$3,
+		$4,
+		$5
+	)
+	RETURNING id, created_at
+	`,
+			targetUserID,
+			currentUserID,
+			"follow",
+			"started following you",
+			currentUserID,
+		).Scan(
+			&notificationID,
+			&createdAt,
 		)
-		VALUES
-		(
-			$1,
-			$2,
-			$3,
-			$4,
-			$5
-		)
-		`,
-				targetUserID,
-				currentUserID,
-				"follow",
-				"started following you",
-				currentUserID,
-			)
 
 		if err != nil {
 
@@ -364,7 +435,45 @@ func ToggleFollow(
 
 			return
 		}
+
+		var senderName string
+
+		database.DB.QueryRow(
+			`
+	SELECT name
+	FROM users
+	WHERE id = $1
+	`,
+			currentUserID,
+		).Scan(&senderName)
+
+		websocket.SendNotification(
+			targetUserID,
+			map[string]interface{}{
+				"type": "notification",
+				"notification": map[string]interface{}{
+					"id":          notificationID,
+					"sender_id":   currentUserID,
+					"sender_name": senderName,
+					"type":        "follow",
+					"message":     "started following you",
+					"is_read":     false,
+					"target_id":   currentUserID,
+					"created_at":  createdAt,
+				},
+			},
+		)
+
 	}
+
+	websocket.Broadcast(
+		map[string]interface{}{
+			"type":        "follow_status",
+			"sender_id":   currentUserID,
+			"receiver_id": targetUserID,
+			"status":      "following",
+		},
+	)
 
 	json.NewEncoder(
 		w,
@@ -720,32 +829,38 @@ func AcceptFollowRequest(
 			currentUserID,
 		)
 
-	_, err =
-		database.DB.Exec(
-			`
-		INSERT INTO notifications
-		(
-			user_id,
-			sender_id,
-			type,
-			message,
-			target_id
-		)
-		VALUES
-		(
-			$1,
-			$2,
-			$3,
-			$4,
-			$5
-		)
-		`,
-			requesterID,
-			currentUserID,
-			"follow_accepted",
-			"accepted your follow request",
-			currentUserID,
-		)
+	var notificationID int
+	var createdAt string
+
+	err = database.DB.QueryRow(
+		`
+	INSERT INTO notifications
+	(
+		user_id,
+		sender_id,
+		type,
+		message,
+		target_id
+	)
+	VALUES
+	(
+		$1,
+		$2,
+		$3,
+		$4,
+		$5
+	)
+	RETURNING id, created_at
+	`,
+		requesterID,
+		currentUserID,
+		"follow_accepted",
+		"accepted your follow request",
+		currentUserID,
+	).Scan(
+		&notificationID,
+		&createdAt,
+	)
 
 	if err != nil {
 
@@ -757,6 +872,44 @@ func AcceptFollowRequest(
 
 		return
 	}
+
+	var senderName string
+
+	database.DB.QueryRow(
+		`
+	SELECT name
+	FROM users
+	WHERE id = $1
+	`,
+		currentUserID,
+	).Scan(&senderName)
+
+	websocket.SendNotification(
+		requesterID,
+		map[string]interface{}{
+			"type": "notification",
+			"notification": map[string]interface{}{
+				"id":          notificationID,
+				"sender_id":   currentUserID,
+				"sender_name": senderName,
+				"type":        "follow_accepted",
+				"message":     "accepted your follow request",
+				"is_read":     false,
+				"target_id":   currentUserID,
+				"created_at":  createdAt,
+			},
+		},
+	)
+
+	websocket.SendToUser(
+		requesterID,
+		map[string]interface{}{
+			"type":        "follow_status",
+			"sender_id":   requesterID,
+			"receiver_id": currentUserID,
+			"status":      "following",
+		},
+	)
 
 	json.NewEncoder(
 		w,
@@ -835,6 +988,16 @@ func RejectFollowRequest(
 
 		return
 	}
+
+	websocket.SendToUser(
+		requesterID,
+		map[string]interface{}{
+			"type":        "follow_status",
+			"sender_id":   requesterID,
+			"receiver_id": currentUserID,
+			"status":      "none",
+		},
+	)
 
 	json.NewEncoder(
 		w,

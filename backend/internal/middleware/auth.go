@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"campushub/internal/database"
 	"context"
 	"net/http"
 	"os"
@@ -53,15 +52,6 @@ func Auth(next http.Handler) http.Handler {
 
 		userID := int(
 			claims["user_id"].(float64),
-		)
-
-		database.DB.Exec(
-			`
-					UPDATE users
-					SET last_seen = NOW()
-					WHERE id = $1
-					`,
-			userID,
 		)
 
 		ctx := context.WithValue(

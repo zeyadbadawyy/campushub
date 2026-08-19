@@ -741,6 +741,23 @@ func CancelFollowRequest(
 		return
 	}
 
+	websocket.Broadcast(
+		map[string]interface{}{
+			"type":        "follow_status",
+			"sender_id":   currentUserID,
+			"receiver_id": targetUserID,
+			"status":      "none",
+		},
+	)
+
+	websocket.SendToUser(
+		targetUserID,
+		map[string]interface{}{
+			"type":         "follow_request_cancelled",
+			"requester_id": currentUserID,
+		},
+	)
+
 	json.NewEncoder(
 		w,
 	).Encode(

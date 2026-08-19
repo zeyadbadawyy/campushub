@@ -1771,11 +1771,11 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 10px;
 
-  margin: 18px 20px;
+  margin: 10px 20px;
 
-  animation: fadeIn 0.25s ease;
+  animation: fadeIn 0.2s ease;
 
 }
 
@@ -1783,41 +1783,43 @@ button {
 
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
 
-  padding: 14px 18px;
+  padding: 8px 12px;
 
-  background: #f5f7fb;
+  background: #f8fafc;
 
-  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+
+  border-radius: 999px;
 
   box-shadow:
-    0 4px 12px rgba(0,0,0,0.08);
+    0 2px 8px rgba(15, 23, 42, 0.04);
 
 }
 
 .typing-bubble span {
 
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
 
   border-radius: 50%;
 
-  background: #6b7280;
+  background: #94a3b8;
 
-  animation: bounce 1.4s infinite;
+  animation: bounce 1.2s infinite ease-in-out;
 
 }
 
 .typing-bubble span:nth-child(2) {
 
-  animation-delay: 0.2s;
+  animation-delay: 0.15s;
 
 }
 
 .typing-bubble span:nth-child(3) {
 
-  animation-delay: 0.4s;
+  animation-delay: 0.3s;
 
 }
 
@@ -1825,28 +1827,30 @@ button {
 
   margin: 0;
 
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 500;
 
-  color: #64748b;
+  color: #94a3b8;
+
+  letter-spacing: 0.2px;
 
 }
 
 @keyframes bounce {
 
   0%,
-  60%,
+  80%,
   100% {
 
     transform: translateY(0);
 
-    opacity: 0.5;
+    opacity: 0.45;
 
   }
 
-  30% {
+  40% {
 
-    transform: translateY(-8px);
+    transform: translateY(-4px);
 
     opacity: 1;
 
@@ -1859,13 +1863,15 @@ button {
   from {
 
     opacity: 0;
-    transform: translateY(5px);
+
+    transform: translateY(4px);
 
   }
 
   to {
 
     opacity: 1;
+
     transform: translateY(0);
 
   }
@@ -3289,8 +3295,7 @@ button {
 .about-item h4,
 .profile-complete-badge,
 .private-icon,
-.chat-header-arrow,
-.send-btn {
+.chat-header-arrow{
   display: flex;
   align-items: center;
   gap: 8px;
@@ -3304,7 +3309,9 @@ button {
   font-size: 2rem;
 }
 
-
+.social-btn.liked {
+  color: #ef4444;
+}
 
 /* =========================
    Skeleton Loading System

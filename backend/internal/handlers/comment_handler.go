@@ -7,6 +7,7 @@ import (
 
 	"campushub/internal/database"
 	"campushub/internal/models"
+	"campushub/internal/websocket"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -149,6 +150,17 @@ func CreateComment(
 	comment.PostID = postID
 	comment.UserID = userID
 
+	var commenterName string
+
+	database.DB.QueryRow(
+		`
+	SELECT name
+	FROM users
+	WHERE id = $1
+	`,
+		userID,
+	).Scan(&commenterName)
+
 	var postOwnerID int
 
 	err = database.DB.QueryRow(
@@ -179,30 +191,37 @@ func CreateComment(
 		postOwnerID != userID &&
 		allowCommentNotifications {
 
-		_, err = database.DB.Exec(
+		var notificationID int
+		var createdAt string
+
+		err = database.DB.QueryRow(
 			`
-			INSERT INTO notifications
-			(
-				user_id,
-				sender_id,
-				type,
-				message,
-				target_id
-			)
-			VALUES
-			(
-				$1,
-				$2,
-				$3,
-				$4,
-				$5
-			)
-			`,
+    INSERT INTO notifications
+    (
+        user_id,
+        sender_id,
+        type,
+        message,
+        target_id
+    )
+    VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5
+    )
+    RETURNING id, created_at
+    `,
 			postOwnerID,
 			userID,
 			"comment",
 			"commented on your post",
 			postID,
+		).Scan(
+			&notificationID,
+			&createdAt,
 		)
 
 		if err != nil {
@@ -215,7 +234,59 @@ func CreateComment(
 
 			return
 		}
+
+		var senderName string
+
+		database.DB.QueryRow(
+			`
+    SELECT name
+    FROM users
+    WHERE id = $1
+    `,
+			userID,
+		).Scan(&senderName)
+
+		websocket.SendNotification(
+			postOwnerID,
+			map[string]interface{}{
+				"type": "notification",
+				"notification": map[string]interface{}{
+					"id":          notificationID,
+					"created_at":  createdAt,
+					"sender_id":   userID,
+					"sender_name": senderName,
+					"type":        "comment",
+					"message":     "commented on your post",
+					"is_read":     false,
+					"target_id":   postID,
+				},
+			},
+		)
+
 	}
+
+	websocket.Broadcast(
+		map[string]interface{}{
+			"type": "comment",
+			"comment": map[string]interface{}{
+				"id":         comment.ID,
+				"post_id":    comment.PostID,
+				"user_id":    comment.UserID,
+				"author":     commenterName,
+				"content":    comment.Content,
+				"created_at": comment.CreatedAt,
+			},
+		},
+	)
+
+	websocket.Broadcast(
+		map[string]interface{}{
+			"type":    "comment_count",
+			"post_id": postID,
+			"delta":   1,
+		},
+	)
+
 	w.WriteHeader(
 		http.StatusCreated,
 	)

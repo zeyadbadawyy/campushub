@@ -9,6 +9,10 @@ import {
 } from "react-icons/fa";
 
 import {
+  useWebSocket
+} from "../contexts/WebSocketContext";
+
+import {
   useEffect,
   useState
 } from "react";
@@ -75,6 +79,24 @@ function Profile() {
   const navigate =
     useNavigate();
 
+  const {
+    onlineUsers,
+    lastSeenUsers,
+    postLikes,
+    newPosts,
+    commentCounts,
+    followStatuses
+  } = useWebSocket();
+
+  const effectiveLastSeen =
+    lastSeenUsers[user?.id] ||
+    user?.last_seen;
+
+  const isOnline =
+    onlineUsers.includes(
+      Number(id)
+    );
+
   const avatarColors = [
     "#4f46e5",
     "#06b6d4",
@@ -125,6 +147,10 @@ function Profile() {
     setCanViewContent
   ] = useState(true);
   
+  const [, forceUpdate] = useState(0);
+
+  
+
   async function loadProfile() {
 
     try {
@@ -241,20 +267,164 @@ function Profile() {
 
   useEffect(() => {
 
-    loadProfile();
-
     const interval =
-      setInterval(
-        loadProfile,
-        30000
-      );
+      setInterval(() => {
+
+        forceUpdate(
+          prev => prev + 1
+        );
+
+      }, 60000);
 
     return () =>
-      clearInterval(
-        interval
-      );
+      clearInterval(interval);
+
+  }, []);
+
+  useEffect(() => {
+
+    loadProfile();
 
   }, [id]);
+
+  useEffect(() => {
+
+    if (!newPosts.length) {
+      return;
+    }
+
+    const newest =
+      newPosts[0];
+
+    if (
+      newest.user_id !==
+      Number(id)
+    ) {
+      return;
+    }
+
+    setPosts(prev => {
+
+      const exists =
+        prev.some(
+          post =>
+            post.id === newest.id
+        );
+
+      if (exists) {
+        return prev;
+      }
+
+      return [
+        newest,
+        ...prev,
+      ];
+
+    });
+
+  }, [newPosts, id]);
+
+  useEffect(() => {
+
+    if (!postLikes.length) {
+      return;
+    }
+
+    const latest =
+      postLikes[0];
+
+    setPosts(prev =>
+      prev.map(post =>
+        post.id === latest.post_id
+          ? {
+              ...post,
+              likes:
+                post.likes +
+                latest.delta,
+            }
+          : post
+      )
+    );
+
+  }, [postLikes]);
+
+  useEffect(() => {
+
+  if (!commentCounts.length) {
+    return;
+  }
+
+  const latest =
+    commentCounts[0];
+
+
+  setPosts(prev =>
+    prev.map(post =>
+      post.id === latest.post_id
+        ? {
+            ...post,
+            comments:
+              post.comments +
+              latest.delta
+          }
+        : post
+    )
+  );
+
+  }, [commentCounts]);
+
+  useEffect(() => {
+
+    if (!followStatuses.length) {
+      return;
+    }
+
+    const latest =
+      followStatuses[0];
+
+    if (
+      latest.sender_id !== currentUser?.id
+    ) {
+      return;
+    }
+
+    if (
+      latest.receiver_id !== Number(id)
+    ) {
+      return;
+    }
+
+    if (
+      latest.status === "requested"
+    ) {
+
+      setIsRequested(true);
+      setIsFollowing(false);
+
+    }
+
+    if (
+      latest.status === "following"
+    ) {
+
+      setIsFollowing(true);
+      setIsRequested(false);
+    }
+
+    if (
+      latest.status === "none"
+    ) {
+
+      setIsFollowing(false);
+      setIsRequested(false);
+
+    }
+
+  }, [
+    followStatuses,
+    currentUser,
+    id
+  ]);
 
   function getLastSeenText(
     lastSeen,
@@ -277,9 +447,6 @@ function Profile() {
       Math.floor(
         (now - time) / 1000
       );
-
-    if (diff < 120)
-      return "● Online";
 
     if (diff < 3600)
       return `Last seen ${Math.floor(diff / 60)}m ago`;
@@ -397,7 +564,7 @@ function Profile() {
             )}
 
             <div className="profile-avatar-container">
-
+             
               <div
                 className="avatar large-avatar"
                 style={{
@@ -407,14 +574,10 @@ function Profile() {
               >
                 {user.name?.charAt(0)}
               </div>
-
+              
               {
-                getLastSeenText(
-                  user.last_seen
-                ) === "● Online" && (
-
+                isOnline && (
                   <span className="online-dot"></span>
-
                 )
               }
 
@@ -423,21 +586,27 @@ function Profile() {
             <h1 className="profile-name">
               {user.name}
             </h1>
-            
-            <div
-              className={
-                getLastSeenText(user.last_seen,user.show_online_status) === "● Online"
-                  ? "last-seen online"
-                  : "last-seen offline"
-              }
-            >
-              {
-                getLastSeenText(
-                  user.last_seen,
-                  user.show_online_status
-                )
-              }
-            </div>
+
+            {currentUser?.id !== user.id && (
+
+              <div
+                className={
+                  isOnline
+                    ? "last-seen online"
+                    : "last-seen offline"
+                }
+              >
+                {
+                  isOnline
+                    ? "● Online"
+                    : getLastSeenText(
+                        effectiveLastSeen,
+                        user.show_online_status
+                      )
+                }
+              </div>
+
+            )}
 
             <div className="profile-role">
 

@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import AuthLayout from "../layouts/AuthLayout";
 
-import { loginUser }
-  from "../services/auth";
+import {
+  useAuth
+} from "../contexts/AuthContext";
 
 function Login() {
 
@@ -18,20 +19,17 @@ function Login() {
   const navigate =
     useNavigate();
 
+  const { login } =
+    useAuth();
+
   const handleLogin =
   async () => {
 
     try {
 
-      const data =
-        await loginUser(
-          email,
-          password
-        );
-
-      localStorage.setItem(
-        "token",
-        data.token
+      await login(
+        email,
+        password
       );
 
       navigate(

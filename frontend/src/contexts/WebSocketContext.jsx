@@ -122,10 +122,14 @@ export function WebSocketProvider({
       user.id
     );
 
-    const ws =
-      new WebSocket(
-        `ws://localhost:8080/ws?userId=${user.id}`
-      );
+    const wsProtocol =
+      window.location.protocol === "https:"
+        ? "wss"
+        : "ws";
+
+    const ws = new WebSocket(
+      `${wsProtocol}://${import.meta.env.VITE_WS_URL}/ws?userId=${user.id}`
+    );
 
     wsRef.current = ws;
 
@@ -303,7 +307,7 @@ export function WebSocketProvider({
       }
 
       if (data.type === "follow_request") {
-        
+
         setRequests((prev) => [
           data.request,
           ...prev,

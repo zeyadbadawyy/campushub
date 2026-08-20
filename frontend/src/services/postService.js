@@ -229,7 +229,7 @@ export async function getFollowStatus(userId) {
 
   const response =
     await fetch(
-      `http://localhost:8080/users/${userId}/follow-status`,
+       `${import.meta.env.VITE_API_URL}/users/${userId}/follow-status`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -248,7 +248,7 @@ export async function toggleFollow(userId) {
 
   const response =
     await fetch(
-      `http://localhost:8080/users/${userId}/follow`,
+      `${import.meta.env.VITE_API_URL}/users/${userId}/follow`,
       {
         method: "POST",
         headers: {

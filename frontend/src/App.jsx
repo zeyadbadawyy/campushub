@@ -1,7 +1,8 @@
 import {
   BrowserRouter,
   Routes,
-  Route
+  Route,
+  Navigate
 } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
@@ -27,6 +28,11 @@ function App() {
     <BrowserRouter>
 
       <Routes>
+
+        <Route 
+          path="/" 
+          element={<Navigate to="/login" replace />} 
+        />
 
         <Route
           path="/login"

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="CampusHub Logo" width="180">
+  <img src="assets/t_logo.png" alt="CampusHub Logo" width="180">
 </p>
 
 <h1 align="center">CampusHub</h1>

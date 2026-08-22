@@ -219,19 +219,19 @@ CampusHub utilizes WebSockets to provide:
 
 ### 🏠 Feed
 
-![Feed](frontend/assets/screenshots/feed.png)
+![Feed](frontend/src/assets/screenshots/feed.png)
 
 ### 👤 Profile
 
-![Profile](frontend/assets/screenshots/profile.png)
+![Profile](frontend/src/assets/screenshots/profile.png)
 
 ### 💬 Messaging
 
-![Messages](frontend/assets/screenshots/messages.png)
+![Messages](frontend/src/assets/screenshots/messages.png)
 
 ### 🔔 Notifications
 
-![Notifications](frontend/assets/screenshots/notifications.png)
+![Notifications](frontend/src/assets/screenshots/notifications.png)
 
 ---
 

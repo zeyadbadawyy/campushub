@@ -1,10 +1,8 @@
 # 🎓 CampusHub
 
 <p align="center">
-  <img src="frontend/assets/logo/t_full_logo.png" alt="CampusHub Logo" width="180">
+  <img src="frontend/src/assets/logo/t_full_logo.png" alt="CampusHub Logo" width="180">
 </p>
-
-<h1 align="center">CampusHub</h1>
 
 <p align="center">
   A Modern Social Networking Platform Built For University Communities

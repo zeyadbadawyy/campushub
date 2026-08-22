@@ -1,7 +1,7 @@
 # 🎓 CampusHub
 
 <p align="center">
-  <img src="backend/assets/t_full_logo.png" alt="CampusHub Logo" width="180">
+  <img src="frontend/assets/logo/t_full_logo.png" alt="CampusHub Logo" width="180">
 </p>
 
 <h1 align="center">CampusHub</h1>

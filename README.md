@@ -41,6 +41,21 @@ The frontend is built with React and Vite, communicating with a Go backend API a
 
 # 🌐 Live Demo
 
+### ⚠️ Important Note
+
+CampusHub's backend is hosted on Render's free tier.
+
+If the application has been inactive for a while, the backend may enter a sleep state. The first request can take approximately **10–60 seconds** while the server wakes up.
+
+If the login page appears slow on the first attempt:
+
+* Wait a few moments after clicking **Login**
+* Refresh once if necessary
+* Subsequent requests should be significantly faster while the server remains active
+
+This behavior is related to the hosting provider and does not occur during local development.
+
+
 ### Frontend
 
 🔗 https://campushub-eta-wheat.vercel.app/
@@ -202,25 +217,21 @@ CampusHub utilizes WebSockets to provide:
 
 # 📸 Application Preview
 
-### 🔐 Authentication
-
-![Login](assets/screenshots/login.png)
-
 ### 🏠 Feed
 
-![Feed](assets/screenshots/feed.png)
+![Feed](frontend/assets/screenshots/feed.png)
 
 ### 👤 Profile
 
-![Profile](assets/screenshots/profile.png)
+![Profile](frontend/assets/screenshots/profile.png)
 
 ### 💬 Messaging
 
-![Messages](assets/screenshots/messages.png)
+![Messages](frontend/assets/screenshots/messages.png)
 
 ### 🔔 Notifications
 
-![Notifications](assets/screenshots/notifications.png)
+![Notifications](frontend/assets/screenshots/notifications.png)
 
 ---
 

@@ -16,6 +16,7 @@ func RegisterRoutes() http.Handler {
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
+			"http://localhost:5173",
 			"https://campushub-eta-wheat.vercel.app",
 		},
 

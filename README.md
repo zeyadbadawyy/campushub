@@ -1,7 +1,7 @@
-# 🎓 CampusHub Frontend
+# 🎓 CampusHub
 
 <p align="center">
-  <img src="assets/logo.png" alt="CampusHub Logo" width="180">
+  <img src="backend/assets/logo.png" alt="CampusHub Logo" width="180">
 </p>
 
 <h1 align="center">CampusHub</h1>

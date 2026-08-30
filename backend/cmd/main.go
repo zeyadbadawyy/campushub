@@ -39,6 +39,7 @@ import (
 	_ "campushub/docs"
 	"campushub/internal/database"
 	"campushub/internal/routes"
+	"campushub/internal/storage"
 
 	"github.com/joho/godotenv"
 )
@@ -64,6 +65,8 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	storage.InitStorage()
 
 	http.ListenAndServe(
 		":"+port,

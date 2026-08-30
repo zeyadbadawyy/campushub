@@ -8,6 +8,8 @@ import {
   FaCheckCircle
 } from "react-icons/fa";
 
+import Avatar from "../components/Avatar";
+
 import {
   useWebSocket
 } from "../contexts/WebSocketContext";
@@ -97,25 +99,11 @@ function Profile() {
       Number(id)
     );
 
-  const avatarColors = [
-    "#4f46e5",
-    "#06b6d4",
-    "#22c55e",
-    "#f97316",
-    "#ec4899"
-  ];
-
-  const avatarColor =
-    avatarColors[
-      (user?.id || 0) %
-      avatarColors.length
-    ];
-
     // completion progress bar
   const completionItems = [
     !!user?.bio,
     !!user?.faculty,
-    false
+    !!user?.avatar_url
   ];
 
   const completedCount =
@@ -565,15 +553,10 @@ function Profile() {
 
             <div className="profile-avatar-container">
              
-              <div
-                className="avatar large-avatar"
-                style={{
-                  background:
-                    avatarColor
-                }}
-              >
-                {user.name?.charAt(0)}
-              </div>
+              <Avatar
+                user={user}
+                size="xl"
+              />
               
               {
                 isOnline && (
@@ -666,8 +649,11 @@ function Profile() {
                   </div>
 
                   <p>
-                    Add a profile picture
-                    to complete your profile.
+                    {
+                      profileComplete
+                        ? "Your profile is fully completed."
+                        : "Complete your profile to help other students know you better."
+                    }
                   </p>
 
                 </div>
@@ -837,6 +823,12 @@ function Profile() {
                         Follow this user to view profile recent posts.
                       </p>
 
+                    </div>
+
+                  ) : posts?.length === 0 ? (
+
+                    <div className="empty-state">
+                      <p>No posts yet.</p>
                     </div>
 
                   ) : (

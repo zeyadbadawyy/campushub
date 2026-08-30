@@ -97,10 +97,11 @@ func CreatePost(
 
 	var authorName string
 	var faculty string
+	var avatarURL string
 
 	database.DB.QueryRow(
 		`
-SELECT name, faculty
+SELECT name, faculty, avatar_url
 FROM users
 WHERE id = $1
 `,
@@ -108,6 +109,7 @@ WHERE id = $1
 	).Scan(
 		&authorName,
 		&faculty,
+		&avatarURL,
 	)
 
 	websocket.Broadcast(
@@ -118,6 +120,7 @@ WHERE id = $1
 				"user_id":    userID,
 				"author":     authorName,
 				"faculty":    faculty,
+				"avatar_url": avatarURL,
 				"content":    post.Content,
 				"created_at": post.CreatedAt,
 				"likes":      0,
@@ -197,6 +200,7 @@ func GetPosts(
 				posts.user_id,
 				users.name,
 				users.faculty,
+				users.avatar_url,
 				posts.content,
 				posts.created_at,
 				COUNT(DISTINCT likes.id) AS likes,
@@ -237,6 +241,7 @@ func GetPosts(
 				posts.user_id,
 				users.name,
 				users.faculty,
+				users.avatar_url,
 				s.private_account,
 				f.id
 
@@ -274,6 +279,7 @@ func GetPosts(
 			&post.UserID,
 			&post.Author,
 			&post.Faculty,
+			&post.AvatarURL,
 			&post.Content,
 			&post.CreatedAt,
 			&post.Likes,
@@ -379,6 +385,7 @@ func GetUserPosts(
 			posts.user_id,
 			users.name,
 			users.faculty,
+			users.avatar_url,
 			posts.content,
 			posts.created_at,
 			COUNT(DISTINCT likes.id) AS likes,
@@ -402,7 +409,8 @@ func GetUserPosts(
 			posts.id,
 			posts.user_id,
 			users.name,
-			users.faculty
+			users.faculty,
+			users.avatar_url
 		ORDER BY posts.created_at DESC
 		`,
 		userID,
@@ -433,6 +441,7 @@ func GetUserPosts(
 			&post.UserID,
 			&post.Author,
 			&post.Faculty,
+			&post.AvatarURL,
 			&post.Content,
 			&post.CreatedAt,
 			&post.Likes,
@@ -722,6 +731,7 @@ func GetPost(
 			posts.user_id,
 			users.name,
 			users.faculty,
+			users.avatar_url,
 			posts.content,
 			posts.created_at,
 			COUNT(DISTINCT likes.id) AS likes,
@@ -745,7 +755,8 @@ func GetPost(
 			posts.id,
 			posts.user_id,
 			users.name,
-			users.faculty
+			users.faculty,
+			users.avatar_url
 		`,
 		postID,
 		currentUserID,
@@ -754,6 +765,7 @@ func GetPost(
 		&post.UserID,
 		&post.Author,
 		&post.Faculty,
+		&post.AvatarURL,
 		&post.Content,
 		&post.CreatedAt,
 		&post.Likes,

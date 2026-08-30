@@ -909,3 +909,54 @@ export async function rejectFollowRequest(
   return response.data;
 
 }
+
+export async function uploadAvatar(file) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "avatar",
+    file
+  );
+
+  const response =
+    await api.post(
+      "/upload/avatar",
+      formData,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function deleteAvatar() {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const response =
+    await api.delete(
+      "/upload/avatar",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}

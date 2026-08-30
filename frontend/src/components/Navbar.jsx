@@ -27,6 +27,8 @@ import {
   markNotificationRead
 } from "../services/postService";
 
+import Avatar from "./Avatar";
+
 import {
   useWebSocket
 } from "../contexts/WebSocketContext";
@@ -80,14 +82,6 @@ function Navbar() {
 
   const accountMenuRef =
     useRef(null); 
-
-  const avatarColors = [
-    "#4f46e5",
-    "#06b6d4",
-    "#22c55e",
-    "#f97316",
-    "#ec4899"
-  ];
 
   useEffect(() => {
 
@@ -445,18 +439,10 @@ function Navbar() {
                     className="search-result"
                   >
 
-                    <div
-                      className="search-avatar"
-                      style={{
-                        background:
-                          avatarColors[
-                            user.id %
-                            avatarColors.length
-                          ]
-                      }}
-                    >
-                      {user.name?.charAt(0)}
-                    </div>
+                    <Avatar
+                      user={user}
+                      size="sm"
+                    />
 
                     <div className="search-user-info">
 
@@ -574,15 +560,14 @@ function Navbar() {
                         >
 
                           <div className="dropdown-notification-top">
-
-                            <span className="avatar">
-
-                              {
-                                notification.sender_name?.charAt(0)
-                              }
-
-                            </span>
-                             
+                          <Avatar
+                            user={{
+                              id: notification.sender_id,
+                              name: notification.sender_name,
+                              avatar_url: notification.sender_avatar_url
+                            }}
+                            size="md"
+                          />
                             <div className="dropdown-type-icon">
 
                               {
@@ -679,12 +664,11 @@ function Navbar() {
             }
           >
 
-            <div className="navbar-avatar">
-
-              {user?.name?.charAt(0)}
-
-            </div>
-
+           <Avatar
+              user={user}
+              size="sm"
+              className="avatar-navbar"
+            />
             <span>
 
               {user?.name}

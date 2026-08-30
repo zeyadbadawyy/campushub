@@ -14,6 +14,8 @@ import {
   getCurrentUser
 } from "../services/auth";
 
+import Avatar from "./Avatar";
+
 import {
   useWebSocket
 } from "../contexts/WebSocketContext";
@@ -88,7 +90,8 @@ function CommentSection({
 
               return {
                 ...comment,
-                author: user.name
+                author: user.name,
+                avatar_url: user.avatar_url
               };
 
             }
@@ -145,7 +148,10 @@ function CommentSection({
 
 
       return [
-        newest,
+        {
+          ...newest,
+          avatar_url: newest.avatar_url || null
+        },
         ...prev
       ];
 
@@ -260,9 +266,20 @@ function CommentSection({
 
               <div className="comment-header">
 
-                <strong>
-                  {comment.author}
-                </strong>
+                <div className="comment-user">
+                  <Avatar
+                    user={{
+                      id: comment.user_id,
+                      name: comment.author,
+                      avatar_url: comment.avatar_url
+                    }}
+                    size="sm"
+                  />
+
+                  <strong>
+                    {comment.author}
+                  </strong>
+                </div>
 
                 {
                   currentUser?.id === comment.user_id && (

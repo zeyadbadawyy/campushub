@@ -14,6 +14,8 @@ import {
   useNavigate
 } from "react-router-dom";
 
+import Avatar from "../components/Avatar";
+
 import {
   useWebSocket
 } from "../contexts/WebSocketContext";
@@ -349,13 +351,11 @@ function Chat() {
           }
         >
 
-          <div className="chat-avatar">
-
-            {
-              chatUser?.name?.charAt(0)
-            }
-
-          </div>
+          <Avatar
+            user={chatUser}
+            size="md"
+            className="avatar-chat"
+          />
 
           <div className="chat-user-details">
 

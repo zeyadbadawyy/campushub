@@ -236,29 +236,34 @@ func CreateComment(
 		}
 
 		var senderName string
+		var senderAvatarURL string
 
 		database.DB.QueryRow(
 			`
-    SELECT name
-    FROM users
-    WHERE id = $1
-    `,
+SELECT name, avatar_url
+FROM users
+WHERE id = $1
+`,
 			userID,
-		).Scan(&senderName)
+		).Scan(
+			&senderName,
+			&senderAvatarURL,
+		)
 
 		websocket.SendNotification(
 			postOwnerID,
 			map[string]interface{}{
 				"type": "notification",
 				"notification": map[string]interface{}{
-					"id":          notificationID,
-					"created_at":  createdAt,
-					"sender_id":   userID,
-					"sender_name": senderName,
-					"type":        "comment",
-					"message":     "commented on your post",
-					"is_read":     false,
-					"target_id":   postID,
+					"id":                notificationID,
+					"created_at":        createdAt,
+					"sender_id":         userID,
+					"sender_name":       senderName,
+					"sender_avatar_url": senderAvatarURL,
+					"type":              "comment",
+					"message":           "commented on your post",
+					"is_read":           false,
+					"target_id":         postID,
 				},
 			},
 		)

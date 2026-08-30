@@ -349,29 +349,34 @@ func SendMessage(
 		}
 
 		var senderName string
+		var senderAvatarURL string
 
 		database.DB.QueryRow(
 			`
-	SELECT name
-	FROM users
-	WHERE id = $1
-	`,
+SELECT name, avatar_url
+FROM users
+WHERE id = $1
+`,
 			senderID,
-		).Scan(&senderName)
+		).Scan(
+			&senderName,
+			&senderAvatarURL,
+		)
 
 		websocket.SendNotification(
 			receiverID,
 			map[string]interface{}{
 				"type": "notification",
 				"notification": map[string]interface{}{
-					"id":          notificationID,
-					"created_at":  createdAt,
-					"sender_id":   senderID,
-					"sender_name": senderName,
-					"type":        "message",
-					"message":     "sent you a message",
-					"is_read":     false,
-					"target_id":   senderID,
+					"id":                notificationID,
+					"created_at":        createdAt,
+					"sender_id":         senderID,
+					"sender_name":       senderName,
+					"sender_avatar_url": senderAvatarURL,
+					"type":              "message",
+					"message":           "sent you a message",
+					"is_read":           false,
+					"target_id":         senderID,
 				},
 			},
 		)
@@ -617,6 +622,7 @@ func GetConversations(
 		SELECT
 			u.id,
 			u.name,
+			u.avatar_url,
 			m.content,
 			m.created_at,
 
@@ -696,6 +702,7 @@ func GetConversations(
 		rows.Scan(
 			&conversation.UserID,
 			&conversation.Name,
+			&conversation.AvatarURL,
 			&conversation.LastMessage,
 			&conversation.LastMessageTime,
 			&conversation.UnreadCount,

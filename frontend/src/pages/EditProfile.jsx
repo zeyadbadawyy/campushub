@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 
+import {
+  FaUserCircle,
+  FaCamera,
+  FaTrash
+} from "react-icons/fa";
+
 import MainLayout
   from "../layouts/MainLayout";
 
@@ -8,7 +14,9 @@ import {
 } from "../services/auth";
 
 import {
-  updateProfile
+  updateProfile,
+  uploadAvatar,
+  deleteAvatar
 } from "../services/postService";
 
 import {
@@ -34,6 +42,16 @@ function EditProfile() {
   const navigate =
     useNavigate();
 
+  const [
+    avatar,
+    setAvatar
+  ] = useState("");
+
+  const [
+    uploadingAvatar,
+    setUploadingAvatar
+  ] = useState(false);
+
   useEffect(() => {
 
     async function loadUser() {
@@ -47,7 +65,11 @@ function EditProfile() {
           name: user.name || "",
           bio: user.bio || "",
           faculty: user.faculty || ""
-        });
+          });
+
+          setAvatar(
+            user.avatar_url || ""
+          );
 
       } catch (error) {
 
@@ -60,6 +82,63 @@ function EditProfile() {
     loadUser();
 
   }, []);
+
+  async function handleAvatarUpload(
+    e
+  ) {
+
+    const file =
+      e.target.files[0];
+
+    if (!file)
+      return;
+
+    try {
+
+      setUploadingAvatar(
+        true
+      );
+
+      const result =
+        await uploadAvatar(
+          file
+        );
+
+      setAvatar(
+        result.url
+      );
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+    } finally {
+
+      setUploadingAvatar(
+        false
+      );
+
+    }
+
+  }
+
+  async function handleDeleteAvatar() {
+
+    try {
+
+      await deleteAvatar();
+
+      setAvatar("");
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
 
   async function handleSubmit(
     e
@@ -121,6 +200,66 @@ function EditProfile() {
           <form
             onSubmit={handleSubmit}
           >
+
+            <div className="avatar-upload-card">
+
+              <div className="avatar-preview">
+
+                {avatar ? (
+
+                  <img
+                    src={avatar}
+                    alt="avatar"
+                  />
+
+                ) : (
+
+                  <FaUserCircle />
+                )}
+
+              </div>
+
+              <div className="avatar-actions">
+
+                <label className="avatar-upload-btn">
+
+                  <FaCamera />
+
+                  {
+                    uploadingAvatar
+                      ? "Uploading..."
+                      : "Change Photo"
+                  }
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={
+                      handleAvatarUpload
+                    }
+                  />
+
+                </label>
+
+                {avatar && (
+
+                  <button
+                    type="button"
+                    className="avatar-remove-btn"
+                    onClick={
+                      handleDeleteAvatar
+                    }
+                  >
+                    <FaTrash />
+                    Remove
+                  </button>
+
+                )}
+
+              </div>
+
+            </div>
 
             <div className="form-group">
 

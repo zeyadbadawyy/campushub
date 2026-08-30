@@ -15,6 +15,8 @@ import {
   searchUsersForChats
 } from "../services/postService";
 
+import Avatar from "../components/Avatar";
+
 import {
   useWebSocket
 } from "../contexts/WebSocketContext";
@@ -40,14 +42,6 @@ function Messages() {
     users,
     setUsers
   ] = useState([]);
-
-  const avatarColors = [
-    "#4f46e5",
-    "#06b6d4",
-    "#22c55e",
-    "#f97316",
-    "#ec4899"
-  ];
 
   const {
     messages: wsMessages
@@ -284,22 +278,11 @@ function Messages() {
                       className="search-user-card"
                     >
 
-                      <div
-                        className="avatar"
-                        style={{
-                          background:
-                            avatarColors[
-                              user.id %
-                              avatarColors.length
-                            ]
-                        }}
-                      >
-
-                        {
-                          user.name?.charAt(0)
-                        }
-
-                      </div>
+                      <Avatar
+                        user={user}
+                        size="sm"
+                        className="avatar-search"
+                      />
 
                       <div className="search-user-info">
 
@@ -374,13 +357,15 @@ function Messages() {
                     }
                   >
 
-                    <div className="avatar">
-
-                      {
-                        user.name?.charAt(0)
-                      }
-
-                    </div>
+                    <Avatar
+                      user={{
+                        id: user.user_id,
+                        name: user.name,
+                        avatar_url: user.avatar_url
+                      }}
+                      size="md"
+                      className="avatar-chat"
+                    />
 
                     <div className="conversation-content">
 

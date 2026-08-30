@@ -15,6 +15,8 @@ import {
   searchUsers
 } from "../services/postService";
 
+import Avatar from "../components/Avatar";
+
 function Search() {
 
   const [
@@ -93,11 +95,10 @@ function Search() {
                     className="search-user-card"
                   >
 
-                    <div className="avatar">
-
-                      {user.name?.charAt(0)}
-
-                    </div>
+                    <Avatar
+                      user={user}
+                      size="md"
+                    />
 
                     <div>
 

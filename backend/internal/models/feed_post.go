@@ -7,6 +7,7 @@ type FeedPost struct {
 	UserID    int       `json:"user_id"`
 	Author    string    `json:"author"`
 	Faculty   string    `json:"faculty"`
+	AvatarURL string    `json:"avatar_url"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 	Likes     int       `json:"likes"`

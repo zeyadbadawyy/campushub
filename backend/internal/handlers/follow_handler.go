@@ -278,29 +278,34 @@ func ToggleFollow(
 		}
 
 		var senderName string
+		var senderAvatarURL string
 
 		database.DB.QueryRow(
 			`
-	SELECT name
-	FROM users
-	WHERE id = $1
-	`,
+SELECT name, avatar_url
+FROM users
+WHERE id = $1
+`,
 			currentUserID,
-		).Scan(&senderName)
+		).Scan(
+			&senderName,
+			&senderAvatarURL,
+		)
 
 		websocket.SendNotification(
 			targetUserID,
 			map[string]interface{}{
 				"type": "notification",
 				"notification": map[string]interface{}{
-					"id":          notificationID,
-					"sender_id":   currentUserID,
-					"sender_name": senderName,
-					"type":        "follow_request",
-					"message":     "sent you a follow request",
-					"is_read":     false,
-					"target_id":   currentUserID,
-					"created_at":  createdAt,
+					"id":                notificationID,
+					"sender_id":         currentUserID,
+					"sender_name":       senderName,
+					"sender_avatar_url": senderAvatarURL,
+					"type":              "follow_request",
+					"message":           "sent you a follow request",
+					"is_read":           false,
+					"target_id":         currentUserID,
+					"created_at":        createdAt,
 				},
 			},
 		)
@@ -312,6 +317,7 @@ func ToggleFollow(
 				"request": map[string]interface{}{
 					"requester_id": currentUserID,
 					"name":         senderName,
+					"avatar_url":   senderAvatarURL,
 					"created_at":   createdAt,
 				},
 			},
@@ -437,29 +443,34 @@ func ToggleFollow(
 		}
 
 		var senderName string
+		var senderAvatarURL string
 
 		database.DB.QueryRow(
 			`
-	SELECT name
-	FROM users
-	WHERE id = $1
-	`,
+SELECT name, avatar_url
+FROM users
+WHERE id = $1
+`,
 			currentUserID,
-		).Scan(&senderName)
+		).Scan(
+			&senderName,
+			&senderAvatarURL,
+		)
 
 		websocket.SendNotification(
 			targetUserID,
 			map[string]interface{}{
 				"type": "notification",
 				"notification": map[string]interface{}{
-					"id":          notificationID,
-					"sender_id":   currentUserID,
-					"sender_name": senderName,
-					"type":        "follow",
-					"message":     "started following you",
-					"is_read":     false,
-					"target_id":   currentUserID,
-					"created_at":  createdAt,
+					"id":                notificationID,
+					"sender_id":         currentUserID,
+					"sender_name":       senderName,
+					"sender_avatar_url": senderAvatarURL,
+					"type":              "follow",
+					"message":           "started following you",
+					"is_read":           false,
+					"target_id":         currentUserID,
+					"created_at":        createdAt,
 				},
 			},
 		)
@@ -689,16 +700,17 @@ func GetFollowRequests(
 	rows, err :=
 		database.DB.Query(
 			`
-			SELECT
-				fr.requester_id,
-				u.name,
-				fr.created_at
-			FROM follow_requests fr
-			JOIN users u
-				ON u.id = fr.requester_id
-			WHERE fr.target_user_id = $1
-			ORDER BY fr.created_at DESC
-			`,
+		SELECT
+			fr.requester_id,
+			u.name,
+			u.avatar_url,
+			fr.created_at
+		FROM follow_requests fr
+		JOIN users u
+			ON u.id = fr.requester_id
+		WHERE fr.target_user_id = $1
+		ORDER BY fr.created_at DESC
+		`,
 			currentUserID,
 		)
 
@@ -725,6 +737,7 @@ func GetFollowRequests(
 		rows.Scan(
 			&request.RequesterID,
 			&request.Name,
+			&request.AvatarURL,
 			&request.CreatedAt,
 		)
 
@@ -874,29 +887,34 @@ func AcceptFollowRequest(
 	}
 
 	var senderName string
+	var senderAvatarURL string
 
 	database.DB.QueryRow(
 		`
-	SELECT name
-	FROM users
-	WHERE id = $1
-	`,
+SELECT name, avatar_url
+FROM users
+WHERE id = $1
+`,
 		currentUserID,
-	).Scan(&senderName)
+	).Scan(
+		&senderName,
+		&senderAvatarURL,
+	)
 
 	websocket.SendNotification(
 		requesterID,
 		map[string]interface{}{
 			"type": "notification",
 			"notification": map[string]interface{}{
-				"id":          notificationID,
-				"sender_id":   currentUserID,
-				"sender_name": senderName,
-				"type":        "follow_accepted",
-				"message":     "accepted your follow request",
-				"is_read":     false,
-				"target_id":   currentUserID,
-				"created_at":  createdAt,
+				"id":                notificationID,
+				"sender_id":         currentUserID,
+				"sender_name":       senderName,
+				"sender_avatar_url": senderAvatarURL,
+				"type":              "follow_accepted",
+				"message":           "accepted your follow request",
+				"is_read":           false,
+				"target_id":         currentUserID,
+				"created_at":        createdAt,
 			},
 		},
 	)

@@ -352,6 +352,20 @@ func RegisterRoutes() http.Handler {
 		handlers.GetUserVisibility,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/upload/avatar",
+		handlers.UploadAvatar,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Delete(
+		"/upload/avatar",
+		handlers.DeleteAvatar,
+	)
+
 	r.Get(
 		"/swagger/*",
 		httpSwagger.Handler(

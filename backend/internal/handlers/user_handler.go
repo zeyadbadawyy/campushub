@@ -14,11 +14,12 @@ import (
 )
 
 type UserResponse struct {
-	ID      int    `json:"id"`
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Bio     string `json:"bio"`
-	Faculty string `json:"faculty"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Bio       string `json:"bio"`
+	Faculty   string `json:"faculty"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 // Me godoc
@@ -52,7 +53,8 @@ func Me(
 			name,
 			email,
 			bio,
-			faculty
+			faculty,
+			avatar_url
 			FROM users
 			WHERE id=$1
 			`,
@@ -63,6 +65,7 @@ func Me(
 			&user.Email,
 			&user.Bio,
 			&user.Faculty,
+			&user.AvatarURL,
 		)
 
 	if err != nil {
@@ -76,11 +79,12 @@ func Me(
 		return
 	}
 	response := UserResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		Bio:     user.Bio,
-		Faculty: user.Faculty,
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Bio:       user.Bio,
+		Faculty:   user.Faculty,
+		AvatarURL: user.AvatarURL,
 	}
 
 	json.NewEncoder(w).Encode(response)
@@ -130,6 +134,7 @@ func GetUserProfile(
 		LastSeen         time.Time `json:"last_seen"`
 		CreatedAt        time.Time `json:"created_at"`
 		ShowOnlineStatus bool      `json:"show_online_status"`
+		AvatarURL        string    `json:"avatar_url"`
 	}
 
 	var user UserProfile
@@ -144,6 +149,7 @@ func GetUserProfile(
 		u.faculty,
 		u.last_seen,
 		u.created_at,
+		u.avatar_url,
 		s.show_online_status
 		FROM users u
 		JOIN user_settings s
@@ -159,6 +165,7 @@ func GetUserProfile(
 		&user.Faculty,
 		&user.LastSeen,
 		&user.CreatedAt,
+		&user.AvatarURL,
 		&user.ShowOnlineStatus,
 	)
 
@@ -222,7 +229,8 @@ func SearchUsers(
 		SELECT
 		u.id,
 		u.name,
-		u.faculty
+		u.faculty,
+		u.avatar_url
 	FROM users u
 	JOIN user_settings s
 		ON s.user_id = u.id
@@ -255,20 +263,23 @@ func SearchUsers(
 		var id int
 		var name string
 		var faculty string
+		var avatarURL string
 
 		rows.Scan(
 			&id,
 			&name,
 			&faculty,
+			&avatarURL,
 		)
 
 		users =
 			append(
 				users,
 				map[string]interface{}{
-					"id":      id,
-					"name":    name,
-					"faculty": faculty,
+					"id":         id,
+					"name":       name,
+					"faculty":    faculty,
+					"avatar_url": avatarURL,
 				},
 			)
 	}
@@ -313,7 +324,8 @@ func SearchUsersForChats(
 		SELECT
 		u.id,
 		u.name,
-		u.faculty
+		u.faculty,
+		u.avatar_url
 	FROM users u
 	JOIN user_settings s
 		ON s.user_id = u.id
@@ -347,20 +359,23 @@ func SearchUsersForChats(
 		var id int
 		var name string
 		var faculty string
+		var avatarURL string
 
 		rows.Scan(
 			&id,
 			&name,
 			&faculty,
+			&avatarURL,
 		)
 
 		users =
 			append(
 				users,
 				map[string]interface{}{
-					"id":      id,
-					"name":    name,
-					"faculty": faculty,
+					"id":         id,
+					"name":       name,
+					"faculty":    faculty,
+					"avatar_url": avatarURL,
 				},
 			)
 	}

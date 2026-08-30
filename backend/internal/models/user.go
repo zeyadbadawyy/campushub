@@ -11,4 +11,5 @@ type User struct {
 	Faculty   string    `json:"faculty"`
 	LastSeen  time.Time `json:"last_seen"`
 	CreatedAt time.Time `json:"created_at"`
+	AvatarURL string    `json:"avatar_url"`
 }

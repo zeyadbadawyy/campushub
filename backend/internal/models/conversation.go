@@ -8,4 +8,5 @@ type Conversation struct {
 	LastMessage     string    `json:"last_message"`
 	LastMessageTime time.Time `json:"last_message_time"`
 	UnreadCount     int       `json:"unread_count"`
+	AvatarURL       string    `json:"avatar_url"`
 }

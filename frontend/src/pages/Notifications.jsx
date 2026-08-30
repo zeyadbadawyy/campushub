@@ -30,6 +30,8 @@ import {
   rejectFollowRequest
 } from "../services/postService";
 
+import Avatar from "../components/Avatar";
+
 import {
   useWebSocket
 } from "../contexts/WebSocketContext";
@@ -361,13 +363,15 @@ function Notifications() {
 
                         <div className="follow-request-info">
 
-                          <div className="notification-avatar">
-
-                            {
-                              request.name?.charAt(0)
-                            }
-
-                          </div>
+                          <Avatar
+                            user={{
+                              id: request.requester_id,
+                              name: request.name,
+                              avatar_url: request.avatar_url
+                            }}
+                            size="md"
+                            className="avatar-notification"
+                          />
 
                           <div>
 
@@ -523,13 +527,15 @@ function Notifications() {
                         handleNotificationClick(notification)
                       }
                     >
-                      <div className="notification-avatar">
-
-                        {
-                          notification.sender_name?.charAt(0)
-                        }
-
-                      </div>
+                      <Avatar
+                        user={{
+                          id: notification.sender_id,
+                          name: notification.sender_name,
+                          avatar_url: notification.sender_avatar_url
+                        }}
+                        size="md"
+                        className="avatar-notification"
+                      />
 
                       <div className="notification-icon">
 

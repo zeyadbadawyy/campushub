@@ -26,6 +26,8 @@ import {
   getCurrentUser
 } from "../services/auth";
 
+import Avatar from "./Avatar";
+
 import {
   useWebSocket
 } from "../contexts/WebSocketContext";
@@ -89,7 +91,6 @@ function PostCard({ post, onLike }) {
 
   }, []);
 
-  
   async function handleLike() {
 
     try {
@@ -199,14 +200,23 @@ function PostCard({ post, onLike }) {
         <div className="post-user">
 
           <div
-            className="avatar clickable"
             onClick={() =>
               navigate(
                 `/profile/${post.user_id}`
               )
             }
           >
-            {post.author?.charAt(0)}
+
+            <Avatar
+              user={{
+                id: post.user_id,
+                name: post.author,
+                avatar_url: post.avatar_url
+              }}
+              size="md"
+              className="clickable"
+            />
+
           </div>
 
           <div>

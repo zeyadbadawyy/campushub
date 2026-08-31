@@ -2,7 +2,9 @@ import {
   FaHeart,
   FaComment,
   FaEdit,
-  FaTrash
+  FaTrash,
+  FaTimes,
+  FaCameraRetro
 } from "react-icons/fa";
 
 import {
@@ -10,16 +12,18 @@ import {
   useEffect
 } from "react";
 
-import { useNavigate }
-  from "react-router-dom";
-  
+import {
+  useNavigate
+} from "react-router-dom";
+
 import CommentSection
   from "./CommentSection";
 
 import {
   toggleLike,
   updatePost,
-  deletePost
+  deletePost,
+  uploadPostImage
 } from "../services/postService";
 
 import {
@@ -49,6 +53,13 @@ function PostCard({ post, onLike }) {
     setEditedContent
   ] = useState(post.content);
 
+  const [
+    editedImage,
+    setEditedImage
+  ] = useState(
+    post.image_url || ""
+  );
+
   const navigate =
     useNavigate();
   
@@ -67,6 +78,11 @@ function PostCard({ post, onLike }) {
   const {
     postLikes
     } = useWebSocket();
+
+  const [
+    showImage,
+    setShowImage
+  ] = useState(false);
 
   useEffect(() => {
 
@@ -117,7 +133,8 @@ function PostCard({ post, onLike }) {
 
       await updatePost(
         post.id,
-        editedContent
+        editedContent,
+        editedImage
       );
 
       setIsEditing(false);
@@ -247,9 +264,19 @@ function PostCard({ post, onLike }) {
 
               <button
                 className="edit-btn"
-                onClick={() =>
-                  setIsEditing(true)
-                }
+                onClick={() => {
+
+                  setEditedContent(
+                    post.content
+                  );
+
+                  setEditedImage(
+                    post.image_url || ""
+                  );
+
+                  setIsEditing(true);
+
+                }}
               >
                 <>
                   <FaEdit />
@@ -279,7 +306,7 @@ function PostCard({ post, onLike }) {
         {
           isEditing ? (
 
-            <div>
+            <div className="edit-post-box">
 
               <textarea
                 value={editedContent}
@@ -290,27 +317,153 @@ function PostCard({ post, onLike }) {
                 }
               />
 
-              <button
-                className="save-btn"
-                onClick={handleUpdate}
-              >
-                Save
-              </button>
+              {
+                editedImage && (
 
-              <button
-                className="cancel-btn"
-                onClick={() =>
-                  setIsEditing(false)
+                  <div className="preview-container">
+
+                    <img
+                      src={editedImage}
+                      alt=""
+                      className="post-preview"
+                    />
+
+                    <button
+                      type="button"
+                      className="remove-image-btn"
+                      onClick={() =>
+                        setEditedImage("")
+                      }
+                    >
+                      <FaTimes />
+                    </button>
+
+                  </div>
+
+                )
+              }
+
+              <label className="image-edit-btn">
+
+                <FaCameraRetro />
+                {
+                  editedImage
+                    ? "Change Photo"
+                    : "Add Photo"
                 }
-              >
-                Cancel
-              </button>
+
+                <input
+                  hidden
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+
+                    const file =
+                      e.target.files[0];
+
+                    if (!file) {
+                      return;
+                    }
+
+                    try {
+
+                      const result =
+                        await uploadPostImage(
+                          file
+                        );
+
+                      setEditedImage(
+                        result.url
+                      );
+
+                    } catch (error) {
+
+                      console.error(error);
+
+                    }
+
+                  }}
+                />
+
+              </label>
+
+              <div className="edit-actions">
+
+                <button
+                  className="save-btn"
+                  onClick={handleUpdate}
+                >
+                  Save
+                </button>
+
+                <button
+                  className="cancel-btn"
+                  onClick={() => {
+
+                    setEditedContent(
+                      post.content
+                    );
+
+                    setEditedImage(
+                      post.image_url || ""
+                    );
+
+                    setIsEditing(false);
+
+                  }}
+                >
+                  Cancel
+                </button>
+
+              </div>
 
             </div>
 
           ) : (
 
-            post.content
+            <>
+              {
+                post.content && (
+                  <p className="post-text">
+                    {post.content}
+                  </p>
+                )
+              }
+
+              {
+                post.image_url && (
+                  <img
+                    src={post.image_url}
+                    alt="Post"
+                    className="post-image"
+                    onClick={() =>
+                      setShowImage(true)
+                    }
+                  />
+                )
+              }
+            </>
+
+          )
+        }
+
+        {
+          showImage && (
+
+            <div
+              className="image-modal"
+              onClick={() =>
+                setShowImage(false)
+              }
+            >
+
+              <img
+                src={post.image_url}
+                alt="Post"
+                className="image-modal-content"
+              />
+
+            </div>
 
           )
         }

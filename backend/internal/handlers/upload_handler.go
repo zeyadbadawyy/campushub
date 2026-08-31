@@ -167,3 +167,110 @@ func DeleteAvatar(
 		http.StatusOK,
 	)
 }
+
+func UploadPostImage(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	err := r.ParseMultipartForm(
+		10 << 20,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Invalid form",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	file, header, err := r.FormFile(
+		"image",
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Image required",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	defer file.Close()
+
+	fileName := fmt.Sprintf(
+		"%d-%s",
+		time.Now().Unix(),
+		header.Filename,
+	)
+
+	buffer := make([]byte, 512)
+
+	_, err = file.Read(buffer)
+	if err != nil {
+		return
+	}
+
+	contentType :=
+		http.DetectContentType(
+			buffer,
+		)
+
+	_, err =
+		file.Seek(0, 0)
+
+	if err != nil {
+		return
+	}
+
+	_, err =
+		storage.Client.Storage.UploadFile(
+			"posts",
+			fileName,
+			file,
+			storagego.FileOptions{
+				ContentType: &contentType,
+			},
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			err.Error(),
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	imageURL :=
+		storage.Client.Storage.GetPublicUrl(
+			"posts",
+			fileName,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not update image",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	json.NewEncoder(w).Encode(
+		map[string]any{
+			"url": imageURL.SignedURL,
+		},
+	)
+}

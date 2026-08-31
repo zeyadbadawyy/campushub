@@ -44,7 +44,10 @@ export async function getPosts() {
 
 }
 
-export async function createPost(content) {
+export async function createPost(
+  content,
+  imageUrl = ""
+) {
 
   const token =
     localStorage.getItem("token");
@@ -53,13 +56,14 @@ export async function createPost(content) {
     await api.post(
       "/posts",
       {
-        content
+        content,
+        image_url: imageUrl,
       },
       {
         headers: {
           Authorization:
-            `Bearer ${token}`
-        }
+            `Bearer ${token}`,
+        },
       }
     );
 
@@ -265,9 +269,20 @@ export async function getPost(
   postId
 ) {
 
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
   const response =
     await api.get(
-      `/posts/${postId}`
+      `/posts/${postId}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }     
     );
 
   return response.data;
@@ -276,7 +291,8 @@ export async function getPost(
 
 export async function updatePost(
   postId,
-  content
+  content,
+  imageUrl = ""
 ) {
 
   const token =
@@ -288,7 +304,8 @@ export async function updatePost(
     await api.put(
       `/posts/${postId}`,
       {
-        content
+        content,
+        image_url: imageUrl
       },
       {
         headers: {
@@ -949,6 +966,35 @@ export async function deleteAvatar() {
   const response =
     await api.delete(
       "/upload/avatar",
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+
+}
+
+export async function uploadPostImage(file) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "image",
+    file
+  );
+
+  const response =
+    await api.post(
+      "/upload/post-image",
+      formData,
       {
         headers: {
           Authorization:

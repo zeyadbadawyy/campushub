@@ -98,7 +98,9 @@ func RegisterRoutes() http.Handler {
 		handlers.GetPosts,
 	)
 
-	r.Get(
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/posts/{id}",
 		handlers.GetPost,
 	)
@@ -364,6 +366,13 @@ func RegisterRoutes() http.Handler {
 	).Delete(
 		"/upload/avatar",
 		handlers.DeleteAvatar,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/upload/post-image",
+		handlers.UploadPostImage,
 	)
 
 	r.Get(

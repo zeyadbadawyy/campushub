@@ -1,14 +1,28 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import {
-  createPost
+  FaCameraRetro,
+  FaTimes
+} from "react-icons/fa";
+
+import {
+  createPost,
+  uploadPostImage
 } from "../services/postService";
 
 function CreatePost({
   onPostCreated
 }) {
 
+  const fileInputRef = useRef(null);
+
   const [content, setContent] =
+    useState("");
+  
+  const [image, setImage] =
+    useState(null);
+
+  const [preview, setPreview] =
     useState("");
 
   const [loading, setLoading] =
@@ -16,7 +30,10 @@ function CreatePost({
 
   async function handleSubmit() {
 
-    if (!content.trim()) {
+    if (
+      !content.trim() &&
+      !image
+    ) {
       return;
     }
 
@@ -24,9 +41,36 @@ function CreatePost({
 
       setLoading(true);
 
-      await createPost(content);
+      let imageUrl = "";
+
+      if (image) {
+
+        const uploadResult =
+          await uploadPostImage(
+            image
+          );
+
+        imageUrl =
+          uploadResult.url;
+      }
+
+      await createPost(
+        content,
+        imageUrl
+      );
 
       setContent("");
+      setImage(null);
+
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+
+      setPreview("");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
 
       onPostCreated();
 
@@ -46,6 +90,18 @@ function CreatePost({
 
   }
 
+  useEffect(() => {
+
+    return () => {
+
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+
+    };
+
+  }, [preview]);
+
   return (
 
     <div className="create-post">
@@ -60,8 +116,81 @@ function CreatePost({
         }
       />
 
+      <div className="create-post-actions">
+
+      </div>
+
+        <div>
+          <input
+            ref={fileInputRef}
+            id="post-image"
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+
+              const file =
+                e.target.files[0];
+
+              if (!file)
+                return;
+
+              setImage(file);
+
+              setPreview(
+                URL.createObjectURL(file)
+              );
+            }}
+          />
+
+          <label
+            htmlFor="post-image"
+            className="image-toggle-btn"
+          >
+            <FaCameraRetro /> Photo
+          </label>
+
+        </div>
+          
+
+      {
+        preview && (
+
+          <div className="preview-container">
+
+            <img
+              src={preview}
+              alt="preview"
+              className="post-preview"
+            />
+
+            <button
+              type="button"
+              className="remove-image-btn"
+              onClick={() => {
+
+                setImage(null);
+                URL.revokeObjectURL(preview);
+                setPreview("");
+
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+
+              }}
+            >
+              <FaTimes />
+            </button>
+
+          </div>
+
+        )
+      }
+
       <button
+        className="post-submit-btn"
         onClick={handleSubmit}
+        disabled={loading}
       >
         {
           loading

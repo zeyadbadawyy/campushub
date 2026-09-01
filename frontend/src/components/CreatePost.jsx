@@ -8,7 +8,8 @@ import {
 
 import {
   createPost,
-  uploadPostImage
+  uploadPostImage,
+  searchGifs
 } from "../services/postService";
 
 function CreatePost({
@@ -35,6 +36,15 @@ function CreatePost({
   const [loading, setLoading] =
     useState(false);
 
+  const [showGiphy, setShowGiphy] =
+    useState(false);
+
+  const [gifSearch, setGifSearch] =
+    useState("");
+
+  const [gifResults, setGifResults] =
+    useState([]);
+  
   async function handleSubmit() {
 
     if (
@@ -104,6 +114,40 @@ function CreatePost({
       setLoading(false);
 
     }
+
+  }
+
+  useEffect(() => {
+
+    if (!gifSearch.trim()) {
+      setGifResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+
+      try {
+        const gifs = await searchGifs(gifSearch);
+
+        setGifResults(gifs);
+
+      } catch (error) {
+
+        console.error(error);
+      }
+    }, 300); // 300ms debounce delay
+
+    return () => clearTimeout(timer);
+
+  }, [gifSearch]);
+
+  function closeGiphy() {
+
+    setShowGiphy(false);
+
+    setGifSearch("");
+
+    setGifResults([]);
 
   }
 
@@ -192,6 +236,15 @@ function CreatePost({
         >
           <FaImage />
           GIF
+        </label>
+
+        <label
+          className="image-toggle-btn"
+          onClick={() =>
+            setShowGiphy(true)
+          }
+        >
+          🔥 Giphy
         </label>
 
       </div>
@@ -296,6 +349,72 @@ function CreatePost({
             >
               <FaTimes />
             </button>
+
+          </div>
+
+        )
+      }
+
+      {
+        showGiphy && (
+
+          <div
+            className="giphy-modal"
+            onClick={closeGiphy}
+          >
+
+            <div
+              className="giphy-box"
+              onClick={(e) =>
+                e.stopPropagation()
+              }
+            >
+
+              <div className="giphy-header">
+
+                <input
+                  className="gif-input"
+                  type="text"
+                  placeholder="Search GIFs..."
+                  value={gifSearch}
+                  onChange={(e) => setGifSearch(e.target.value)}
+                  autoFocus
+                />
+
+              </div>
+
+              <div
+                className="giphy-grid"
+              >
+
+                {
+                  gifResults.map(
+                    gif => (
+
+                      <img
+                        key={gif.id}
+                        src={
+                          gif.images.fixed_height.url
+                        }
+                        alt=""
+                        onClick={() => {
+
+                          setGifUrl(
+                            gif.images.original.url
+                          );
+
+                          closeGiphy();
+
+                        }}
+                      />
+
+                    )
+                  )
+                }
+
+              </div>
+
+            </div>
 
           </div>
 

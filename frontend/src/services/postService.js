@@ -1046,3 +1046,18 @@ export async function uploadChatImage(
 
   return response.data;
 }
+
+export async function searchGifs(query) {
+
+  const response =
+    await fetch(
+      `https://api.giphy.com/v1/gifs/search?api_key=${
+        import.meta.env.VITE_GIPHY_API_KEY
+      }&q=${query}&limit=20`
+    );
+
+  const data =
+    await response.json();
+
+  return data.data;
+}

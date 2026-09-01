@@ -611,40 +611,42 @@ function Chat() {
         }
 
         <div className="chat-input-area">
+          <div className="chat-image-container">
+            <input
+              hidden
+              id="chat-image"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
 
-          <input
-            hidden
-            id="chat-image"
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
+                const file =
+                  e.target.files[0];
 
-              const file =
-                e.target.files[0];
+                if (!file) return;
 
-              if (!file) return;
+                setImage(file);
 
-              setImage(file);
+                if (imagePreview) {
+                  URL.revokeObjectURL(
+                    imagePreview
+                  );
+                }
 
-              if (imagePreview) {
-                URL.revokeObjectURL(
-                  imagePreview
+                setImagePreview(
+                  URL.createObjectURL(file)
                 );
-              }
 
-              setImagePreview(
-                URL.createObjectURL(file)
-              );
+              }}
+            />
 
-            }}
-          />
+            <label
+              htmlFor="chat-image"
+              className="chat-image-btn"
+            >
+              <FaImage />
+            </label>
 
-          <label
-            htmlFor="chat-image"
-            className="chat-image-btn"
-          >
-            <FaImage />
-          </label>
+          </div>
 
           {
             imagePreview && (

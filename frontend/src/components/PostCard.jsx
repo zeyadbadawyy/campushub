@@ -4,7 +4,8 @@ import {
   FaEdit,
   FaTrash,
   FaTimes,
-  FaCameraRetro
+  FaCameraRetro,
+  FaImage
 } from "react-icons/fa";
 
 import {
@@ -59,6 +60,18 @@ function PostCard({ post, onLike }) {
   ] = useState(
     post.image_url || ""
   );
+
+  const [
+    editedGif,
+    setEditedGif
+  ] = useState(
+    post.gif_url || ""
+  );
+
+  const [
+    showGifInput,
+    setShowGifInput
+  ] = useState(false);
 
   const navigate =
     useNavigate();
@@ -134,7 +147,8 @@ function PostCard({ post, onLike }) {
       await updatePost(
         post.id,
         editedContent,
-        editedImage
+        editedImage,
+        editedGif
       );
 
       setIsEditing(false);
@@ -274,6 +288,10 @@ function PostCard({ post, onLike }) {
                     post.image_url || ""
                   );
 
+                  setEditedGif(
+                    post.gif_url || ""
+                  );
+
                   setIsEditing(true);
 
                 }}
@@ -317,13 +335,16 @@ function PostCard({ post, onLike }) {
                 }
               />
 
-              {
-                editedImage && (
+             {
+               (editedImage || editedGif) && (
 
                   <div className="preview-container">
 
                     <img
-                      src={editedImage}
+                      src={
+                        editedImage ||
+                        editedGif
+                      }
                       alt=""
                       className="post-preview"
                     />
@@ -331,9 +352,10 @@ function PostCard({ post, onLike }) {
                     <button
                       type="button"
                       className="remove-image-btn"
-                      onClick={() =>
-                        setEditedImage("")
-                      }
+                      onClick={() => {
+                        setEditedImage("");
+                        setEditedGif("");
+                      }}
                     >
                       <FaTimes />
                     </button>
@@ -372,6 +394,8 @@ function PostCard({ post, onLike }) {
                           file
                         );
 
+                      setEditedGif("");
+
                       setEditedImage(
                         result.url
                       );
@@ -386,6 +410,39 @@ function PostCard({ post, onLike }) {
                 />
 
               </label>
+              
+              <label
+                className="image-edit-btn"
+                onClick={() =>
+                  setShowGifInput(
+                    !showGifInput
+                  )
+                }
+              >
+                <FaImage /> Add GIF
+              </label>
+
+              {
+                showGifInput && (
+
+                  <input
+                    type="text"
+                    placeholder="Paste GIF URL..."
+                    className="gif-input"
+                    value={editedGif}
+                    onChange={(e) => {
+
+                      setEditedImage("");
+
+                      setEditedGif(
+                        e.target.value
+                      );
+
+                    }}
+                  />
+
+                )
+              }
 
               <div className="edit-actions">
 
@@ -406,6 +463,10 @@ function PostCard({ post, onLike }) {
 
                     setEditedImage(
                       post.image_url || ""
+                    );
+
+                    setEditedGif(
+                      post.gif_url || ""
                     );
 
                     setIsEditing(false);
@@ -431,9 +492,12 @@ function PostCard({ post, onLike }) {
               }
 
               {
-                post.image_url && (
+                (post.image_url || post.gif_url) && (
                   <img
-                    src={post.image_url}
+                    src={
+                      post.image_url ||
+                      post.gif_url
+                    }
                     alt="Post"
                     className="post-image"
                     onClick={() =>
@@ -458,7 +522,10 @@ function PostCard({ post, onLike }) {
             >
 
               <img
-                src={post.image_url}
+                src={
+                  post.image_url ||
+                  post.gif_url
+                }
                 alt="Post"
                 className="image-modal-content"
               />

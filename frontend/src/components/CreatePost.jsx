@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 import {
   FaCameraRetro,
+  FaImage,
   FaTimes
 } from "react-icons/fa";
 
@@ -18,9 +19,15 @@ function CreatePost({
 
   const [content, setContent] =
     useState("");
-  
+
   const [image, setImage] =
     useState(null);
+
+  const [gifUrl, setGifUrl] =
+    useState("");
+
+  const [showGifInput, setShowGifInput] =
+    useState(false);
 
   const [preview, setPreview] =
     useState("");
@@ -32,7 +39,8 @@ function CreatePost({
 
     if (
       !content.trim() &&
-      !image
+      !image &&
+      !gifUrl.trim()
     ) {
       return;
     }
@@ -52,24 +60,33 @@ function CreatePost({
 
         imageUrl =
           uploadResult.url;
+
       }
 
       await createPost(
         content,
-        imageUrl
+        imageUrl,
+        gifUrl
       );
 
       setContent("");
       setImage(null);
+      setGifUrl("");
+      setShowGifInput(false);
 
       if (preview) {
-        URL.revokeObjectURL(preview);
+        URL.revokeObjectURL(
+          preview
+        );
       }
 
       setPreview("");
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (
+        fileInputRef.current
+      ) {
+        fileInputRef.current.value =
+          "";
       }
 
       onPostCreated();
@@ -95,7 +112,11 @@ function CreatePost({
     return () => {
 
       if (preview) {
-        URL.revokeObjectURL(preview);
+
+        URL.revokeObjectURL(
+          preview
+        );
+
       }
 
     };
@@ -118,40 +139,101 @@ function CreatePost({
 
       <div className="create-post-actions">
 
+        <input
+          ref={fileInputRef}
+          id="post-image"
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+
+            const file =
+              e.target.files[0];
+
+            if (!file) {
+              return;
+            }
+
+            setGifUrl("");
+
+            if (preview) {
+              URL.revokeObjectURL(
+                preview
+              );
+            }
+
+            setImage(file);
+
+            setPreview(
+              URL.createObjectURL(
+                file
+              )
+            );
+
+          }}
+        />
+
+        <label
+          htmlFor="post-image"
+          className="image-toggle-btn"
+        >
+          <FaCameraRetro />
+          Photo
+        </label>
+
+        <label
+          type="button"
+          className="image-toggle-btn"
+          onClick={() =>
+            setShowGifInput(
+              !showGifInput
+            )
+          }
+        >
+          <FaImage />
+          GIF
+        </label>
+
       </div>
 
-        <div>
+      {
+        showGifInput && (
+
           <input
-            ref={fileInputRef}
-            id="post-image"
-            type="file"
-            accept="image/*"
-            hidden
+            type="text"
+            placeholder="Paste GIF URL..."
+            value={gifUrl}
             onChange={(e) => {
 
-              const file =
-                e.target.files[0];
+              setImage(null);
 
-              if (!file)
-                return;
+              if (preview) {
 
-              setImage(file);
+                URL.revokeObjectURL(
+                  preview
+                );
 
-              setPreview(
-                URL.createObjectURL(file)
+              }
+
+              setPreview("");
+
+              if (
+                fileInputRef.current
+              ) {
+                fileInputRef.current.value =
+                  "";
+              }
+
+              setGifUrl(
+                e.target.value
               );
+
             }}
+            className="gif-input"
           />
 
-          <label
-            htmlFor="post-image"
-            className="image-toggle-btn"
-          >
-            <FaCameraRetro /> Photo
-          </label>
-
-        </div>
-          
+        )
+      }
 
       {
         preview && (
@@ -170,14 +252,47 @@ function CreatePost({
               onClick={() => {
 
                 setImage(null);
-                URL.revokeObjectURL(preview);
+
+                URL.revokeObjectURL(
+                  preview
+                );
+
                 setPreview("");
 
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = "";
+                if (
+                  fileInputRef.current
+                ) {
+                  fileInputRef.current.value =
+                    "";
                 }
 
               }}
+            >
+              <FaTimes />
+            </button>
+
+          </div>
+
+        )
+      }
+
+      {
+        gifUrl && (
+
+          <div className="preview-container">
+
+            <img
+              src={gifUrl}
+              alt="gif"
+              className="post-preview"
+            />
+
+            <button
+              type="button"
+              className="remove-image-btn"
+              onClick={() =>
+                setGifUrl("")
+              }
             >
               <FaTimes />
             </button>

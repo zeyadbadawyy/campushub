@@ -478,7 +478,7 @@ button {
 
 }
 
-.create-post button {
+.create-post button:not(.remove-image-btn) {
 
   background: var(--primary);
 
@@ -494,7 +494,7 @@ button {
 
 }
 
-.create-post button:hover {
+.create-post button:not(.remove-image-btn):hover {
 
   background: var(--primary-hover);
 
@@ -3531,6 +3531,7 @@ button {
   background: #f4f6f8;
   font-weight: 600;
   margin-top: 12px;
+  margin-right: 20px;
 }
 
 .image-edit-btn:hover {
@@ -3541,6 +3542,24 @@ button {
   display: flex;
   gap: 10px;
   margin-top: 16px;
+}
+
+.gif-input {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.gif-input:focus {
+  outline: none;
+  background: white;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
 }
 
 /* =========================

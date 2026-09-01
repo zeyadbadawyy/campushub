@@ -46,7 +46,8 @@ export async function getPosts() {
 
 export async function createPost(
   content,
-  imageUrl = ""
+  imageUrl = "",
+  gifUrl = ""
 ) {
 
   const token =
@@ -58,6 +59,7 @@ export async function createPost(
       {
         content,
         image_url: imageUrl,
+        gif_url: gifUrl,
       },
       {
         headers: {
@@ -292,7 +294,8 @@ export async function getPost(
 export async function updatePost(
   postId,
   content,
-  imageUrl = ""
+  imageUrl = "",
+  gifUrl = ""
 ) {
 
   const token =
@@ -305,7 +308,8 @@ export async function updatePost(
       `/posts/${postId}`,
       {
         content,
-        image_url: imageUrl
+        image_url: imageUrl,
+        gif_url: gifUrl
       },
       {
         headers: {

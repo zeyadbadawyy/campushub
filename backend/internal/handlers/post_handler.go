@@ -33,6 +33,7 @@ func CreatePost(
 	type CreatePostRequest struct {
 		Content  string `json:"content"`
 		ImageURL string `json:"image_url"`
+		GIFURL   string `json:"gif_url"`
 	}
 
 	userID :=
@@ -63,7 +64,8 @@ func CreatePost(
 	}
 
 	if request.Content == "" &&
-		request.ImageURL == "" {
+		request.ImageURL == "" &&
+		request.GIFURL == "" {
 
 		http.Error(
 			w,
@@ -79,21 +81,24 @@ func CreatePost(
 			`
 			INSERT INTO posts
 			(
-				user_id,
-				content,
-				image_url
+					user_id,
+					content,
+					image_url,
+					gif_url
 			)
 			VALUES
 			(
 				$1,
 				$2,
-				$3
+				$3,
+    		$4
 			)
 			RETURNING id, created_at
 			`,
 			userID,
 			request.Content,
 			request.ImageURL,
+			request.GIFURL,
 		).Scan(
 			&post.ID,
 			&post.CreatedAt,
@@ -113,6 +118,7 @@ func CreatePost(
 	post.UserID = userID
 	post.Content = request.Content
 	post.ImageURL = request.ImageURL
+	post.GIFURL = request.GIFURL
 
 	var authorName string
 	var faculty string
@@ -142,6 +148,7 @@ WHERE id = $1
 				"avatar_url": avatarURL,
 				"content":    post.Content,
 				"image_url":  post.ImageURL,
+				"gif_url":    post.GIFURL,
 				"created_at": post.CreatedAt,
 				"likes":      0,
 				"comments":   0,
@@ -223,6 +230,7 @@ func GetPosts(
 				users.avatar_url,
 				posts.content,
 				posts.image_url,
+				posts.gif_url,
 				posts.created_at,
 				COUNT(DISTINCT likes.id) AS likes,
 				COUNT(DISTINCT comments.id) AS comments,
@@ -303,6 +311,7 @@ func GetPosts(
 			&post.AvatarURL,
 			&post.Content,
 			&post.ImageURL,
+			&post.GIFURL,
 			&post.CreatedAt,
 			&post.Likes,
 			&post.Comments,
@@ -410,6 +419,7 @@ func GetUserPosts(
 			users.avatar_url,
 			posts.content,
 			posts.image_url,
+			posts.gif_url,
 			posts.created_at,
 			COUNT(DISTINCT likes.id) AS likes,
 			COUNT(DISTINCT comments.id) AS comments,
@@ -467,6 +477,7 @@ func GetUserPosts(
 			&post.AvatarURL,
 			&post.Content,
 			&post.ImageURL,
+			&post.GIFURL,
 			&post.CreatedAt,
 			&post.Likes,
 			&post.Comments,
@@ -658,6 +669,7 @@ func UpdatePost(
 	var request struct {
 		Content  string `json:"content"`
 		ImageURL string `json:"image_url"`
+		GIFURL   string `json:"gif_url"`
 	}
 
 	err = json.NewDecoder(
@@ -678,7 +690,8 @@ func UpdatePost(
 	}
 
 	if request.Content == "" &&
-		request.ImageURL == "" {
+		request.ImageURL == "" &&
+		request.GIFURL == "" {
 
 		http.Error(
 			w,
@@ -693,12 +706,14 @@ func UpdatePost(
 		`
 		UPDATE posts
 		SET
-			content=$1,
-			image_url=$2
-		WHERE id=$3
+				content=$1,
+				image_url=$2,
+				gif_url=$3
+		WHERE id=$4
 		`,
 		request.Content,
 		request.ImageURL,
+		request.GIFURL,
 		postID,
 	)
 
@@ -763,6 +778,7 @@ func GetPost(
 			users.avatar_url,
 			posts.content,
 			posts.image_url,
+			posts.gif_url,
 			posts.created_at,
 			COUNT(DISTINCT likes.id) AS likes,
 			COUNT(DISTINCT comments.id) AS comments,
@@ -798,6 +814,7 @@ func GetPost(
 		&post.AvatarURL,
 		&post.Content,
 		&post.ImageURL,
+		&post.GIFURL,
 		&post.CreatedAt,
 		&post.Likes,
 		&post.Comments,

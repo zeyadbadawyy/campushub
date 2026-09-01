@@ -10,6 +10,7 @@ type FeedPost struct {
 	AvatarURL string    `json:"avatar_url"`
 	Content   string    `json:"content"`
 	ImageURL  string    `json:"image_url"`
+	GIFURL    string    `json:"gif_url"`
 	CreatedAt time.Time `json:"created_at"`
 	Likes     int       `json:"likes"`
 	Comments  int       `json:"comments"`

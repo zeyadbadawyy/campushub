@@ -7,5 +7,6 @@ type Post struct {
 	UserID    int       `json:"user_id"`
 	Content   string    `json:"content"`
 	ImageURL  string    `json:"image_url"`
+	GIFURL    string    `json:"gif_url"`
 	CreatedAt time.Time `json:"created_at"`
 }

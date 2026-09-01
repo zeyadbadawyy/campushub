@@ -1,6 +1,8 @@
 import {
   FaChevronRight,
-  FaPaperPlane
+  FaPaperPlane,
+  FaImage,
+  FaTimes
 } from "react-icons/fa";
 
 import {
@@ -27,7 +29,8 @@ import {
   getConversation,
   sendMessage,
   getUserProfile,
-  getOnlineStatus
+  getOnlineStatus,
+  uploadChatImage
 } from "../services/postService";
 
 import {
@@ -60,6 +63,15 @@ function Chat() {
     content,
     setContent
   ] = useState("");
+
+  const [image, setImage] =
+    useState(null);
+
+  const [imagePreview, setImagePreview] =
+    useState("");
+
+  const [showImage, setShowImage] =
+    useState(null);
 
   const [
     chatUser,
@@ -141,15 +153,33 @@ function Chat() {
 
   async function handleSend() {
 
-    if (!content.trim())
+    if (
+      !content.trim() &&
+      !image
+    )
       return;
 
     try {
 
+      let imageUrl = "";
+
+      if (image) {
+
+        const upload =
+          await uploadChatImage(
+            image
+          );
+
+        imageUrl =
+          upload.url;
+
+      }
+
       const response =
         await sendMessage(
           id,
-          content
+          content,
+          imageUrl
         );
       
       setMessages(
@@ -160,6 +190,22 @@ function Chat() {
       );
 
       setContent("");
+
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+
+      setImage(null);
+      setImagePreview("");
+
+      const input =
+        document.getElementById(
+          "chat-image"
+        );
+
+      if (input) {
+        input.value = "";
+      }
 
     } catch (error) {
 
@@ -434,13 +480,40 @@ function Chat() {
 
                       <div
                         className={
-                          isMine
-                            ? "message-bubble mine"
-                            : "message-bubble"
+                          message.image_url && !message.content
+                            ? "message-bubble image-only"
+                            : isMine
+                              ? "message-bubble mine"
+                              : "message-bubble"
                         }
                       >
 
-                        {message.content}
+                        <>
+                          {
+                            message.content && (
+                              <p>
+                                {message.content}
+                              </p>
+                            )
+                          }
+
+                          {
+                            message.image_url && (
+
+                              <img
+                                src={message.image_url}
+                                alt=""
+                                className="chat-message-image"
+                                onClick={() =>
+                                  setShowImage(
+                                    message.image_url
+                                  )
+                                }
+                              />
+
+                            )
+                          }
+                        </>
 
                       </div>
 
@@ -516,8 +589,102 @@ function Chat() {
 
         </div>
 
+        {
+          showImage && (
+
+            <div
+              className="image-modal"
+              onClick={() =>
+                setShowImage(null)
+              }
+            >
+
+              <img
+                src={showImage}
+                alt=""
+                className="image-modal-content"
+              />
+
+            </div>
+
+          )
+        }
 
         <div className="chat-input-area">
+
+          <input
+            hidden
+            id="chat-image"
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+
+              const file =
+                e.target.files[0];
+
+              if (!file) return;
+
+              setImage(file);
+
+              if (imagePreview) {
+                URL.revokeObjectURL(
+                  imagePreview
+                );
+              }
+
+              setImagePreview(
+                URL.createObjectURL(file)
+              );
+
+            }}
+          />
+
+          <label
+            htmlFor="chat-image"
+            className="chat-image-btn"
+          >
+            <FaImage />
+          </label>
+
+          {
+            imagePreview && (
+
+              <div className="chat-preview">
+
+                <img
+                  src={imagePreview}
+                  alt=""
+                />
+
+                <button
+                  className="remove-image-btn"
+                  onClick={() => {
+
+                    if (imagePreview) {
+                      URL.revokeObjectURL(imagePreview);
+                    }
+
+                    setImage(null);
+                    setImagePreview("");
+
+                    const input =
+                      document.getElementById(
+                        "chat-image"
+                      );
+
+                    if (input) {
+                      input.value = "";
+                    }
+
+                  }}
+                >
+                  <FaTimes />
+                </button>
+
+              </div>
+
+            )
+          }
 
           <textarea
             value={content}
@@ -546,7 +713,10 @@ function Chat() {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
 
-                if (content.trim()) {
+                if (
+                  content.trim() ||
+                  image
+                ) {
                   handleSend();
                 }
               }

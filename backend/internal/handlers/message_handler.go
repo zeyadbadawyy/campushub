@@ -198,7 +198,8 @@ func SendMessage(
 		return
 	}
 
-	if message.Content == "" {
+	if message.Content == "" &&
+		message.ImageURL == "" {
 
 		http.Error(
 			w,
@@ -212,13 +213,25 @@ func SendMessage(
 	err = database.DB.QueryRow(
 		`
 		INSERT INTO messages
-		(sender_id,receiver_id,content)
-		VALUES ($1,$2,$3)
+		(
+				sender_id,
+				receiver_id,
+				content,
+				image_url
+		)
+		VALUES
+		(
+				$1,
+				$2,
+				$3,
+				$4
+		)
 		RETURNING id,created_at
 		`,
 		senderID,
 		receiverID,
 		message.Content,
+		message.ImageURL,
 	).Scan(
 		&message.ID,
 		&message.CreatedAt,
@@ -535,6 +548,7 @@ func GetConversation(
 			sender_id,
 			receiver_id,
 			content,
+			image_url,
 			created_at,
 			is_read
 		FROM messages
@@ -578,6 +592,7 @@ func GetConversation(
 			&message.SenderID,
 			&message.ReceiverID,
 			&message.Content,
+			&message.ImageURL,
 			&message.CreatedAt,
 			&message.IsRead,
 		)
@@ -624,6 +639,7 @@ func GetConversations(
 			u.name,
 			u.avatar_url,
 			m.content,
+			m.image_url,
 			m.created_at,
 
 			(
@@ -648,6 +664,7 @@ func GetConversations(
 				sender_id,
 				receiver_id,
 				content,
+				image_url,
 				created_at
 
 			FROM messages
@@ -704,6 +721,7 @@ func GetConversations(
 			&conversation.Name,
 			&conversation.AvatarURL,
 			&conversation.LastMessage,
+			&conversation.ImageURL,
 			&conversation.LastMessageTime,
 			&conversation.UnreadCount,
 		)

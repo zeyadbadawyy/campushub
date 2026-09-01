@@ -405,7 +405,16 @@ function Messages() {
 
                       <p className="conversation-preview">
 
-                        {truncateMessage(user.last_message)}
+                        {
+                          user.last_message &&
+                          user.image_url
+                            ? `📷 ${truncateMessage(user.last_message)}`
+                            : user.last_message
+                              ? truncateMessage(user.last_message)
+                              : user.image_url
+                                ? "📷 Image"
+                                : ""
+                        }
 
                       </p>
 

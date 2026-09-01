@@ -413,7 +413,8 @@ export async function getConversation(
 
 export async function sendMessage(
   userId,
-  content
+  content,
+  imageUrl = ""
 ) {
 
   const token =
@@ -423,7 +424,8 @@ export async function sendMessage(
     await api.post(
       `/messages/${userId}`,
       {
-        content
+        content,
+        image_url: imageUrl
       },
       {
         headers: {
@@ -1009,4 +1011,38 @@ export async function uploadPostImage(file) {
 
   return response.data;
 
+}
+
+export async function uploadChatImage(
+  file
+) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "image",
+    file
+  );
+
+  const response =
+    await api.post(
+      "/upload/chat-image",
+      formData,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+          "Content-Type":
+            "multipart/form-data"
+        }
+      }
+    );
+
+  return response.data;
 }

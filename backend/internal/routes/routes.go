@@ -375,6 +375,13 @@ func RegisterRoutes() http.Handler {
 		handlers.UploadPostImage,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/upload/chat-image",
+		handlers.UploadChatImage,
+	)
+
 	r.Get(
 		"/swagger/*",
 		httpSwagger.Handler(

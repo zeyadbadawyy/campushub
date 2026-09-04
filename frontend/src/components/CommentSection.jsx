@@ -1,7 +1,12 @@
 import {
   useEffect,
-  useState
+  useState,
+  useRef
 } from "react";
+
+import {
+  FaSmile
+} from "react-icons/fa";
 
 import {
   getComments,
@@ -19,6 +24,10 @@ import Avatar from "./Avatar";
 import {
   useWebSocket
 } from "../contexts/WebSocketContext";
+
+import EmojiPicker from "emoji-picker-react";
+
+
 
 function CommentSection({
   postId,
@@ -44,6 +53,13 @@ function CommentSection({
   const {
     comments: wsComments
   } = useWebSocket();
+
+  const [
+    showEmojiPicker,
+    setShowEmojiPicker
+  ] = useState(false);
+
+  const pickerRef = useRef(null);
 
   useEffect(() => {
 
@@ -160,6 +176,43 @@ function CommentSection({
 
   }, [wsComments, postId]);
 
+  useEffect(() => {
+
+    function handleClickOutside(
+      event
+    ) {
+
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(
+          event.target
+        )
+      ) {
+
+        setShowEmojiPicker(
+          false
+        );
+
+      }
+
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+
+    };
+
+  }, []);
+
   async function handleComment() {
 
     if (!content.trim())
@@ -220,6 +273,17 @@ function CommentSection({
 
   }
 
+  function handleEmojiClick(
+    emojiData
+  ) {
+
+    setContent(
+      prev =>
+        prev + emojiData.emoji
+    );
+
+  }
+
   return (
 
     <div className="comment-section">
@@ -237,12 +301,41 @@ function CommentSection({
         />
 
         <button
+          type="button"
+          className="emoji-btn"
+          onClick={() =>
+            setShowEmojiPicker(
+              !showEmojiPicker
+            )
+          }
+        >
+          <FaSmile />
+        </button>
+
+        <button
           onClick={handleComment}
         >
           Comment
         </button>
 
       </div>
+
+      {
+        showEmojiPicker && (
+
+          <div
+            ref={pickerRef}
+            className="chat-emoji-picker"
+          >
+
+            <EmojiPicker
+              theme="dark"
+              onEmojiClick={handleEmojiClick}
+            />
+
+          </div>
+        )
+      }
 
       <div className="comments-list">
         

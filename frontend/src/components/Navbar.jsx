@@ -33,7 +33,16 @@ import {
   useWebSocket
 } from "../contexts/WebSocketContext";
 
+import {
+  useTheme
+} from "../contexts/ThemeContext";
+
 function Navbar() {
+
+  const {
+    darkMode,
+    toggleDarkMode
+  } = useTheme();
 
   const {
     notifications,
@@ -717,9 +726,13 @@ function Navbar() {
                 Settings
               </button>
 
-              <button>
+              <button
+                onClick={toggleDarkMode}
+              >
 
-                Dark Mode
+                {darkMode
+                  ? "☀️ Light Mode"
+                  : "🌙 Dark Mode"}
 
               </button>
 

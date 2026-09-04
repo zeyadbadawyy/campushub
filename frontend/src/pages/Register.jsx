@@ -134,13 +134,13 @@ function Register() {
         </form>
 
         <p
-          style={{
-            marginTop: "20px"
-          }}
+          className="login-text"
         >
           Already have an account?{" "}
-          <Link to="/login">
-            Login
+          <Link 
+            className="login-link"
+            to="/login">
+              Login
           </Link>
         </p>
 

@@ -23,7 +23,11 @@ createRoot(document.getElementById('root')).render(
 
     <WebSocketProvider>
 
-      <App />
+      <ThemeProvider>
+
+        <App />
+
+      </ThemeProvider>
 
     </WebSocketProvider>
 

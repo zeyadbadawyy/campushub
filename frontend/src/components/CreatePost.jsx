@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 
+import EmojiPicker from "emoji-picker-react";
+
 import {
   FaCameraRetro,
   FaImage,
-  FaTimes
+  FaTimes,
+  FaSmile
 } from "react-icons/fa";
 
 import {
@@ -45,6 +48,11 @@ function CreatePost({
   const [gifResults, setGifResults] =
     useState([]);
   
+  const [showEmojiPicker, setShowEmojiPicker] =
+    useState(false);
+
+  const pickerRef = useRef(null);
+
   async function handleSubmit() {
 
     if (
@@ -141,6 +149,43 @@ function CreatePost({
 
   }, [gifSearch]);
 
+  useEffect(() => {
+
+    function handleClickOutside(
+      event
+    ) {
+
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(
+          event.target
+        )
+      ) {
+
+        setShowEmojiPicker(
+          false
+        );
+
+      }
+
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+
+    };
+
+  }, []);
+
   function closeGiphy() {
 
     setShowGiphy(false);
@@ -167,6 +212,15 @@ function CreatePost({
 
   }, [preview]);
 
+  function handleEmojiClick(emojiData) {
+
+    setContent(
+      prev =>
+        prev + emojiData.emoji
+    );
+
+  }
+
   return (
 
     <div className="create-post">
@@ -182,6 +236,19 @@ function CreatePost({
       />
 
       <div className="create-post-actions">
+
+        <label
+          type="button"
+          className="image-toggle-btn"
+          onClick={() =>
+            setShowEmojiPicker(
+              !showEmojiPicker
+            )
+          }
+        >
+          <FaSmile />
+          Emoji
+        </label>
 
         <input
           ref={fileInputRef}
@@ -248,6 +315,24 @@ function CreatePost({
         </label>
 
       </div>
+
+      {
+        showEmojiPicker && (
+
+          <div
+            ref={pickerRef}
+            className="chat-emoji-picker"
+          >
+
+            <EmojiPicker
+              theme="dark"
+              onEmojiClick={handleEmojiClick}
+            />
+
+          </div>
+
+        )
+      }
 
       {
         showGifInput && (

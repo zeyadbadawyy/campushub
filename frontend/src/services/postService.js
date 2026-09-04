@@ -1053,7 +1053,7 @@ export async function searchGifs(query) {
     await fetch(
       `https://api.giphy.com/v1/gifs/search?api_key=${
         import.meta.env.VITE_GIPHY_API_KEY
-      }&q=${query}&limit=20`
+      }&q=${query}&limit=70`
     );
 
   const data =

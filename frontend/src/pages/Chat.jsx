@@ -2,8 +2,11 @@ import {
   FaChevronRight,
   FaPaperPlane,
   FaImage,
-  FaTimes
+  FaTimes,
+  FaSmile
 } from "react-icons/fa";
+
+import EmojiPicker from "emoji-picker-react";
 
 import {
   useEffect,
@@ -86,7 +89,6 @@ function Chat() {
   const bottomRef =
     useRef(null);
 
-
   const typingTimeout =
     useRef(null);
 
@@ -104,6 +106,13 @@ function Chat() {
     messages: wsMessages
   } = useWebSocket();
   
+  const [
+    showEmojiPicker,
+    setShowEmojiPicker
+  ] = useState(false);
+
+  const pickerRef = useRef(null);
+
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
@@ -350,6 +359,43 @@ function Chat() {
     id
   ]);
 
+  useEffect(() => {
+
+    function handleClickOutside(
+      event
+    ) {
+
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(
+          event.target
+        )
+      ) {
+
+        setShowEmojiPicker(
+          false
+        );
+
+      }
+
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+
+    };
+
+  }, []);
+
   function getLastSeen(
     lastSeen,
     showOnlineStatus
@@ -382,6 +428,17 @@ function Chat() {
       return `Last seen ${Math.floor(diff / 3600)}h ago`;
 
     return `Last seen ${Math.floor(diff / 86400)}d ago`;
+  }
+
+  function handleEmojiClick(
+    emojiData
+  ) {
+
+    setContent(
+      prev =>
+        prev + emojiData.emoji
+    );
+
   }
 
   return (
@@ -682,6 +739,36 @@ function Chat() {
                 >
                   <FaTimes />
                 </button>
+
+              </div>
+
+            )
+          }
+
+          <button
+            type="button"
+            className="emoji-btn"
+            onClick={() =>
+              setShowEmojiPicker(
+                !showEmojiPicker
+              )
+            }
+          >
+            <FaSmile />
+          </button>
+
+          {
+            showEmojiPicker && (
+
+              <div
+                ref={pickerRef}
+                className="chat-emoji-picker"
+              >
+
+                <EmojiPicker
+                  theme="dark"
+                  onEmojiClick={handleEmojiClick}
+                />
 
               </div>
 

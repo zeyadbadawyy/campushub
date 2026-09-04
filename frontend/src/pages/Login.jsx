@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import AuthLayout from "../layouts/AuthLayout";
 
@@ -89,6 +89,17 @@ function Login() {
         >
           Sign In
         </button>
+
+        <p className="register-text">
+          Don't have an account?{' '}
+
+          <Link 
+            className="register-link"
+            to="/register">
+              Register
+          </Link>
+
+        </p>
 
       </div>
 

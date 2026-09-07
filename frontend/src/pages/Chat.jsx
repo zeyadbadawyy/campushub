@@ -1,71 +1,72 @@
 import {
-  FaChevronRight,
-  FaPaperPlane,
-  FaImage,
-  FaTimes,
-  FaSmile
-} from "react-icons/fa";
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  motion,
+  AnimatePresence,
+} from "framer-motion";
+
+import {
+  ArrowLeft,
+  Image as ImageIcon,
+  Smile,
+  Send,
+  X,
+  ChevronRight,
+  MessageCircle,
+  MoreHorizontal,
+  VolumeX,
+  Volume2,
+  UserRound,
+} from "lucide-react";
 
 import EmojiPicker from "emoji-picker-react";
 
 import {
-  useEffect,
-  useState,
-  useRef
-} from "react";
-
-import {
   useParams,
-  useNavigate
+  useNavigate,
 } from "react-router-dom";
 
 import Avatar from "../components/Avatar";
 
 import {
-  useWebSocket
+  useWebSocket,
 } from "../contexts/WebSocketContext";
 
-import MainLayout
-  from "../layouts/MainLayout";
+import MainLayout from "../layouts/MainLayout";
 
 import {
   getConversation,
   sendMessage,
   getUserProfile,
-  getOnlineStatus,
-  uploadChatImage
+  uploadChatImage,
 } from "../services/postService";
 
 import {
-  getCurrentUser
+  getCurrentUser,
 } from "../services/auth";
 
-
 function Chat() {
-
   const {
     socket,
     typingUsers,
     readReceipts,
     onlineUsers,
-    lastSeenUsers
+    lastSeenUsers,
   } = useWebSocket();
 
-  const { id } =
-    useParams();
+  const { id } = useParams();
 
-  const navigate = 
-    useNavigate();
+  const navigate = useNavigate();
 
-  const [
-    messages,
-    setMessages
-  ] = useState([]);
+  const [messages, setMessages] =
+    useState([]);
 
-  const [
-    content,
-    setContent
-  ] = useState("");
+  const [content, setContent] =
+    useState("");
 
   const [image, setImage] =
     useState(null);
@@ -76,112 +77,96 @@ function Chat() {
   const [showImage, setShowImage] =
     useState(null);
 
-  const [
-    chatUser,
-    setChatUser
-  ] = useState(null);
+  const [chatUser, setChatUser] =
+    useState(null);
 
-  const [
-    currentUser,
-    setCurrentUser
-  ] = useState(null);
+  const [currentUser, setCurrentUser] =
+    useState(null);
+
+  const [isTyping, setIsTyping] =
+    useState(false);
+
+  const [isOnline, setIsOnline] =
+    useState(false);
+
+  const [showEmojiPicker, setShowEmojiPicker] =
+    useState(false);
 
   const bottomRef =
+    useRef(null);
+
+  const pickerRef =
+    useRef(null);
+
+  const fileInputRef =
     useRef(null);
 
   const typingTimeout =
     useRef(null);
 
-  const [
-    isTyping,
-    setIsTyping
-  ] = useState(false);
-
-  const [
-    isOnline,
-    setIsOnline
-  ] = useState(false);
+  const [showChatMenu, setShowChatMenu] =
+    useState(false);
 
   const {
-    messages: wsMessages
+    messages: wsMessages,
   } = useWebSocket();
-  
-  const [
-    showEmojiPicker,
-    setShowEmojiPicker
-  ] = useState(false);
 
-  const pickerRef = useRef(null);
-
-  const [, forceUpdate] = useState(0);
+  const [, forceUpdate] =
+    useState(0);
 
   useEffect(() => {
-
     const interval =
       setInterval(() => {
-
         forceUpdate(
-          prev => prev + 1
+          (prev) => prev + 1
         );
-
       }, 60000);
 
     return () =>
       clearInterval(interval);
-
   }, []);
 
+  function openProfile() {
+    setShowChatMenu(false);
+    navigate(`/profile/${id}`);
+  }
+
   useEffect(() => {
-
     bottomRef.current?.scrollIntoView({
-      behavior: "smooth"
+      behavior: "smooth",
     });
-
-  }, [messages, isTyping]);
+  }, [
+    messages,
+    isTyping,
+  ]);
 
   async function loadMessages() {
-
     try {
-
       const data =
-        await getConversation(
-          id
-        );
+        await getConversation(id);
 
-      setMessages(
-        data || []
-      );
-
+      setMessages(data || []);
     } catch (error) {
-
       console.error(error);
-
     }
-
   }
 
   async function handleSend() {
-
     if (
       !content.trim() &&
       !image
-    )
+    ) {
       return;
+    }
 
     try {
-
       let imageUrl = "";
 
       if (image) {
-
         const upload =
-          await uploadChatImage(
-            image
-          );
+          await uploadChatImage(image);
 
-        imageUrl =
-          upload.url;
-
+        imageUrl = upload.url;
       }
 
       const response =
@@ -190,100 +175,69 @@ function Chat() {
           content,
           imageUrl
         );
-      
-      setMessages(
-        (prev) => [
-          ...prev,
-          response
-        ]
-      );
+
+      setMessages((prev) => [
+        ...prev,
+        response,
+      ]);
 
       setContent("");
 
       if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
+        URL.revokeObjectURL(
+          imagePreview
+        );
       }
 
       setImage(null);
       setImagePreview("");
 
-      const input =
-        document.getElementById(
-          "chat-image"
-        );
-
-      if (input) {
-        input.value = "";
+      if (fileInputRef.current) {
+        fileInputRef.current.value =
+          "";
       }
 
+      setShowEmojiPicker(false);
     } catch (error) {
-
       console.error(error);
-
     }
-
   }
 
   useEffect(() => {
-
     async function loadUser() {
-
       try {
-
         const user =
           await getCurrentUser();
 
-        setCurrentUser(
-          user
-        );
-
+        setCurrentUser(user);
       } catch (error) {
-
         console.error(error);
-
       }
-
     }
 
     loadUser();
-
   }, []);
 
   useEffect(() => {
-
     async function loadChatUser() {
-
       try {
-
         const user =
-          await getUserProfile(
-            id
-          );
+          await getUserProfile(id);
 
-        setChatUser(
-          user
-        );
-
+        setChatUser(user);
       } catch (error) {
-
         console.error(error);
-
       }
-
     }
 
     loadChatUser();
-
   }, [id]);
 
   useEffect(() => {
-
     loadMessages();
-
   }, [id]);
 
   useEffect(() => {
-
     if (!wsMessages.length) {
       return;
     }
@@ -294,90 +248,80 @@ function Chat() {
       ];
 
     const belongsToThisChat =
-      latestMessage.sender_id === Number(id) ||
-      latestMessage.receiver_id === Number(id);
+      latestMessage.sender_id ===
+        Number(id) ||
+      latestMessage.receiver_id ===
+        Number(id);
 
     if (!belongsToThisChat) {
       return;
     }
 
-    setMessages(
-      (prev) => {
+    setMessages((prev) => {
+      const exists =
+        prev.some(
+          (msg) =>
+            msg.id ===
+            latestMessage.id
+        );
 
-        const exists =
-          prev.some(
-            (msg) =>
-              msg.id === latestMessage.id
-          );
-
-        if (exists) {
-          return prev;
-        }
-
-        return [
-          ...prev,
-          latestMessage
-        ];
-
+      if (exists) {
+        return prev;
       }
-    );
+
+      return [
+        ...prev,
+        latestMessage,
+      ];
+    });
 
     if (
-      latestMessage.sender_id === Number(id)
+      latestMessage.sender_id ===
+      Number(id)
     ) {
       loadMessages();
     }
-
   }, [
     wsMessages,
-    id
+    id,
   ]);
 
   useEffect(() => {
-
     setIsOnline(
       onlineUsers.includes(
         Number(id)
       )
     );
-
   }, [
     onlineUsers,
-    id
+    id,
   ]);
 
   useEffect(() => {
-
     setIsTyping(
       typingUsers.includes(
         Number(id)
       )
     );
-
   }, [
     typingUsers,
-    id
+    id,
   ]);
 
   useEffect(() => {
-
     function handleClickOutside(
       event
     ) {
-
       if (
         pickerRef.current &&
         !pickerRef.current.contains(
           event.target
         )
       ) {
-
         setShowEmojiPicker(
           false
         );
-
       }
-
     }
 
     document.addEventListener(
@@ -386,26 +330,40 @@ function Chat() {
     );
 
     return () => {
-
       document.removeEventListener(
         "mousedown",
         handleClickOutside
       );
-
     };
-
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeout.current) {
+        clearTimeout(
+          typingTimeout.current
+        );
+      }
+
+      if (imagePreview) {
+        URL.revokeObjectURL(
+          imagePreview
+        );
+      }
+    };
+  }, [imagePreview]);
 
   function getLastSeen(
     lastSeen,
     showOnlineStatus
-  )
-  {
-    if (!showOnlineStatus)
-      return "offline";
+  ) {
+    if (!showOnlineStatus) {
+      return "Offline";
+    }
 
-    if (!lastSeen)
-      return "offline";
+    if (!lastSeen) {
+      return "Offline";
+    }
 
     const now =
       new Date();
@@ -418,417 +376,997 @@ function Chat() {
         (now - time) / 1000
       );
 
-    if (diff < 60)
+    if (diff < 60) {
       return "Last seen just now";
+    }
 
-    if (diff < 3600)
-      return `Last seen ${Math.floor(diff / 60)}m ago`;
+    if (diff < 3600) {
+      return `Last seen ${Math.floor(
+        diff / 60
+      )}m ago`;
+    }
 
-    if (diff < 86400)
-      return `Last seen ${Math.floor(diff / 3600)}h ago`;
+    if (diff < 86400) {
+      return `Last seen ${Math.floor(
+        diff / 3600
+      )}h ago`;
+    }
 
-    return `Last seen ${Math.floor(diff / 86400)}d ago`;
+    return `Last seen ${Math.floor(
+      diff / 86400
+    )}d ago`;
   }
 
   function handleEmojiClick(
     emojiData
   ) {
-
     setContent(
-      prev =>
+      (prev) =>
         prev + emojiData.emoji
     );
-
   }
 
+  function handleImageSelect(
+    event
+  ) {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (imagePreview) {
+      URL.revokeObjectURL(
+        imagePreview
+      );
+    }
+
+    setImage(file);
+
+    setImagePreview(
+      URL.createObjectURL(file)
+    );
+  }
+
+  function removeImage() {
+    if (imagePreview) {
+      URL.revokeObjectURL(
+        imagePreview
+      );
+    }
+
+    setImage(null);
+    setImagePreview("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value =
+        "";
+    }
+  }
+
+  function handleTyping(
+    event
+  ) {
+    const value =
+      event.target.value;
+
+    setContent(value);
+
+    if (
+      socket &&
+      socket.readyState ===
+        WebSocket.OPEN
+    ) {
+      socket.send(
+        JSON.stringify({
+          type: "typing",
+          targetUserId:
+            Number(id),
+        })
+      );
+    }
+
+    if (typingTimeout.current) {
+      clearTimeout(
+        typingTimeout.current
+      );
+    }
+
+    typingTimeout.current =
+      setTimeout(() => {
+        // WebSocket typing state is handled
+        // by the existing backend context.
+      }, 800);
+  }
+
+  const readUntil =
+    readReceipts[
+      Number(id)
+    ] || 0;
+
   return (
-
     <MainLayout>
+      <div className="
+        mx-auto
+        flex
+        h-[calc(100vh-8rem)]
+        w-full
+        max-w-5xl
+        min-h-[500px]
+        flex-col
+        overflow-hidden
+        rounded-3xl
+        border
+        border-slate-200/80
+        bg-white
+        shadow-sm
+        dark:border-slate-800
+        dark:bg-slate-900
+      ">
 
-      <div className="chat-page">
+        {/* Header */}
 
-        <div 
-          className="chat-header"
-          onClick={() =>
-            navigate(`/profile/${id}`)
-          }
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: -6,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          className="
+            flex
+            shrink-0
+            items-center
+            gap-3
+            border-b
+            border-slate-100
+            bg-white/95
+            px-4 py-3
+            backdrop-blur-xl
+            dark:border-slate-800
+            dark:bg-slate-900/95
+            sm:px-5
+          "
         >
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/messages")
+            }
+            className="
+              flex h-10 w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              text-slate-500
+              transition
+              hover:bg-slate-100
+              hover:text-slate-900
+              dark:hover:bg-slate-800
+              dark:hover:text-white
+              sm:hidden
+            "
+          >
+            <ArrowLeft size={19} />
+          </button>
 
-          <Avatar
-            user={chatUser}
-            size="md"
-            className="avatar-chat"
-          />
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `/profile/${id}`
+              )
+            }
+            className="
+              flex min-w-0
+              flex-1
+              items-center
+              gap-3
+              text-left
+            "
+          >
+            <div className="
+              relative shrink-0
+            ">
+              <Avatar
+                user={chatUser}
+                size="md"
+              />
 
-          <div className="chat-user-details">
-
-            <h2>
-
-              {
-                chatUser?.name
-              }
-
-            </h2>
-
-            <p>
-              {
-                isOnline
-                  ? <span>online</span>
-                  : getLastSeen(
-                      lastSeenUsers[id] || chatUser?.last_seen,
-                      chatUser?.show_online_status
-                    )
-              }
-            </p>
-
-          </div>
-
-          <div className="chat-header-arrow">
-            <FaChevronRight />
-          </div>
-
-        </div>
-
-        <div className="chat-messages">
-
-          {messages.length === 0 ? (
-
-            <div className="empty-state">
-
-              <h3>
-                No messages yet
-              </h3>
-
-              <p>
-                Start the conversation.
-              </p>
-
+              {isOnline && (
+                <span className="
+                  absolute
+                  bottom-0
+                  right-0
+                  h-3
+                  w-3
+                  rounded-full
+                  border-2
+                  border-white
+                  bg-emerald-500
+                  dark:border-slate-900
+                " />
+              )}
             </div>
 
+            <div className="
+              min-w-0
+              flex-1
+            ">
+              <h2 className="
+                truncate
+                text-sm
+                font-semibold
+              ">
+                {chatUser?.name ||
+                  "Loading..."}
+              </h2>
+
+              <p className="
+                mt-0.5
+                truncate
+                text-xs
+                text-slate-500
+                dark:text-slate-400
+              ">
+                {isOnline
+                  ? "Online"
+                  : getLastSeen(
+                      lastSeenUsers[id] ||
+                        chatUser?.last_seen,
+                      chatUser?.show_online_status
+                    )}
+              </p>
+            </div>
+
+            <ChevronRight
+              size={18}
+              className="
+                shrink-0
+                text-slate-300
+                dark:text-slate-600
+              "
+            />
+          </button>
+
+
+          {/* meatballs menu button for mute,search in convo, and view profile*/}
+
+
+          {/* <button
+            type="button"
+            className="
+              flex h-10 w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              text-slate-400
+              transition
+              hover:bg-slate-100
+              hover:text-slate-700
+              dark:hover:bg-slate-800
+              dark:hover:text-white
+            "
+          >
+            <MoreHorizontal
+              size={19}
+            />
+          </button> */}
+
+
+          
+        </motion.div>
+
+        {/* Messages */}
+
+        <div className="
+          flex-1
+          overflow-y-auto
+          bg-slate-50/60
+          px-4 py-5
+          dark:bg-slate-950/40
+          sm:px-6
+        ">
+          {messages.length === 0 ? (
+            <div className="
+              flex h-full
+              min-h-[360px]
+              items-center
+              justify-center
+            ">
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  scale: 0.97,
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                className="
+                  text-center
+                "
+              >
+                <div className="
+                  mx-auto
+                  flex h-14 w-14
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  bg-white
+                  text-indigo-500
+                  shadow-sm
+                  dark:bg-slate-900
+                ">
+                  <MessageCircle
+                    size={25}
+                  />
+                </div>
+
+                <h3 className="
+                  mt-4
+                  text-sm
+                  font-semibold
+                ">
+                  Start the conversation
+                </h3>
+
+                <p className="
+                  mt-1
+                  text-xs
+                  text-slate-500
+                  dark:text-slate-400
+                ">
+                  Send a message to{" "}
+                  {chatUser?.name ||
+                    "this student"}.
+                </p>
+              </motion.div>
+            </div>
           ) : (
+            <div className="
+              mx-auto
+              flex
+              max-w-3xl
+              flex-col
+              gap-3
+            ">
+              {messages.map(
+                (message) => {
+                  const isMine =
+                    currentUser?.id ===
+                    message.sender_id;
 
-            messages.map(
-              (message) => {
+                  const isSeen =
+                    message.id <=
+                    readUntil;
 
-                const isMine =
-                  currentUser?.id ===
-                  message.sender_id;
-
-                const readUntil =
-                  readReceipts[
-                    Number(id)
-                  ] || 0;
-
-                const isSeen =
-                  message.id <= readUntil;
-                  
-                return (
-
-                  <div
-                    key={message.id}
-                    className={
-                      isMine
-                        ? "message-row mine"
-                        : "message-row"
-                    }
-                  >
-
-                    <div className="message-wrapper">
-
-                      <div
-                        className={
-                          message.image_url && !message.content
-                            ? "message-bubble image-only"
-                            : isMine
-                              ? "message-bubble mine"
-                              : "message-bubble"
+                  return (
+                    <motion.div
+                      key={message.id}
+                      initial={{
+                        opacity: 0,
+                        y: 6,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      className={`
+                        flex
+                        ${
+                          isMine
+                            ? "justify-end"
+                            : "justify-start"
                         }
-                      >
+                      `}
+                    >
+                      <div className={`
+                        flex
+                        max-w-[85%]
+                        flex-col
+                        ${
+                          isMine
+                            ? "items-end"
+                            : "items-start"
+                        }
+                      `}>
 
-                        <>
-                          {
-                            message.content && (
-                              <p>
-                                {message.content}
-                              </p>
-                            )
-                          }
+                        {/* Bubble */}
 
-                          {
-                            message.image_url && (
+                        <div
+                          className={`
+                            overflow-hidden
+                            rounded-2xl
+                            px-4 py-3
+                            shadow-sm
+                            ${
+                              message.image_url &&
+                              !message.content
+                                ? `
+                                  border
+                                  border-slate-200
+                                  bg-white
+                                  p-1
+                                  dark:border-slate-800
+                                  dark:bg-slate-900
+                                `
+                                : isMine
+                                ? `
+                                  rounded-br-md
+                                  bg-indigo-600
+                                  text-white
+                                `
+                                : `
+                                  rounded-bl-md
+                                  border
+                                  border-slate-200
+                                  bg-white
+                                  text-slate-800
+                                  dark:border-slate-800
+                                  dark:bg-slate-900
+                                  dark:text-slate-100
+                                `
+                            }
+                          `}
+                        >
+                          {message.content && (
+                            <p className="
+                              whitespace-pre-wrap
+                              break-words
+                              text-sm
+                              leading-6
+                            ">
+                              {
+                                message.content
+                              }
+                            </p>
+                          )}
 
+                          {message.image_url && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowImage(
+                                  message.image_url
+                                )
+                              }
+                              className="
+                                block
+                                overflow-hidden
+                                rounded-xl
+                              "
+                            >
                               <img
-                                src={message.image_url}
-                                alt=""
-                                className="chat-message-image"
-                                onClick={() =>
-                                  setShowImage(
-                                    message.image_url
-                                  )
+                                src={
+                                  message.image_url
                                 }
+                                alt=""
+                                className="
+                                  h-auto
+                                  max-h-[240px]
+                                  max-w-[240px]
+                                  rounded-xl
+                                  object-cover
+                                  transition
+                                  hover:scale-[1.01]
+                                  sm:max-h-[280px]
+                                  sm:max-w-[280px]
+                                "
                               />
+                            </button>
+                          )}
+                        </div>
 
-                            )
-                          }
-                        </>
+                        {/* Meta */}
 
-                      </div>
-
-                      <div className="message-meta">
-
-                        <span className="message-time">
-
-                          {
-                            new Date(
+                        <div className="
+                          mt-1.5
+                          flex items-center
+                          gap-1.5
+                          px-1
+                        ">
+                          <span className="
+                            text-[10px]
+                            text-slate-400
+                          ">
+                            {new Date(
                               message.created_at
                             ).toLocaleTimeString(
                               [],
                               {
-                                hour: "2-digit",
-                                minute: "2-digit"
+                                hour:
+                                  "2-digit",
+                                minute:
+                                  "2-digit",
                               }
-                            )
-                          }
+                            )}
+                          </span>
 
-                        </span>
-
-                        {
-                          isMine && (
-
+                          {isMine && (
                             <span
-                              className={
-                                (message.is_read || isSeen)
-                                  ? "message-checks seen"
-                                  : "message-checks"
-                              }
+                              className={`
+                                text-[10px]
+                                ${
+                                  message.is_read ||
+                                  isSeen
+                                    ? `
+                                      text-indigo-500
+                                      dark:text-indigo-400
+                                    `
+                                    : `
+                                      text-slate-400
+                                    `
+                                }
+                              `}
                             >
-                              ✔✔
+                              ✓✓
                             </span>
-
-                          )
-                        }
-
+                          )}
+                        </div>
                       </div>
+                    </motion.div>
+                  );
+                }
+              )}
+
+              {/* Typing */}
+
+              <AnimatePresence>
+                {isTyping && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      y: 6,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 6,
+                    }}
+                    className="
+                      flex
+                      items-end
+                      gap-2
+                    "
+                  >
+                    <div className="
+                      flex
+                      items-center
+                      gap-1
+                      rounded-2xl
+                      rounded-bl-md
+                      border
+                      border-slate-200
+                      bg-white
+                      px-4 py-3
+                      dark:border-slate-800
+                      dark:bg-slate-900
+                    ">
+                      <span className="
+                        h-1.5 w-1.5
+                        animate-bounce
+                        rounded-full
+                        bg-slate-400
+                      " />
+
+                      <span
+                        className="
+                          h-1.5 w-1.5
+                          animate-bounce
+                          rounded-full
+                          bg-slate-400
+                        "
+                        style={{
+                          animationDelay:
+                            "120ms",
+                        }}
+                      />
+
+                      <span
+                        className="
+                          h-1.5 w-1.5
+                          animate-bounce
+                          rounded-full
+                          bg-slate-400
+                        "
+                        style={{
+                          animationDelay:
+                            "240ms",
+                        }}
+                      />
                     </div>
 
-                  </div>
+                    <span className="
+                      mb-1
+                      text-[10px]
+                      text-slate-400
+                    ">
+                      {chatUser?.name}
+                      {" "}
+                      is typing...
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-                );
-
-              }
-            )
-
+              <div ref={bottomRef} />
+            </div>
           )}
-
-          {
-            isTyping && (
-
-              <div className="typing-container">
-
-                <div className="typing-bubble">
-
-                  <span></span>
-                  <span></span>
-                  <span></span>
-
-                </div>
-
-                <p className="typing-text">
-                  {chatUser?.name} is typing...
-                </p>
-
-              </div>
-
-            )
-          }
-
-          <div ref={bottomRef} />
-
         </div>
 
-        {
-          showImage && (
+        {/* Image fullscreen */}
 
-            <div
-              className="image-modal"
+        <AnimatePresence>
+          {showImage && (
+            <motion.div
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              exit={{
+                opacity: 0,
+              }}
               onClick={() =>
                 setShowImage(null)
               }
+              className="
+                fixed inset-0
+                z-[100]
+                flex
+                items-center
+                justify-center
+                bg-slate-950/80
+                p-4
+                backdrop-blur-md
+              "
             >
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  scale: 0.96,
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.96,
+                }}
+                onClick={(e) =>
+                  e.stopPropagation()
+                }
+                className="
+                  relative
+                  max-h-[92vh]
+                  max-w-[95vw]
+                "
+              >
+                <img
+                  src={showImage}
+                  alt=""
+                  className="
+                    max-h-[92vh]
+                    max-w-[95vw]
+                    rounded-2xl
+                    object-contain
+                    shadow-2xl
+                  "
+                />
 
-              <img
-                src={showImage}
-                alt=""
-                className="image-modal-content"
-              />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowImage(null)
+                  }
+                  className="
+                    absolute
+                    right-3
+                    top-3
+                    flex h-10 w-10
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-black/60
+                    text-white
+                    backdrop-blur-md
+                    transition
+                    hover:bg-black/80
+                  "
+                >
+                  <X size={18} />
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            </div>
+        {/* Image preview */}
 
-          )
-        }
+        <AnimatePresence>
+          {imagePreview && (
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{
+                opacity: 0,
+                y: 8,
+              }}
+              className="
+                shrink-0
+                border-t
+                border-slate-100
+                bg-white
+                px-4 py-3
+                dark:border-slate-800
+                dark:bg-slate-900
+                sm:px-5
+              "
+            >
+              <div className="
+                relative
+                w-fit
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                dark:border-slate-700
+              ">
+                <img
+                  src={imagePreview}
+                  alt=""
+                  className="
+                    h-24
+                    w-24
+                    object-cover
+                  "
+                />
 
-        <div className="chat-input-area">
-          <div className="chat-image-container">
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="
+                    absolute
+                    right-1.5
+                    top-1.5
+                    flex h-7 w-7
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-black/60
+                    text-white
+                    backdrop-blur-sm
+                  "
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Composer */}
+
+        <div className="
+          relative
+          shrink-0
+          border-t
+          border-slate-100
+          bg-white
+          p-3
+          dark:border-slate-800
+          dark:bg-slate-900
+          sm:p-4
+        ">
+          <div className="
+            mx-auto
+            flex
+            max-w-3xl
+            items-end
+            gap-2
+          ">
+
+            {/* Image */}
+
             <input
+              ref={fileInputRef}
               hidden
               id="chat-image"
               type="file"
               accept="image/*"
-              onChange={(e) => {
-
-                const file =
-                  e.target.files[0];
-
-                if (!file) return;
-
-                setImage(file);
-
-                if (imagePreview) {
-                  URL.revokeObjectURL(
-                    imagePreview
-                  );
-                }
-
-                setImagePreview(
-                  URL.createObjectURL(file)
-                );
-
-              }}
+              onChange={
+                handleImageSelect
+              }
             />
 
-            <label
-              htmlFor="chat-image"
-              className="chat-image-btn"
+            <button
+              type="button"
+              onClick={() =>
+                fileInputRef.current?.click()
+              }
+              className="
+                flex h-10 w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-xl
+                text-slate-400
+                transition
+                hover:bg-indigo-50
+                hover:text-indigo-600
+                dark:hover:bg-indigo-500/10
+                dark:hover:text-indigo-400
+              "
             >
-              <FaImage />
-            </label>
+              <ImageIcon size={19} />
+            </button>
 
-          </div>
+            {/* Emoji */}
 
-          {
-            imagePreview && (
-
-              <div className="chat-preview">
-
-                <img
-                  src={imagePreview}
-                  alt=""
-                />
-
-                <button
-                  className="remove-image-btn"
-                  onClick={() => {
-
-                    if (imagePreview) {
-                      URL.revokeObjectURL(imagePreview);
-                    }
-
-                    setImage(null);
-                    setImagePreview("");
-
-                    const input =
-                      document.getElementById(
-                        "chat-image"
-                      );
-
-                    if (input) {
-                      input.value = "";
-                    }
-
-                  }}
-                >
-                  <FaTimes />
-                </button>
-
-              </div>
-
-            )
-          }
-
-          <button
-            type="button"
-            className="emoji-btn"
-            onClick={() =>
-              setShowEmojiPicker(
-                !showEmojiPicker
-              )
-            }
-          >
-            <FaSmile />
-          </button>
-
-          {
-            showEmojiPicker && (
-
-              <div
-                ref={pickerRef}
-                className="chat-emoji-picker"
-              >
-
-                <EmojiPicker
-                  theme="dark"
-                  onEmojiClick={handleEmojiClick}
-                />
-
-              </div>
-
-            )
-          }
-
-          <textarea
-            value={content}
-            onChange={(e) => {
-
-              setContent(
-                e.target.value
-              );
-
-              if (
-                socket &&
-                socket.readyState === WebSocket.OPEN
-              ) {
-
-                socket.send(
-                  JSON.stringify({
-                    type: "typing",
-                    targetUserId: Number(id),
-                  })
-                );
-
-              }
-
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-
-                if (
-                  content.trim() ||
-                  image
-                ) {
-                  handleSend();
+            <div
+              ref={pickerRef}
+              className="relative"
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  setShowEmojiPicker(
+                    (prev) => !prev
+                  )
                 }
+                className="
+                  flex h-10 w-10
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  text-slate-400
+                  transition
+                  hover:bg-amber-50
+                  hover:text-amber-600
+                  dark:hover:bg-amber-500/10
+                  dark:hover:text-amber-400
+                "
+              >
+                <Smile size={19} />
+              </button>
+
+              <AnimatePresence>
+                {showEmojiPicker && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      y: 8,
+                      scale: 0.97,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 8,
+                      scale: 0.97,
+                    }}
+                    className="
+                      absolute
+                      bottom-12
+                      left-0
+                      z-50
+                      overflow-hidden
+                      rounded-2xl
+                      shadow-2xl
+                    "
+                  >
+                    <EmojiPicker
+                      theme="auto"
+                      onEmojiClick={
+                        handleEmojiClick
+                      }
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Input */}
+
+            <textarea
+              value={content}
+              onChange={
+                handleTyping
               }
-            }}
-            placeholder="Type a message..."
-          />
+              onKeyDown={(e) => {
+                if (
+                  e.key ===
+                    "Enter" &&
+                  !e.shiftKey
+                ) {
+                  e.preventDefault();
 
-          <button
-            onClick={handleSend}
-            className="send-btn"
-          >
-            <FaPaperPlane />
-          </button>
+                  if (
+                    content.trim() ||
+                    image
+                  ) {
+                    handleSend();
+                  }
+                }
+              }}
+              placeholder="Write a message..."
+              rows={1}
+              className="
+                max-h-32
+                min-h-10
+                flex-1
+                resize-none
+                rounded-2xl
+                border
+                border-slate-200
+                bg-slate-50
+                px-4 py-2.5
+                text-sm
+                leading-5
+                outline-none
+                transition
+                focus:border-indigo-500
+                focus:bg-white
+                focus:ring-4
+                focus:ring-indigo-500/10
+                dark:border-slate-700
+                dark:bg-slate-950
+                dark:focus:bg-slate-950
+              "
+            />
 
+            {/* Send */}
+
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={
+                !content.trim() &&
+                !image
+              }
+              className="
+                flex h-10 w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-xl
+                bg-indigo-600
+                text-white
+                shadow-sm
+                transition
+                hover:bg-indigo-700
+                disabled:cursor-not-allowed
+                disabled:opacity-40
+              "
+            >
+              <Send size={17} />
+            </button>
+          </div>
         </div>
-
-
       </div>
-
     </MainLayout>
-
   );
-
 }
 
 export default Chat;

@@ -3,22 +3,15 @@ package storage
 import (
 	"os"
 
-	supabase "github.com/supabase-community/supabase-go"
+	storagego "github.com/supabase-community/storage-go"
 )
 
-var Client *supabase.Client
+var Client *storagego.Client
 
 func InitStorage() {
-
-	client, err := supabase.NewClient(
-		os.Getenv("SUPABASE_URL"),
+	Client = storagego.NewClient(
+		os.Getenv("SUPABASE_URL")+"/storage/v1",
 		os.Getenv("SUPABASE_SERVICE_KEY"),
 		nil,
 	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	Client = client
 }

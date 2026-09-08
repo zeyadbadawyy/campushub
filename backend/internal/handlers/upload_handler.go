@@ -74,7 +74,7 @@ func UploadAvatar(
 	}
 
 	_, err =
-		storage.Client.Storage.UploadFile(
+		storage.Client.UploadFile(
 			"avatars",
 			fileName,
 			file,
@@ -95,7 +95,7 @@ func UploadAvatar(
 	}
 
 	avatarURL :=
-		storage.Client.Storage.GetPublicUrl(
+		storage.Client.GetPublicUrl(
 			"avatars",
 			fileName,
 		)
@@ -231,7 +231,7 @@ func UploadPostImage(
 	}
 
 	_, err =
-		storage.Client.Storage.UploadFile(
+		storage.Client.UploadFile(
 			"posts",
 			fileName,
 			file,
@@ -252,7 +252,7 @@ func UploadPostImage(
 	}
 
 	imageURL :=
-		storage.Client.Storage.GetPublicUrl(
+		storage.Client.GetPublicUrl(
 			"posts",
 			fileName,
 		)
@@ -338,7 +338,7 @@ func UploadChatImage(
 	}
 
 	_, err =
-		storage.Client.Storage.UploadFile(
+		storage.Client.UploadFile(
 			"chat-images",
 			fileName,
 			file,
@@ -359,7 +359,7 @@ func UploadChatImage(
 	}
 
 	imageURL :=
-		storage.Client.Storage.GetPublicUrl(
+		storage.Client.GetPublicUrl(
 			"chat-images",
 			fileName,
 		)

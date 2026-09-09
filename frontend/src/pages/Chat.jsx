@@ -21,6 +21,7 @@ import {
   VolumeX,
   Volume2,
   UserRound,
+  Search,
 } from "lucide-react";
 
 import EmojiPicker from "emoji-picker-react";
@@ -43,6 +44,9 @@ import {
   sendMessage,
   getUserProfile,
   uploadChatImage,
+  getConversationSettings,
+  toggleConversationMute,
+  searchConversation,
 } from "../services/postService";
 
 import {
@@ -58,6 +62,24 @@ function Chat() {
     lastSeenUsers,
   } = useWebSocket();
 
+  const [muted, setMuted] =
+    useState(false);
+
+  const [muteLoading, setMuteLoading] =
+    useState(false);
+
+  const [showSearch, setShowSearch] =
+    useState(false);
+
+  const [searchQuery, setSearchQuery] =
+    useState("");
+
+  const [searchResults, setSearchResults] =
+    useState([]);
+
+  const [searchLoading, setSearchLoading] =
+    useState(false);
+    
   const { id } = useParams();
 
   const navigate = useNavigate();
@@ -104,6 +126,9 @@ function Chat() {
   const typingTimeout =
     useRef(null);
 
+  const messageRefs =
+    useRef({});
+  
   const [showChatMenu, setShowChatMenu] =
     useState(false);
 
@@ -139,6 +164,37 @@ function Chat() {
     messages,
     isTyping,
   ]);
+
+  function openSearchResult(messageId) {
+    setShowSearch(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowChatMenu(false);
+
+    setTimeout(() => {
+      const messageElement =
+        messageRefs.current[messageId];
+
+      if (!messageElement) {
+        return;
+      }
+
+      messageElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      messageElement.classList.add(
+        "chat-message-highlight"
+      );
+
+      setTimeout(() => {
+        messageElement.classList.remove(
+          "chat-message-highlight"
+        );
+      }, 1800);
+    }, 100);
+  }
 
   async function loadMessages() {
     try {
@@ -352,6 +408,90 @@ function Chat() {
       }
     };
   }, [imagePreview]);
+
+  useEffect(() => {
+    async function loadConversationSettings() {
+      try {
+        const data =
+          await getConversationSettings(id);
+
+        setMuted(Boolean(data?.muted));
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    if (id) {
+      loadConversationSettings();
+    }
+  }, [id]);
+
+  async function handleMuteToggle() {
+    if (muteLoading) {
+      return;
+    }
+
+    try {
+      setMuteLoading(true);
+
+      const data =
+        await toggleConversationMute(id);
+
+      setMuted(Boolean(data?.muted));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setMuteLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const query =
+      searchQuery.trim();
+
+    if (!showSearch || !query) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer =
+      setTimeout(async () => {
+        try {
+          setSearchLoading(true);
+
+          const data =
+            await searchConversation(
+              id,
+              query
+            );
+
+          setSearchResults(data || []);
+        } catch (error) {
+          console.error(error);
+          setSearchResults([]);
+        } finally {
+          setSearchLoading(false);
+        }
+      }, 250);
+
+    return () =>
+      clearTimeout(timer);
+  }, [
+    id,
+    searchQuery,
+    showSearch,
+  ]);
+
+  function openConversationSearch() {
+    setShowChatMenu(false);
+    setShowSearch(true);
+  }
+
+  function closeConversationSearch() {
+    setShowSearch(false);
+    setSearchQuery("");
+    setSearchResults([]);
+  }
 
   function getLastSeen(
     lastSeen,
@@ -637,30 +777,366 @@ function Chat() {
           {/* meatballs menu button for mute,search in convo, and view profile*/}
 
 
-          {/* <button
-            type="button"
-            className="
-              flex h-10 w-10
-              shrink-0
-              items-center
-              justify-center
-              rounded-xl
-              text-slate-400
-              transition
-              hover:bg-slate-100
-              hover:text-slate-700
-              dark:hover:bg-slate-800
-              dark:hover:text-white
-            "
-          >
-            <MoreHorizontal
-              size={19}
-            />
-          </button> */}
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() =>
+                setShowChatMenu(
+                  (prev) => !prev
+                )
+              }
+              aria-label="Conversation options"
+              aria-expanded={showChatMenu}
+              className="
+                flex h-10 w-10
+                items-center
+                justify-center
+                rounded-xl
+                text-slate-400
+                transition
+                hover:bg-slate-100
+                hover:text-slate-700
+                dark:hover:bg-slate-800
+                dark:hover:text-white
+              "
+            >
+              <MoreHorizontal size={19} />
+            </button>
+
+            <AnimatePresence>
+              {showChatMenu && (
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: -6,
+                    scale: 0.97,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -6,
+                    scale: 0.97,
+                  }}
+                  transition={{
+                    duration: 0.18,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="
+                    absolute
+                    right-0
+                    top-12
+                    z-50
+                    w-56
+                    overflow-hidden
+                    rounded-2xl
+                    border
+                    border-slate-200
+                    bg-white
+                    p-1.5
+                    shadow-xl
+                    dark:border-slate-700
+                    dark:bg-slate-900
+                  "
+                >
+                  <button
+                    type="button"
+                    onClick={handleMuteToggle}
+                    disabled={muteLoading}
+                    className="
+                      flex w-full
+                      items-center
+                      gap-3
+                      rounded-xl
+                      px-3 py-2.5
+                      text-left
+                      text-sm
+                      font-medium
+                      text-slate-700
+                      transition
+                      hover:bg-slate-100
+                      dark:text-slate-200
+                      dark:hover:bg-slate-800
+                    "
+                  >
+                    {muted ? (
+                      <Volume2 size={17} />
+                    ) : (
+                      <VolumeX size={17} />
+                    )}
+
+                    <span>
+                      {muteLoading
+                        ? "Updating..."
+                        : muted
+                          ? "Unmute conversation"
+                          : "Mute conversation"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={openProfile}
+                    className="
+                      flex w-full
+                      items-center
+                      gap-3
+                      rounded-xl
+                      px-3 py-2.5
+                      text-left
+                      text-sm
+                      font-medium
+                      text-slate-700
+                      transition
+                      hover:bg-slate-100
+                      dark:text-slate-200
+                      dark:hover:bg-slate-800
+                    "
+                  >
+                    <UserRound size={17} />
+
+                    <span>
+                      View profile
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={openConversationSearch}
+                    className="
+                      flex w-full
+                      items-center
+                      gap-3
+                      rounded-xl
+                      px-3 py-2.5
+                      text-left
+                      text-sm
+                      font-medium
+                      text-slate-700
+                      transition
+                      hover:bg-slate-100
+                      dark:text-slate-200
+                      dark:hover:bg-slate-800
+                    "
+                  >
+                    <Search size={17} />
+
+                    <span>
+                      Search in conversation
+                    </span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
 
 
         </motion.div>
+
+        <AnimatePresence>
+          {showSearch && (
+            <motion.div
+              initial={{
+                opacity: 0,
+                height: 0,
+              }}
+              animate={{
+                opacity: 1,
+                height: "auto",
+              }}
+              exit={{
+                opacity: 0,
+                height: 0,
+              }}
+              className="
+                shrink-0
+                overflow-hidden
+                border-b
+                border-slate-100
+                bg-white
+                dark:border-slate-800
+                dark:bg-slate-900
+              "
+            >
+              <div className="
+                mx-auto
+                flex
+                max-w-3xl
+                items-center
+                gap-2
+                px-4
+                py-3
+                sm:px-6
+              ">
+                <div className="
+                  flex
+                  h-10
+                  min-w-0
+                  flex-1
+                  items-center
+                  gap-2
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-slate-50
+                  px-3
+                  focus-within:border-indigo-500
+                  focus-within:ring-4
+                  focus-within:ring-indigo-500/10
+                  dark:border-slate-700
+                  dark:bg-slate-950
+                ">
+                  <Search
+                    size={16}
+                    className="
+                      shrink-0
+                      text-slate-400
+                    "
+                  />
+
+                  <input
+                    type="text"
+                    autoFocus
+                    value={searchQuery}
+                    onChange={(event) =>
+                      setSearchQuery(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Search messages..."
+                    className="
+                      min-w-0
+                      flex-1
+                      bg-transparent
+                      text-sm
+                      outline-none
+                      placeholder:text-slate-400
+                    "
+                  />
+
+                  {searchLoading && (
+                    <span className="
+                      text-[11px]
+                      text-slate-400
+                    ">
+                      Searching...
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeConversationSearch}
+                  className="
+                    flex h-10 w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    text-slate-400
+                    transition
+                    hover:bg-slate-100
+                    hover:text-slate-700
+                    dark:hover:bg-slate-800
+                    dark:hover:text-white
+                  "
+                  aria-label="Close search"
+                >
+                  <X size={17} />
+                </button>
+              </div>
+
+              {searchQuery.trim() && (
+                <div className="
+                  mx-auto
+                  max-h-72
+                  max-w-3xl
+                  overflow-y-auto
+                  px-4
+                  pb-3
+                  sm:px-6
+                ">
+                  {searchResults.length > 0 ? (
+                    <div className="
+                      overflow-hidden
+                      rounded-2xl
+                      border
+                      border-slate-200
+                      dark:border-slate-800
+                    ">
+                      {searchResults.map(
+                        (result) => (
+                          <button
+                            key={result.id}
+                            type="button"
+                            onClick={() =>
+                              openSearchResult(result.id)
+                            }
+                            className="
+                              block
+                              w-full
+                              border-b
+                              border-slate-100
+                              px-4 py-3
+                              text-left
+                              last:border-b-0
+                              transition
+                              hover:bg-slate-50
+                              dark:border-slate-800
+                              dark:hover:bg-slate-800
+                            "
+                          >
+                            <p className="
+                              whitespace-pre-wrap
+                              break-words
+                              text-sm
+                              text-slate-700
+                              dark:text-slate-200
+                            ">
+                              {result.content}
+                            </p>
+
+                            <p className="
+                              mt-1
+                              text-[10px]
+                              text-slate-400
+                            ">
+                              {new Date(
+                                result.created_at
+                              ).toLocaleString()}
+                            </p>
+                          </button>
+                        )
+                      )}
+                    </div>
+                  ) : !searchLoading ? (
+                    <div className="
+                      rounded-2xl
+                      border
+                      border-dashed
+                      border-slate-200
+                      px-4 py-6
+                      text-center
+                      dark:border-slate-800
+                    ">
+                      <p className="
+                        text-sm
+                        text-slate-500
+                        dark:text-slate-400
+                      ">
+                        No matching messages
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Messages */}
 
@@ -749,6 +1225,16 @@ function Chat() {
                   return (
                     <motion.div
                       key={message.id}
+                      ref={(element) => {
+                        if (element) {
+                          messageRefs.current[message.id] =
+                            element;
+                        } else {
+                          delete messageRefs.current[
+                            message.id
+                          ];
+                        }
+                      }}
                       initial={{
                         opacity: 0,
                         y: 6,

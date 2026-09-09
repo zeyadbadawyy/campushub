@@ -295,10 +295,10 @@ func SendMessage(
 
 	err = database.DB.QueryRow(
 		`
-		SELECT message_notifications
-		FROM user_settings
-		WHERE user_id = $1
-	`,
+	SELECT message_notifications
+	FROM user_settings
+	WHERE user_id = $1
+`,
 		receiverID,
 	).Scan(
 		&allowMessageNotifications,
@@ -315,7 +315,39 @@ func SendMessage(
 		return
 	}
 
-	if allowMessageNotifications {
+	var conversationMuted bool
+
+	err = database.DB.QueryRow(
+		`
+	SELECT COALESCE(
+		(
+			SELECT muted
+			FROM conversation_settings
+			WHERE user_id = $1
+			AND other_user_id = $2
+		),
+		FALSE
+	)
+	`,
+		receiverID,
+		senderID,
+	).Scan(
+		&conversationMuted,
+	)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"Could not check conversation settings",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	if allowMessageNotifications &&
+		!conversationMuted {
 
 		var notificationID int
 		var createdAt string

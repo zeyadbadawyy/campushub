@@ -56,6 +56,9 @@ function Profile() {
   const [canViewContent, setCanViewContent] =
     useState(true);
 
+  const [showMessageTooltip, setShowMessageTooltip] =
+    useState(false);
+
   const [, forceUpdate] = useState(0);
 
   const {
@@ -630,49 +633,111 @@ function Profile() {
                     )}
                   </button>
 
-                  <button
-                    type="button"
-                    disabled={
-                      !canReceiveMessages
-                    }
-                    onClick={() =>
-                      navigate(
-                        `/messages/${user.id}`
-                      )
-                    }
-                    className="
-                      inline-flex
-                      items-center
-                      justify-center
-                      gap-2
-                      rounded-xl
-                      border
-                      border-slate-200
-                      bg-white
-                      px-5 py-2.5
-                      text-sm
-                      font-semibold
-                      text-slate-700
-                      transition
-                      hover:bg-slate-50
-                      disabled:cursor-not-allowed
-                      disabled:opacity-50
-                      dark:border-slate-700
-                      dark:bg-slate-900
-                      dark:text-slate-200
-                      dark:hover:bg-slate-800
-                    "
-                    title={
-                      !canReceiveMessages
-                        ? "This user is not accepting new messages."
-                        : ""
-                    }
+                  <div
+                    className="relative"
+                    onMouseEnter={() => {
+                      if (!canReceiveMessages) {
+                        setShowMessageTooltip(true);
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      setShowMessageTooltip(false);
+                    }}
                   >
-                    <MessageCircle
-                      size={16}
-                    />
-                    Message
-                  </button>
+                    <button
+                      type="button"
+                      disabled={!canReceiveMessages}
+                      onClick={() =>
+                        navigate(
+                          `/messages/${user.id}`
+                        )
+                      }
+                      onFocus={() => {
+                        if (!canReceiveMessages) {
+                          setShowMessageTooltip(true);
+                        }
+                      }}
+                      onBlur={() => {
+                        setShowMessageTooltip(false);
+                      }}
+                      aria-disabled={!canReceiveMessages}
+                      className="
+                        inline-flex
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-xl
+                        border
+                        border-slate-200
+                        bg-white
+                        px-5 py-2.5
+                        text-sm
+                        font-semibold
+                        text-slate-700
+                        transition
+                        hover:bg-slate-50
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                        dark:border-slate-700
+                        dark:bg-slate-900
+                        dark:text-slate-200
+                        dark:hover:bg-slate-800
+                      "
+                    >
+                      <MessageCircle size={16} />
+                      Message
+                    </button>
+
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        opacity:
+                          showMessageTooltip
+                            ? 1
+                            : 0,
+                        y:
+                          showMessageTooltip
+                            ? 0
+                            : 4,
+                        scale:
+                          showMessageTooltip
+                            ? 1
+                            : 0.96,
+                        pointerEvents:
+                          showMessageTooltip
+                            ? "auto"
+                            : "none",
+                      }}
+                      transition={{
+                        duration: 0.18,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="
+                        absolute
+                        left-0
+                        top-full
+                        z-30
+                        mt-2
+                        w-64
+                        rounded-xl
+                        border
+                        border-slate-200
+                        bg-white
+                        px-3 py-2.5
+                        text-xs
+                        font-medium
+                        leading-5
+                        text-slate-600
+                        shadow-lg
+                        dark:border-slate-700
+                        dark:bg-slate-900
+                        dark:text-slate-300
+                      "
+                    >
+                      This user is not accepting
+                      new messages.
+                    </motion.div>
+                  </div>
                 </div>
               )}
             </div>

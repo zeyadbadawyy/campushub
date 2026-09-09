@@ -7,13 +7,7 @@ function MainLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="
-      min-h-screen
-      bg-slate-50
-      text-slate-950
-      dark:bg-slate-950
-      dark:text-slate-50
-    ">
+    <div className="min-h-screen text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       <Sidebar
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
@@ -26,14 +20,7 @@ function MainLayout({ children }) {
           }
         />
 
-        <main className="
-          w-full
-          px-4
-          pb-10
-          pt-6
-          sm:px-6
-          lg:px-8
-        ">
+        <main className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
           {children}
         </main>
       </div>

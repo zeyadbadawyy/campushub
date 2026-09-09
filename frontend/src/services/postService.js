@@ -1061,3 +1061,71 @@ export async function searchGifs(query) {
 
   return data.data;
 }
+
+export async function getConversationSettings(
+  userId
+) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      `/messages/${userId}/settings`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+}
+
+export async function toggleConversationMute(
+  userId
+) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.put(
+      `/messages/${userId}/settings/mute`,
+      {},
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+}
+
+export async function searchConversation(
+  userId,
+  query
+) {
+
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      `/messages/${userId}/search`,
+      {
+        params: {
+          q: query
+        },
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  return response.data;
+}

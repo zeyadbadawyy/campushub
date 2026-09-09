@@ -4102,8 +4102,6 @@ body.dark-mode {
   color: #f8fafc;
 }
 
-/* EMOJI PICKER DARK MODE */
-
 aside.EmojiPickerReact{
   --epr-bg-color: #1e293b !important;
   --epr-category-label-bg-color: #1e293b !important;
@@ -4118,8 +4116,6 @@ aside.EmojiPickerReact{
   box-shadow:
     0 20px 60px rgba(0,0,0,.35) !important;
 }
-
-/* Main Cards & Containers */
 
 body.dark-mode .navbar,
 body.dark-mode .sidebar,
@@ -4156,8 +4152,6 @@ body.dark-mode .comment-dropdown {
   border-color: #334155;
 }
 
-/* Text */
-
 body.dark-mode p,
 body.dark-mode span,
 body.dark-mode small,
@@ -4181,8 +4175,6 @@ body.dark-mode .profile-bio {
   color: #94a3b8;
 }
 
-/* Search */
-
 body.dark-mode .search-btn {
 
   background: #334155;
@@ -4196,8 +4188,6 @@ body.dark-mode .search-user-card:hover {
   background: #334155;
 }
 
-/* Sidebar */
-
 body.dark-mode .sidebar a {
 
   color: #cbd5e1;
@@ -4209,8 +4199,6 @@ body.dark-mode .sidebar a.active {
   background: rgba(99,102,241,.18);
   color: #818cf8;
 }
-
-/* Dropdowns */
 
 body.dark-mode .account-trigger {
   color: #f8fafc;
@@ -4240,7 +4228,6 @@ body.dark-mode .account-dropdown button:hover {
   background: #334155;
   color: #a5b4fc;
 }
-/* Messages */
 
 body.dark-mode .message-bubble {
 
@@ -4274,8 +4261,6 @@ body.dark-mode .chat-image-container {
   background: #334155;
 }
 
-/* Notifications */
-
 body.dark-mode .notification-card.unread {
 
   background:
@@ -4290,8 +4275,6 @@ body.dark-mode .notification-type {
   background: rgba(99,102,241,.2);
   color: #c7d2fe;
 }
-
-/* Profile */
 
 body.dark-mode .profile-stats div {
 
@@ -4317,8 +4300,6 @@ body.dark-mode .tab-btn.active {
 
   color: #818cf8;
 }
-
-/* Buttons */
 
 body.dark-mode .emoji-btn{
 
@@ -4357,8 +4338,6 @@ body.dark-mode .image-edit-btn {
   color: #f8fafc;
 }
 
-/* Create Post */
-
 body.dark-mode .create-post textarea,
 body.dark-mode .post-content textarea {
 
@@ -4377,29 +4356,21 @@ body.dark-mode .image-toggle-btn:hover {
   background: #475569;
 }
 
-/* Empty States */
-
 body.dark-mode .empty-state {
 
   background: #1e293b;
   color: #94a3b8;
 }
 
-/* Follow Requests */
-
 body.dark-mode .follow-request-card {
 
   background: #1e293b;
 }
 
-/* Avatar Upload */
-
 body.dark-mode .avatar-preview {
 
   background: #334155;
 }
-
-/* Scrollbars */
 
 body.dark-mode ::-webkit-scrollbar {
 
@@ -4421,7 +4392,7 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 
   background: #64748b;
 }
-/* ---break---*/
+
 @theme inline {
 
   --font-heading: var(--font-sans);
@@ -4505,7 +4476,7 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
   --radius-4xl: calc(var(--radius) * 2.6);
 
 }
-/* ---break---*/
+
 .dark {
 
   --background: oklch(0.145 0 0);
@@ -4632,5 +4603,96 @@ select:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================
+   CAMPUSHUB PREMIUM LIGHT THEME + AMBIENT MOTION
+   ========================================================= */
+
+body:not(.dark-mode) {
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      rgba(255, 255, 255, 0.055),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 88% 12%,
+      rgba(151, 106, 228, 0.045),
+      transparent 28%
+    ),
+    #eef2f7;
+
+  color: #172033;
+  background-size: 125% 125%, 125% 125%, auto;
+  animation: campusAmbient 18s ease-in-out infinite alternate;
+}
+
+/* Softer surfaces in light mode */
+body:not(.dark-mode) .bg-white {
+  background-color: #fbfcfe !important;
+}
+
+body:not(.dark-mode) .bg-slate-50 {
+  background-color: #f4f6fa !important;
+}
+
+body:not(.dark-mode) .bg-slate-100 {
+  background-color: #edf1f6 !important;
+}
+
+/* Softer borders */
+body:not(.dark-mode) .border-slate-200,
+body:not(.dark-mode) .border-slate-200\/80 {
+  border-color: #e2e7ef !important;
+}
+
+/* Slightly softer shadows */
+body:not(.dark-mode) .shadow-sm {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.03),
+    0 8px 24px rgba(15, 23, 42, 0.045) !important;
+}
+
+@keyframes campusAmbient {
+  0% {
+    background-position:
+      0% 0%,
+      100% 0%;
+  }
+
+  100% {
+    background-position:
+      8% 4%,
+      92% 8%;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  body:not(.dark-mode) {
+    animation: none;
+  }
+}
+
+.chat-message-highlight {
+  animation: chatMessageHighlight 1.8s ease;
+}
+
+@keyframes chatMessageHighlight {
+  0% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+
+  25% {
+    filter: brightness(1.08);
+    transform: scale(1.015);
+  }
+
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
   }
 }

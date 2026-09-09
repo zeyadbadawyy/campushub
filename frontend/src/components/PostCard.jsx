@@ -91,7 +91,6 @@ function PostCard({ post, onLike }) {
   async function handleLike() {
     try {
       await toggleLike(post.id);
-      setLiked((prev) => !prev);
     } catch (error) {
       console.error(error);
     }

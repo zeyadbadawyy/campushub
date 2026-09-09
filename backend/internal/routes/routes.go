@@ -219,6 +219,27 @@ func RegisterRoutes() http.Handler {
 	r.With(
 		middleware.Auth,
 	).Get(
+		"/messages/{id}/settings",
+		handlers.GetConversationSettings,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Put(
+		"/messages/{id}/settings/mute",
+		handlers.ToggleConversationMute,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/messages/{id}/search",
+		handlers.SearchConversation,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/conversations",
 		handlers.GetConversations,
 	)

@@ -3,17 +3,25 @@ import {
   Newspaper,
   MessageCircle,
   UserRound,
-  GraduationCap,
   X,
 } from "lucide-react";
 
-import { NavLink } from "react-router-dom";
+import {
+  NavLink,
+  useNavigate,
+} from "react-router-dom";
+
 import { useEffect, useState } from "react";
 
 import { getCurrentUser } from "../services/postService";
 import { useWebSocket } from "../contexts/WebSocketContext";
 
+import logo from "../assets/logo/t_logo.png";
+import label from "../assets/logo/t_label.png";
+
 function Sidebar({ mobileOpen = false, onClose = () => {} }) {
+  const navigate = useNavigate();
+
   const [currentUser, setCurrentUser] = useState(null);
 
   const { unreadCount } = useWebSocket();
@@ -95,49 +103,67 @@ function Sidebar({ mobileOpen = false, onClose = () => {} }) {
       >
         <div className="flex h-full flex-col px-4 py-5">
 
-          {/* Mobile close */}
+          {/* Branding */}
 
-          <div className="mb-8 flex items-center justify-between px-3">
-            <div className="flex items-center gap-3">
-              <div
+            <div className="mb-8 flex items-center justify-between px-3">
+              <button
+                type="button"
+                onClick={() => {
+                  navigate("/feed");
+                  onClose();
+                }}
                 className="
-                  flex h-10 w-10 items-center
-                  justify-center rounded-2xl
-                  bg-indigo-600 text-white
-                  shadow-lg shadow-indigo-600/20
+                  group
+                  flex
+                  items-center
+                  rounded-2xl
+                  text-left
                 "
               >
-                <GraduationCap size={21} />
-              </div>
+                <img
+                  src={logo}
+                  alt="CampusHub"
+                  className="
+                    h-10
+                    w-10
+                    object-contain
+                    ml-2
+                  "
+                />
 
-              <div>
-                <h1 className="text-lg font-bold tracking-tight">
-                  CampusHub
-                </h1>
+                <img
+                  src={label}
+                  alt="CampusHub"
+                  className="
+                    h-10
+                    w-50
+                    object-contain
+                    -ml-6
+                    invert dark:invert-0
+                    drop-shadow-[0_0_1px_rgba(0,0,0,0.3)]
+                  "
+                />
 
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Your campus community
-                </p>
-              </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="
+                  flex h-9 w-9 items-center
+                  justify-center rounded-xl
+                  text-slate-400
+                  hover:bg-slate-100
+                  hover:text-slate-700
+                  dark:hover:bg-slate-900
+                  dark:hover:text-white
+                  lg:hidden
+                "
+                aria-label="Close navigation"
+              >
+                <X size={18} />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="
-                flex h-9 w-9 items-center
-                justify-center rounded-xl
-                text-slate-400
-                hover:bg-slate-100
-                hover:text-slate-700
-                dark:hover:bg-slate-900
-                dark:hover:text-white
-                lg:hidden
-              "
-            >
-              <X size={18} />
-            </button>
-          </div>
 
           {/* Navigation */}
 

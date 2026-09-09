@@ -659,7 +659,7 @@ function Chat() {
           </button> */}
 
 
-          
+
         </motion.div>
 
         {/* Messages */}
@@ -891,21 +891,27 @@ function Chat() {
                           {isMine && (
                             <span
                               className={`
-                                text-[10px]
+                                text-[11px]
+                                font-extrabold
+                                tracking-[-2px]
+                                leading-none
                                 ${
                                   message.is_read ||
                                   isSeen
                                     ? `
-                                      text-indigo-500
-                                      dark:text-indigo-400
+                                      text-blue-600
+                                      drop-shadow-[0_0_5px_rgba(37,99,235,0.25)]
+                                      dark:text-blue-400
+                                      dark:drop-shadow-[0_0_6px_rgba(96,165,250,0.3)]
                                     `
                                     : `
                                       text-slate-400
+                                      dark:text-slate-500
                                     `
                                 }
                               `}
                             >
-                              ✓✓
+                              ✔✔
                             </span>
                           )}
                         </div>

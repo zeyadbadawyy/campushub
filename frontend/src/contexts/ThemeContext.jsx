@@ -13,46 +13,33 @@ export function ThemeProvider({
 }) {
 
   const [darkMode, setDarkMode] =
-    useState(false);
+    useState(() => {
+      const savedTheme =
+        localStorage.getItem("darkMode");
+
+      return savedTheme === null
+        ? true
+        : savedTheme === "true";
+    });
 
   useEffect(() => {
 
-    const savedTheme =
-      localStorage.getItem(
-        "darkMode"
-      );
-
-    if (
-      savedTheme === "true"
-    ) {
-
-      setDarkMode(true);
-
-      document.body.classList.add(
-        "dark-mode"
-      );
-
-    }
-
-  }, []);
-
-  function toggleDarkMode() {
-
-    const newValue =
-      !darkMode;
-
-    setDarkMode(
-      newValue
+    document.body.classList.toggle(
+      "dark-mode",
+      darkMode
     );
 
     localStorage.setItem(
       "darkMode",
-      newValue
+      String(darkMode)
     );
 
-    document.body.classList.toggle(
-      "dark-mode",
-      newValue
+  }, [darkMode]);
+
+  function toggleDarkMode() {
+
+    setDarkMode(
+      previous => !previous
     );
 
   }

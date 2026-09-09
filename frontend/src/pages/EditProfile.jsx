@@ -38,6 +38,9 @@ function EditProfile() {
   const [loading, setLoading] =
     useState(false);
 
+  const [nameError, setNameError] =
+    useState("");
+
   const [avatar, setAvatar] =
     useState("");
 
@@ -92,6 +95,7 @@ function EditProfile() {
   }
 
   async function handleDeleteAvatar() {
+  
     try {
       await deleteAvatar();
       setAvatar("");
@@ -103,10 +107,23 @@ function EditProfile() {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    const trimmedName =
+      formData.name.trim();
+
+    if (!trimmedName) {
+      setNameError("Name cannot be empty.");
+      return;
+    }
+
+    setNameError("");
+
     try {
       setLoading(true);
 
-      await updateProfile(formData);
+      await updateProfile({
+        ...formData,
+        name: trimmedName,
+      });
 
       const user =
         await getCurrentUser();
@@ -453,12 +470,16 @@ function EditProfile() {
                   id="profile-name"
                   type="text"
                   value={formData.name}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     updateField(
                       "name",
                       e.target.value
-                    )
-                  }
+                    );
+
+                    if (e.target.value.trim()) {
+                      setNameError("");
+                    }
+                  }}
                   className="
                     h-11
                     w-full
@@ -479,6 +500,19 @@ function EditProfile() {
                     dark:focus:bg-slate-950
                   "
                 />
+
+                {nameError && (
+                  <p className="
+                    mt-2
+                    text-xs
+                    font-medium
+                    text-red-600
+                    dark:text-red-400
+                  ">
+                    {nameError}
+                  </p>
+                )}
+
               </div>
 
               {/* Faculty */}

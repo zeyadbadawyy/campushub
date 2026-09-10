@@ -47,6 +47,7 @@ import {
   getConversationSettings,
   toggleConversationMute,
   searchConversation,
+  searchGifs,
 } from "../services/postService";
 
 import {
@@ -62,24 +63,6 @@ function Chat() {
     lastSeenUsers,
   } = useWebSocket();
 
-  const [muted, setMuted] =
-    useState(false);
-
-  const [muteLoading, setMuteLoading] =
-    useState(false);
-
-  const [showSearch, setShowSearch] =
-    useState(false);
-
-  const [searchQuery, setSearchQuery] =
-    useState("");
-
-  const [searchResults, setSearchResults] =
-    useState([]);
-
-  const [searchLoading, setSearchLoading] =
-    useState(false);
-    
   const { id } = useParams();
 
   const navigate = useNavigate();
@@ -114,6 +97,42 @@ function Chat() {
   const [showEmojiPicker, setShowEmojiPicker] =
     useState(false);
 
+  const [muted, setMuted] =
+    useState(false);
+
+  const [muteLoading, setMuteLoading] =
+    useState(false);
+
+  const [showChatMenu, setShowChatMenu] =
+    useState(false);
+
+  const [showSearch, setShowSearch] =
+    useState(false);
+
+  const [searchQuery, setSearchQuery] =
+    useState("");
+
+  const [searchResults, setSearchResults] =
+    useState([]);
+
+  const [searchLoading, setSearchLoading] =
+    useState(false);
+
+  const [gifUrl, setGifUrl] =
+    useState("");
+
+  const [showGifPicker, setShowGifPicker] =
+    useState(false);
+
+  const [gifSearch, setGifSearch] =
+    useState("");
+
+  const [gifResults, setGifResults] =
+    useState([]);
+
+  const [gifLoading, setGifLoading] =
+    useState(false);
+
   const bottomRef =
     useRef(null);
 
@@ -128,9 +147,6 @@ function Chat() {
 
   const messageRefs =
     useRef({});
-  
-  const [showChatMenu, setShowChatMenu] =
-    useState(false);
 
   const {
     messages: wsMessages,
@@ -154,6 +170,58 @@ function Chat() {
   function openProfile() {
     setShowChatMenu(false);
     navigate(`/profile/${id}`);
+  }
+
+  useEffect(() => {
+    const query =
+      gifSearch.trim();
+
+    if (!showGifPicker || !query) {
+      setGifResults([]);
+      return;
+    }
+
+    const timer =
+      setTimeout(async () => {
+        try {
+          setGifLoading(true);
+
+          const results =
+            await searchGifs(query);
+
+          setGifResults(
+            results || []
+          );
+        } catch (error) {
+          console.error(error);
+          setGifResults([]);
+        } finally {
+          setGifLoading(false);
+        }
+      }, 300);
+
+    return () =>
+      clearTimeout(timer);
+  }, [
+    gifSearch,
+    showGifPicker,
+  ]);
+
+  function handleGifSelect(gif) {
+    const url =
+      gif?.images?.original?.url ||
+      gif?.images?.fixed_height?.url ||
+      "";
+
+    if (!url) {
+      return;
+    }
+
+    setGifUrl(url);
+    setShowGifPicker(false);
+    setShowEmojiPicker(false);
+    setGifSearch("");
+    setGifResults([]);
   }
 
   useEffect(() => {
@@ -210,7 +278,8 @@ function Chat() {
   async function handleSend() {
     if (
       !content.trim() &&
-      !image
+      !image &&
+      !gifUrl
     ) {
       return;
     }
@@ -229,7 +298,8 @@ function Chat() {
         await sendMessage(
           id,
           content,
-          imageUrl
+          imageUrl,
+          gifUrl
         );
 
       setMessages((prev) => [
@@ -238,6 +308,7 @@ function Chat() {
       ]);
 
       setContent("");
+      setGifUrl("");
 
       if (imagePreview) {
         URL.revokeObjectURL(
@@ -248,12 +319,15 @@ function Chat() {
       setImage(null);
       setImagePreview("");
 
+      setShowEmojiPicker(false);
+      setShowGifPicker(false);
+      setGifSearch("");
+      setGifResults([]);
+
       if (fileInputRef.current) {
         fileInputRef.current.value =
           "";
       }
-
-      setShowEmojiPicker(false);
     } catch (error) {
       console.error(error);
     }
@@ -374,9 +448,8 @@ function Chat() {
           event.target
         )
       ) {
-        setShowEmojiPicker(
-          false
-        );
+        setShowEmojiPicker(false);
+        setShowGifPicker(false);
       }
     }
 
@@ -438,6 +511,7 @@ function Chat() {
         await toggleConversationMute(id);
 
       setMuted(Boolean(data?.muted));
+      setShowChatMenu(false);
     } catch (error) {
       console.error(error);
     } finally {
@@ -465,7 +539,9 @@ function Chat() {
               query
             );
 
-          setSearchResults(data || []);
+          setSearchResults(
+            data || []
+          );
         } catch (error) {
           console.error(error);
           setSearchResults([]);
@@ -544,6 +620,8 @@ function Chat() {
       (prev) =>
         prev + emojiData.emoji
     );
+
+    setShowGifPicker(false);
   }
 
   function handleImageSelect(
@@ -567,6 +645,8 @@ function Chat() {
     setImagePreview(
       URL.createObjectURL(file)
     );
+
+    setShowGifPicker(false);
   }
 
   function removeImage() {
@@ -773,9 +853,7 @@ function Chat() {
             />
           </button>
 
-
-          {/* meatballs menu button for mute,search in convo, and view profile*/}
-
+          {/* Conversation menu */}
 
           <div className="relative shrink-0">
             <button
@@ -823,7 +901,12 @@ function Chat() {
                   }}
                   transition={{
                     duration: 0.18,
-                    ease: [0.22, 1, 0.36, 1],
+                    ease: [
+                      0.22,
+                      1,
+                      0.36,
+                      1,
+                    ],
                   }}
                   className="
                     absolute
@@ -844,8 +927,12 @@ function Chat() {
                 >
                   <button
                     type="button"
-                    onClick={handleMuteToggle}
-                    disabled={muteLoading}
+                    onClick={
+                      handleMuteToggle
+                    }
+                    disabled={
+                      muteLoading
+                    }
                     className="
                       flex w-full
                       items-center
@@ -858,6 +945,8 @@ function Chat() {
                       text-slate-700
                       transition
                       hover:bg-slate-100
+                      disabled:cursor-wait
+                      disabled:opacity-60
                       dark:text-slate-200
                       dark:hover:bg-slate-800
                     "
@@ -872,14 +961,16 @@ function Chat() {
                       {muteLoading
                         ? "Updating..."
                         : muted
-                          ? "Unmute conversation"
-                          : "Mute conversation"}
+                        ? "Unmute conversation"
+                        : "Mute conversation"}
                     </span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={openProfile}
+                    onClick={
+                      openProfile
+                    }
                     className="
                       flex w-full
                       items-center
@@ -905,7 +996,9 @@ function Chat() {
 
                   <button
                     type="button"
-                    onClick={openConversationSearch}
+                    onClick={
+                      openConversationSearch
+                    }
                     className="
                       flex w-full
                       items-center
@@ -932,10 +1025,9 @@ function Chat() {
               )}
             </AnimatePresence>
           </div>
-
-
-
         </motion.div>
+
+        {/* Conversation search */}
 
         <AnimatePresence>
           {showSearch && (
@@ -1030,7 +1122,9 @@ function Chat() {
 
                 <button
                   type="button"
-                  onClick={closeConversationSearch}
+                  onClick={
+                    closeConversationSearch
+                  }
                   className="
                     flex h-10 w-10
                     shrink-0
@@ -1074,7 +1168,9 @@ function Chat() {
                             key={result.id}
                             type="button"
                             onClick={() =>
-                              openSearchResult(result.id)
+                              openSearchResult(
+                                result.id
+                              )
                             }
                             className="
                               block
@@ -1227,8 +1323,9 @@ function Chat() {
                       key={message.id}
                       ref={(element) => {
                         if (element) {
-                          messageRefs.current[message.id] =
-                            element;
+                          messageRefs.current[
+                            message.id
+                          ] = element;
                         } else {
                           delete messageRefs.current[
                             message.id
@@ -1273,7 +1370,8 @@ function Chat() {
                             shadow-sm
                             ${
                               message.image_url &&
-                              !message.content
+                              !message.content &&
+                              !message.gif_url
                                 ? `
                                   border
                                   border-slate-200
@@ -1314,6 +1412,22 @@ function Chat() {
                             </p>
                           )}
 
+                          {message.gif_url && (
+                            <img
+                              src={
+                                message.gif_url
+                              }
+                              alt=""
+                              className="
+                                mt-2
+                                max-h-[280px]
+                                max-w-[280px]
+                                rounded-xl
+                                object-cover
+                              "
+                            />
+                          )}
+
                           {message.image_url && (
                             <button
                               type="button"
@@ -1323,6 +1437,7 @@ function Chat() {
                                 )
                               }
                               className="
+                                mt-2
                                 block
                                 overflow-hidden
                                 rounded-xl
@@ -1377,24 +1492,12 @@ function Chat() {
                           {isMine && (
                             <span
                               className={`
+                                chat-message-checks
+                                ${message.is_read || isSeen ? "seen" : ""}
                                 text-[11px]
                                 font-extrabold
                                 tracking-[-2px]
                                 leading-none
-                                ${
-                                  message.is_read ||
-                                  isSeen
-                                    ? `
-                                      text-blue-600
-                                      drop-shadow-[0_0_5px_rgba(37,99,235,0.25)]
-                                      dark:text-blue-400
-                                      dark:drop-shadow-[0_0_6px_rgba(96,165,250,0.3)]
-                                    `
-                                    : `
-                                      text-slate-400
-                                      dark:text-slate-500
-                                    `
-                                }
                               `}
                             >
                               ✔✔
@@ -1633,7 +1736,81 @@ function Chat() {
 
                 <button
                   type="button"
-                  onClick={removeImage}
+                  onClick={
+                    removeImage
+                  }
+                  className="
+                    absolute
+                    right-1.5
+                    top-1.5
+                    flex h-7 w-7
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-black/60
+                    text-white
+                    backdrop-blur-sm
+                  "
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* GIF preview */}
+
+        <AnimatePresence>
+          {gifUrl && (
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{
+                opacity: 0,
+                y: 8,
+              }}
+              className="
+                shrink-0
+                border-t
+                border-slate-100
+                bg-white
+                px-4 py-3
+                dark:border-slate-800
+                dark:bg-slate-900
+                sm:px-5
+              "
+            >
+              <div className="
+                relative
+                w-fit
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                dark:border-slate-700
+              ">
+                <img
+                  src={gifUrl}
+                  alt=""
+                  className="
+                    h-24
+                    w-36
+                    object-cover
+                  "
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setGifUrl("")
+                  }
                   className="
                     absolute
                     right-1.5
@@ -1690,9 +1867,11 @@ function Chat() {
 
             <button
               type="button"
-              onClick={() =>
-                fileInputRef.current?.click()
-              }
+              onClick={() => {
+                fileInputRef.current?.click();
+                setShowEmojiPicker(false);
+                setShowGifPicker(false);
+              }}
               className="
                 flex h-10 w-10
                 shrink-0
@@ -1710,22 +1889,30 @@ function Chat() {
               <ImageIcon size={19} />
             </button>
 
-            {/* Emoji */}
+            {/* Emoji + GIF */}
 
             <div
               ref={pickerRef}
-              className="relative"
+              className="
+                relative
+                flex
+                shrink-0
+                items-center
+                gap-1
+              "
             >
+              {/* Emoji */}
+
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
                   setShowEmojiPicker(
                     (prev) => !prev
-                  )
-                }
+                  );
+                  setShowGifPicker(false);
+                }}
                 className="
                   flex h-10 w-10
-                  shrink-0
                   items-center
                   justify-center
                   rounded-xl
@@ -1736,6 +1923,7 @@ function Chat() {
                   dark:hover:bg-amber-500/10
                   dark:hover:text-amber-400
                 "
+                aria-label="Emoji"
               >
                 <Smile size={19} />
               </button>
@@ -1777,6 +1965,176 @@ function Chat() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* GIF */}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGifPicker(
+                    (prev) => !prev
+                  );
+                  setShowEmojiPicker(false);
+                }}
+                className="
+                  flex h-10 w-10
+                  items-center
+                  justify-center
+                  rounded-xl
+                  text-xs
+                  font-bold
+                  text-slate-400
+                  transition
+                  hover:bg-indigo-50
+                  hover:text-indigo-600
+                  dark:hover:bg-indigo-500/10
+                  dark:hover:text-indigo-400
+                "
+                aria-label="GIFs"
+              >
+                GIF
+              </button>
+
+              <AnimatePresence>
+                {showGifPicker && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      y: 8,
+                      scale: 0.97,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 8,
+                      scale: 0.97,
+                    }}
+                    className="
+                      absolute
+                      bottom-14
+                      left-0
+                      z-50
+                      w-80
+                      overflow-hidden
+                      rounded-2xl
+                      border
+                      border-slate-200
+                      bg-white
+                      shadow-2xl
+                      dark:border-slate-700
+                      dark:bg-slate-900
+                      sm:left-12
+                    "
+                  >
+                    <div className="p-3">
+                      <input
+                        type="text"
+                        value={gifSearch}
+                        onChange={(e) =>
+                          setGifSearch(
+                            e.target.value
+                          )
+                        }
+                        placeholder="Search GIFs..."
+                        className="
+                          h-10
+                          w-full
+                          rounded-xl
+                          border
+                          border-slate-200
+                          bg-slate-50
+                          px-3
+                          text-sm
+                          outline-none
+                          focus:border-indigo-500
+                          dark:border-slate-700
+                          dark:bg-slate-950
+                        "
+                      />
+                    </div>
+
+                    <div className="
+                      grid
+                      max-h-80
+                      grid-cols-2
+                      gap-2
+                      overflow-y-auto
+                      p-3
+                    ">
+                      {gifLoading ? (
+                        <div className="
+                          col-span-2
+                          py-8
+                          text-center
+                          text-sm
+                          text-slate-400
+                        ">
+                          Searching...
+                        </div>
+                      ) : gifResults.length > 0 ? (
+                        gifResults.map(
+                          (gif) => (
+                            <button
+                              key={gif.id}
+                              type="button"
+                              onClick={() =>
+                                handleGifSelect(
+                                  gif
+                                )
+                              }
+                              className="
+                                overflow-hidden
+                                rounded-xl
+                                bg-slate-100
+                                dark:bg-slate-800
+                              "
+                            >
+                              <img
+                                src={
+                                  gif.images?.fixed_width?.url ||
+                                  gif.images?.original?.url
+                                }
+                                alt=""
+                                className="
+                                  h-28
+                                  w-full
+                                  object-cover
+                                  transition
+                                  hover:scale-[1.03]
+                                "
+                              />
+                            </button>
+                          )
+                        )
+                      ) : gifSearch ? (
+                        <div className="
+                          col-span-2
+                          py-8
+                          text-center
+                          text-sm
+                          text-slate-400
+                        ">
+                          No GIFs found
+                        </div>
+                      ) : (
+                        <div className="
+                          col-span-2
+                          py-8
+                          text-center
+                          text-sm
+                          text-slate-400
+                        ">
+                          Search for a GIF
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Input */}
@@ -1796,7 +2154,8 @@ function Chat() {
 
                   if (
                     content.trim() ||
-                    image
+                    image ||
+                    gifUrl
                   ) {
                     handleSend();
                   }
@@ -1835,7 +2194,8 @@ function Chat() {
               onClick={handleSend}
               disabled={
                 !content.trim() &&
-                !image
+                !image &&
+                !gifUrl
               }
               className="
                 flex h-10 w-10

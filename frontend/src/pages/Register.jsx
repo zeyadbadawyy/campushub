@@ -49,12 +49,51 @@ function Register() {
       return;
     }
 
+    const name =
+      formData.name.trim();
+
+    const email =
+      formData.email.trim().toLowerCase();
+
+    const password =
+      formData.password;
+
+    if (!name) {
+      alert("Name is required.");
+      return;
+    }
+
+    if (!email) {
+      alert("Email is required.");
+      return;
+    }
+
+    const emailPattern =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(email)) {
+      alert(
+        "Please enter a valid email address."
+      );
+      return;
+    }
+
+    if (password.length <= 6) {
+      alert(
+        "Password must be more than 6 characters."
+      );
+      return;
+    }
+
     try {
       setLoading(true);
 
-      await registerUser(
-        formData
-      );
+      await registerUser({
+        ...formData,
+        name,
+        email,
+        password,
+      });
 
       alert(
         "Registration successful!"
@@ -64,9 +103,11 @@ function Register() {
     } catch (error) {
       console.error(error);
 
-      alert(
-        "Registration failed"
-      );
+      const message =
+        error.response?.data ||
+        "Registration failed.";
+
+      alert(message);
     } finally {
       setLoading(false);
     }
@@ -202,7 +243,6 @@ function Register() {
             value={formData.faculty}
             onChange={handleChange}
             icon={BookOpen}
-            required
           />
 
           <div>

@@ -110,7 +110,8 @@ func CreateComment(
 		return
 	}
 
-	if comment.Content == "" {
+	if comment.Content == "" &&
+		comment.GIFURL == "" {
 
 		http.Error(
 			w,
@@ -124,13 +125,14 @@ func CreateComment(
 	err = database.DB.QueryRow(
 		`
 		INSERT INTO comments
-		(post_id,user_id,content)
-		VALUES ($1,$2,$3)
+		(post_id,user_id,content,gif_url)
+		VALUES ($1,$2,$3,$4)
 		RETURNING id,created_at
 		`,
 		postID,
 		userID,
 		comment.Content,
+		comment.GIFURL,
 	).Scan(
 		&comment.ID,
 		&comment.CreatedAt,
@@ -279,6 +281,7 @@ WHERE id = $1
 				"user_id":    comment.UserID,
 				"author":     commenterName,
 				"content":    comment.Content,
+				"gif_url":    comment.GIFURL,
 				"created_at": comment.CreatedAt,
 			},
 		},
@@ -335,6 +338,7 @@ func GetComments(
 			post_id,
 			user_id,
 			content,
+			gif_url,
 			created_at
 		FROM comments
 		WHERE post_id=$1
@@ -368,6 +372,7 @@ func GetComments(
 			&comment.PostID,
 			&comment.UserID,
 			&comment.Content,
+			&comment.GIFURL,
 			&comment.CreatedAt,
 		)
 

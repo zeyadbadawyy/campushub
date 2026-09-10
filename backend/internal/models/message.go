@@ -8,6 +8,7 @@ type Message struct {
 	ReceiverID int       `json:"receiver_id"`
 	Content    string    `json:"content"`
 	ImageURL   string    `json:"image_url"`
+	GIFURL     string    `json:"gif_url"`
 	CreatedAt  time.Time `json:"created_at"`
 	IsRead     bool      `json:"is_read"`
 }

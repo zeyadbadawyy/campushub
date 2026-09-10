@@ -199,7 +199,8 @@ func SendMessage(
 	}
 
 	if message.Content == "" &&
-		message.ImageURL == "" {
+		message.ImageURL == "" &&
+		message.GIFURL == "" {
 
 		http.Error(
 			w,
@@ -217,14 +218,16 @@ func SendMessage(
 				sender_id,
 				receiver_id,
 				content,
-				image_url
+				image_url,
+				gif_url
 		)
 		VALUES
 		(
 				$1,
 				$2,
 				$3,
-				$4
+				$4,
+				$5
 		)
 		RETURNING id,created_at
 		`,
@@ -232,6 +235,7 @@ func SendMessage(
 		receiverID,
 		message.Content,
 		message.ImageURL,
+		message.GIFURL,
 	).Scan(
 		&message.ID,
 		&message.CreatedAt,
@@ -581,6 +585,7 @@ func GetConversation(
 			receiver_id,
 			content,
 			image_url,
+			gif_url,
 			created_at,
 			is_read
 		FROM messages
@@ -619,21 +624,40 @@ func GetConversation(
 
 		var message models.Message
 
-		rows.Scan(
+		err = rows.Scan(
 			&message.ID,
 			&message.SenderID,
 			&message.ReceiverID,
 			&message.Content,
 			&message.ImageURL,
+			&message.GIFURL,
 			&message.CreatedAt,
 			&message.IsRead,
 		)
+
+		if err != nil {
+			http.Error(
+				w,
+				"Could not read message",
+				http.StatusInternalServerError,
+			)
+			return
+		}
 
 		messages =
 			append(
 				messages,
 				message,
 			)
+	}
+
+	if err = rows.Err(); err != nil {
+		http.Error(
+			w,
+			"Could not read messages",
+			http.StatusInternalServerError,
+		)
+		return
 	}
 
 	json.NewEncoder(

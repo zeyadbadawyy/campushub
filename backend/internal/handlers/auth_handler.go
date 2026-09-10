@@ -3,11 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"campushub/internal/database"
 	"campushub/internal/models"
 	"campushub/internal/utils"
 
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,35 +37,91 @@ func Register(
 	).Decode(&user)
 
 	if err != nil {
-
 		http.Error(
 			w,
 			"Invalid JSON",
 			http.StatusBadRequest,
 		)
-
 		return
 	}
 
-	if user.Password == "" {
+	user.Name = strings.TrimSpace(user.Name)
+	user.Email = strings.ToLower(
+		strings.TrimSpace(user.Email),
+	)
 
+	if user.Name == "" {
+		http.Error(
+			w,
+			"Name is required",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	if user.Email == "" {
+		http.Error(
+			w,
+			"Email is required",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	emailPattern :=
+		`^[^\s@]+@[^\s@]+\.[^\s@]+$`
+
+	matched, err :=
+		regexp.MatchString(
+			emailPattern,
+			user.Email,
+		)
+
+	if err != nil || !matched {
+		http.Error(
+			w,
+			"Please enter a valid email address",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	if len(user.Password) == 0 {
 		http.Error(
 			w,
 			"Password is required",
 			http.StatusBadRequest,
 		)
-
 		return
 	}
 
-	if len(user.Password) < 6 {
-
+	if len(user.Password) <= 6 {
 		http.Error(
 			w,
-			"Password must be at least 6 characters",
+			"Password must be more than 6 characters",
 			http.StatusBadRequest,
 		)
+		return
+	}
 
+	var existingUserID int
+
+	err = database.DB.QueryRow(
+		`
+	SELECT id
+	FROM users
+	WHERE LOWER(email) = LOWER($1)
+	LIMIT 1
+	`,
+		user.Email,
+	).Scan(&existingUserID)
+
+	if err == nil {
+		http.Error(
+			w,
+			"An account with this email already exists",
+			http.StatusConflict,
+		)
 		return
 	}
 
@@ -73,13 +132,11 @@ func Register(
 		)
 
 	if err != nil {
-
 		http.Error(
 			w,
 			"Could not hash password",
 			http.StatusInternalServerError,
 		)
-
 		return
 	}
 
@@ -87,34 +144,55 @@ func Register(
 
 	err = database.DB.QueryRow(
 		`
-	INSERT INTO users
-	(name,email,password,bio,faculty)
-	VALUES ($1,$2,$3,$4,$5)
-	RETURNING id
-	`,
+		INSERT INTO users
+		(name, email, password, bio, faculty)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id
+		`,
 		user.Name,
 		user.Email,
 		string(hashedPassword),
-		user.Bio,
-		user.Faculty,
+		strings.TrimSpace(user.Bio),
+		strings.TrimSpace(user.Faculty),
 	).Scan(&userID)
+
+	if err != nil {
+
+		if pgErr, ok := err.(*pq.Error); ok &&
+			pgErr.Code == "23505" {
+
+			http.Error(
+				w,
+				"An account with this email already exists",
+				http.StatusConflict,
+			)
+
+			return
+		}
+
+		http.Error(
+			w,
+			"Could not create account",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
 
 	_, err = database.DB.Exec(
 		`
-	INSERT INTO user_settings (user_id)
-	VALUES ($1)
-	`,
+		INSERT INTO user_settings (user_id)
+		VALUES ($1)
+		`,
 		userID,
 	)
 
 	if err != nil {
-
 		http.Error(
 			w,
-			err.Error(),
+			"Could not initialize account settings",
 			http.StatusInternalServerError,
 		)
-
 		return
 	}
 

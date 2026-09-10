@@ -110,7 +110,8 @@ export async function getComments(
 
 export async function createComment(
   postId,
-  content
+  content,
+  gifUrl = ""
 ) {
 
   const token =
@@ -414,7 +415,8 @@ export async function getConversation(
 export async function sendMessage(
   userId,
   content,
-  imageUrl = ""
+  imageUrl = "",
+  gifUrl = ""
 ) {
 
   const token =
@@ -425,7 +427,8 @@ export async function sendMessage(
       `/messages/${userId}`,
       {
         content,
-        image_url: imageUrl
+        image_url: imageUrl,
+        gif_url: gifUrl
       },
       {
         headers: {

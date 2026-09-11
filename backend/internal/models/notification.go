@@ -13,4 +13,5 @@ type Notification struct {
 	IsRead          bool      `json:"is_read"`
 	CreatedAt       time.Time `json:"created_at"`
 	SenderAvatarURL string    `json:"sender_avatar_url"`
+	MessageCount    int       `json:"message_count"`
 }

@@ -145,9 +145,30 @@ function Navbar({ onMenuClick }) {
 
     const newest = notifications[0];
 
-    setRecentNotifications((prev) =>
-      [newest, ...prev].slice(0, 5)
-    );
+    setRecentNotifications((prev) => {
+
+      const exists =
+        prev.some(
+          (notification) =>
+            notification.id ===
+            newest.id
+        );
+
+      if (exists) {
+        return prev.map(
+          (notification) =>
+            notification.id ===
+            newest.id
+              ? newest
+              : notification
+        );
+      }
+
+      return [
+        newest,
+        ...prev,
+      ].slice(0, 5);
+    });
   }, [notifications]);
 
   function handleLogout() {
@@ -637,6 +658,30 @@ function Navbar({ onMenuClick }) {
                               {getNotificationIcon(
                                 notification.type
                               )}
+
+                              {notification.type === "message" &&
+                                notification.message_count > 1 && (
+                                  <span className="
+                                    absolute
+                                    -right-2
+                                    -top-2
+                                    flex
+                                    h-4
+                                    min-w-4
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    bg-red-500
+                                    px-1
+                                    text-[8px]
+                                    font-bold
+                                    text-white
+                                  ">
+                                    {notification.message_count > 99
+                                      ? "99+"
+                                      : notification.message_count}
+                                  </span>
+                                )}
                             </span>
                           </div>
 

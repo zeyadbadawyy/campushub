@@ -32,6 +32,7 @@ func GetNotifications(
 				n.type,
 				n.message,
 				n.is_read,
+				COALESCE(n.message_count, 1),
 				n.created_at,
 				n.target_id
 			FROM notifications n
@@ -71,6 +72,7 @@ func GetNotifications(
 			&notification.Type,
 			&notification.Message,
 			&notification.IsRead,
+			&notification.MessageCount,
 			&notification.CreatedAt,
 			&notification.TargetID,
 		)

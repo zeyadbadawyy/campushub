@@ -38,6 +38,9 @@ export function WebSocketProvider({
   const typingTimeoutsRef =
     useRef({});
 
+  const notificationsRef =
+    useRef([]);
+
   const [messages, setMessages] =
     useState([]);
 
@@ -78,6 +81,11 @@ export function WebSocketProvider({
 
   const [newPosts, setNewPosts] =
     useState([]);
+
+  useEffect(() => {
+    notificationsRef.current =
+      notifications;
+  }, [notifications]);
 
   useEffect(() => {
     async function loadCounts() {
@@ -315,17 +323,39 @@ export function WebSocketProvider({
 
       if (data.type === "notification") {
 
-        setNotifications(
-          prev => [
-            data.notification,
-            ...prev
-          ]
-        );
+        const incoming =
+          data.notification;
 
-        setNotificationCount(
-          prev => prev + 1
-        );
+        const existing =
+          notificationsRef.current.some(
+            (notification) =>
+              notification.id ===
+              incoming.id
+          );
 
+        setNotifications((prev) => {
+
+          if (existing) {
+            return prev.map(
+              (notification) =>
+                notification.id ===
+                incoming.id
+                  ? incoming
+                  : notification
+            );
+          }
+
+          return [
+            incoming,
+            ...prev,
+          ];
+        });
+
+        if (!existing) {
+          setNotificationCount(
+            (prev) => prev + 1
+          );
+        }
       }
 
       if (data.type === "follow_request") {
@@ -417,7 +447,7 @@ export function WebSocketProvider({
       setTypingUsers([]);
       setOnlineUsers([]);
       setLastSeenUsers({});
-      
+
       ws.close();
 
     };

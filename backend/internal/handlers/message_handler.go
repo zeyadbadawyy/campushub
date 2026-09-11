@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -341,47 +342,168 @@ func SendMessage(
 	if allowMessageNotifications &&
 		!conversationMuted {
 
+		tx, err := database.DB.Begin()
+
+		if err != nil {
+			http.Error(
+				w,
+				"Could not start notification transaction",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+		_, err = tx.Exec(
+			`
+		SELECT pg_advisory_xact_lock(
+			hashtext($1)
+		)
+		`,
+			fmt.Sprintf(
+				"message-notification:%d:%d",
+				receiverID,
+				senderID,
+			),
+		)
+
+		if err != nil {
+			_ = tx.Rollback()
+
+			http.Error(
+				w,
+				"Could not lock notification batch",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
 		var notificationID int
 		var createdAt string
+		var messageCount int
 
-		err = database.DB.QueryRow(
+		err = tx.QueryRow(
 			`
-	INSERT INTO notifications
-	(
-		user_id,
-		sender_id,
-		type,
-		message,
-		target_id
-	)
-	VALUES
-	(
-		$1,
-		$2,
-		$3,
-		$4,
-		$5
-	)
-	RETURNING id, created_at
-	`,
+		SELECT
+			id,
+			created_at,
+			message_count
+		FROM notifications
+		WHERE user_id = $1
+		AND sender_id = $2
+		AND type = 'message'
+		AND is_read = FALSE
+		AND created_at >= CURRENT_TIMESTAMP - INTERVAL '1 minute'
+		ORDER BY created_at DESC
+		LIMIT 1
+		FOR UPDATE
+		`,
 			receiverID,
-			senderID,
-			"message",
-			"sent you a message",
 			senderID,
 		).Scan(
 			&notificationID,
 			&createdAt,
+			&messageCount,
 		)
 
-		if err != nil {
+		if err == nil {
+
+			messageCount++
+
+			notificationMessage :=
+				"sent you a message"
+
+			if messageCount > 1 {
+				notificationMessage =
+					fmt.Sprintf(
+						"sent you %d messages",
+						messageCount,
+					)
+			}
+
+			err = tx.QueryRow(
+				`
+			UPDATE notifications
+			SET
+				message = $1,
+				message_count = $2,
+				created_at = CURRENT_TIMESTAMP
+			WHERE id = $3
+			RETURNING created_at
+			`,
+				notificationMessage,
+				messageCount,
+				notificationID,
+			).Scan(
+				&createdAt,
+			)
+
+			if err != nil {
+				_ = tx.Rollback()
+
+				http.Error(
+					w,
+					"Could not update notification",
+					http.StatusInternalServerError,
+				)
+				return
+			}
+
+		} else {
+
+			messageCount = 1
+
+			err = tx.QueryRow(
+				`
+			INSERT INTO notifications
+			(
+				user_id,
+				sender_id,
+				type,
+				message,
+				target_id,
+				message_count
+			)
+			VALUES
+			(
+				$1,
+				$2,
+				$3,
+				$4,
+				$5,
+				$6
+			)
+			RETURNING id, created_at
+			`,
+				receiverID,
+				senderID,
+				"message",
+				"sent you a message",
+				senderID,
+				1,
+			).Scan(
+				&notificationID,
+				&createdAt,
+			)
+
+			if err != nil {
+				_ = tx.Rollback()
+
+				http.Error(
+					w,
+					"Could not create notification",
+					http.StatusInternalServerError,
+				)
+				return
+			}
+		}
+
+		if err = tx.Commit(); err != nil {
 
 			http.Error(
 				w,
-				"Could not create notification",
+				"Could not save notification",
 				http.StatusInternalServerError,
 			)
-
 			return
 		}
 
@@ -390,15 +512,26 @@ func SendMessage(
 
 		database.DB.QueryRow(
 			`
-SELECT name, avatar_url
-FROM users
-WHERE id = $1
-`,
+		SELECT name, avatar_url
+		FROM users
+		WHERE id = $1
+		`,
 			senderID,
 		).Scan(
 			&senderName,
 			&senderAvatarURL,
 		)
+
+		notificationMessage :=
+			"sent you a message"
+
+		if messageCount > 1 {
+			notificationMessage =
+				fmt.Sprintf(
+					"sent you %d messages",
+					messageCount,
+				)
+		}
 
 		websocket.SendNotification(
 			receiverID,
@@ -411,13 +544,13 @@ WHERE id = $1
 					"sender_name":       senderName,
 					"sender_avatar_url": senderAvatarURL,
 					"type":              "message",
-					"message":           "sent you a message",
+					"message":           notificationMessage,
+					"message_count":     messageCount,
 					"is_read":           false,
 					"target_id":         senderID,
 				},
 			},
 		)
-
 	}
 
 	w.WriteHeader(

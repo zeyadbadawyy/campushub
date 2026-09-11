@@ -75,6 +75,7 @@ function Notifications() {
   }, []);
 
   useEffect(() => {
+
     if (!wsNotifications.length) {
       return;
     }
@@ -89,7 +90,12 @@ function Notifications() {
       );
 
       if (exists) {
-        return prev;
+        return prev.map(
+          (item) =>
+            item.id === newest.id
+              ? newest
+              : item
+        );
       }
 
       return [
@@ -97,6 +103,7 @@ function Notifications() {
         ...prev,
       ];
     });
+
   }, [wsNotifications]);
 
   async function handleMarkRead() {
@@ -821,6 +828,30 @@ function Notifications() {
                         {getNotificationIcon(
                           notification.type
                         )}
+
+                        {notification.type === "message" &&
+                          notification.message_count > 1 && (
+                            <span className="
+                              absolute
+                              -right-2
+                              -top-2
+                              flex
+                              h-4
+                              min-w-4
+                              items-center
+                              justify-center
+                              rounded-full
+                              bg-red-500
+                              px-1
+                              text-[8px]
+                              font-bold
+                              text-white
+                            ">
+                              {notification.message_count > 99
+                                ? "99+"
+                                : notification.message_count}
+                            </span>
+                          )}
                       </span>
                     </div>
 

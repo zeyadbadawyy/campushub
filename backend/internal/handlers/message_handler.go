@@ -487,7 +487,7 @@ func GetConversation(
 				"userID",
 			).(int)
 
-	_, err = database.DB.Exec(
+	_, _ = database.DB.Exec(
 		`
 		UPDATE messages
 		SET is_read = TRUE
@@ -495,6 +495,19 @@ func GetConversation(
 		AND sender_id = $2
 		AND is_read = FALSE
 		`,
+		currentUserID,
+		targetUserID,
+	)
+
+	_, _ = database.DB.Exec(
+		`
+	UPDATE notifications
+	SET is_read = TRUE
+	WHERE user_id = $1
+	AND sender_id = $2
+	AND type = 'message'
+	AND is_read = FALSE
+	`,
 		currentUserID,
 		targetUserID,
 	)
@@ -577,6 +590,33 @@ func GetConversation(
 		}
 	}
 
+	var notificationCount int
+
+	err = database.DB.QueryRow(
+		`
+	SELECT COUNT(*)
+	FROM notifications
+	WHERE user_id = $1
+	AND is_read = FALSE
+	`,
+		currentUserID,
+	).Scan(
+		&notificationCount,
+	)
+
+	if err == nil {
+		if client, exists :=
+			websocket.WSHub.Clients[currentUserID]; exists {
+
+			client.Conn.WriteJSON(
+				map[string]interface{}{
+					"type":  "notification_count",
+					"count": notificationCount,
+				},
+			)
+		}
+	}
+
 	rows, err := database.DB.Query(
 		`
 		SELECT
@@ -584,8 +624,8 @@ func GetConversation(
 			sender_id,
 			receiver_id,
 			content,
-			image_url,
-			gif_url,
+			COALESCE(image_url, ''),
+			COALESCE(gif_url, ''),
 			created_at,
 			is_read
 		FROM messages

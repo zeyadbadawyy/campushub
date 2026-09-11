@@ -8,8 +8,9 @@ import {
   motion,
 } from "framer-motion";
 
+import logo from "../assets/logo/t_full_logo.png";
+
 import {
-  GraduationCap,
   Mail,
   Lock,
   ArrowRight,
@@ -100,21 +101,20 @@ function Login() {
           mb-8
           text-center
         ">
-          <div className="
-            mx-auto
+          <div className="        
             flex
-            h-14
-            w-14
             items-center
             justify-center
             rounded-2xl
-            bg-indigo-600
-            text-white
-            shadow-lg
-            shadow-indigo-600/20
           ">
-            <GraduationCap
-              size={27}
+            <img
+              src={logo}
+              alt="CampusHub"
+              className="
+                h-50
+                w-50
+                object-contain
+              "
             />
           </div>
 

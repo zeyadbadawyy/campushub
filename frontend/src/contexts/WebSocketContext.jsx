@@ -11,7 +11,8 @@ import {
 } from "./AuthContext";
 
 import {
-  getUnreadNotificationsCount
+  getUnreadNotificationsCount,
+  getUnreadMessagesCount,
 } from "../services/postService";
 
 const WebSocketContext =
@@ -76,30 +77,31 @@ export function WebSocketProvider({
     useState([]);
 
   useEffect(() => {
-
-    async function loadCount() {
-
+    async function loadCounts() {
       try {
-
-        const data =
-          await getUnreadNotificationsCount();
+        const [
+          notificationData,
+          messageData,
+        ] = await Promise.all([
+          getUnreadNotificationsCount(),
+          getUnreadMessagesCount(),
+        ]);
 
         setNotificationCount(
-          data.count || 0
+          notificationData.count || 0
         );
 
+        setUnreadCount(
+          messageData.count || 0
+        );
       } catch (error) {
-
         console.error(error);
-
       }
-
     }
 
     if (user) {
-      loadCount();
+      loadCounts();
     }
-
   }, [user]);
 
   useEffect(() => {
@@ -289,6 +291,12 @@ export function WebSocketProvider({
           data.count
         );
 
+      }
+
+      if (data.type === "notification_count") {
+        setNotificationCount(
+          data.count
+        );
       }
 
       if (data.type === "notification") {

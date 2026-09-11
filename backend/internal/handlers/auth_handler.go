@@ -95,10 +95,10 @@ func Register(
 		return
 	}
 
-	if len(user.Password) <= 6 {
+	if len(user.Password) < 6 {
 		http.Error(
 			w,
-			"Password must be more than 6 characters",
+			"Password must be at least 6 characters",
 			http.StatusBadRequest,
 		)
 		return

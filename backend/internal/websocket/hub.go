@@ -3,6 +3,8 @@ package websocket
 import (
 	"encoding/json"
 	"sync"
+
+	gorilla "github.com/gorilla/websocket"
 )
 
 type Hub struct {
@@ -16,16 +18,28 @@ var WSHub = &Hub{
 
 func Broadcast(data interface{}) {
 
-	message, _ :=
+	message, err :=
 		json.Marshal(data)
 
+	if err != nil {
+		return
+	}
+
 	WSHub.Mutex.RLock()
-	defer WSHub.Mutex.RUnlock()
+	clients := make([]*Client, 0, len(WSHub.Clients))
 
 	for _, client := range WSHub.Clients {
+		clients = append(
+			clients,
+			client,
+		)
+	}
 
-		client.Conn.WriteMessage(
-			1,
+	WSHub.Mutex.RUnlock()
+
+	for _, client := range clients {
+		_ = client.WriteMessage(
+			gorilla.TextMessage,
 			message,
 		)
 	}

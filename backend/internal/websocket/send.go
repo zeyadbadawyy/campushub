@@ -2,6 +2,8 @@ package websocket
 
 import (
 	"encoding/json"
+
+	gorilla "github.com/gorilla/websocket"
 )
 
 func SendToUser(
@@ -9,8 +11,12 @@ func SendToUser(
 	data interface{},
 ) {
 
-	message, _ :=
+	message, err :=
 		json.Marshal(data)
+
+	if err != nil {
+		return
+	}
 
 	WSHub.Mutex.RLock()
 
@@ -23,8 +29,8 @@ func SendToUser(
 		return
 	}
 
-	client.Conn.WriteMessage(
-		1,
+	_ = client.WriteMessage(
+		gorilla.TextMessage,
 		message,
 	)
 }

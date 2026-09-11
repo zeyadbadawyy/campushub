@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	gorilla "github.com/gorilla/websocket"
-
 	"campushub/internal/database"
 	"campushub/internal/models"
 	"campushub/internal/websocket"
@@ -255,17 +253,10 @@ func SendMessage(
 	message.SenderID = senderID
 	message.ReceiverID = receiverID
 
-	messageJSON, _ :=
-		json.Marshal(message)
-
-	if client, exists :=
-		websocket.WSHub.Clients[receiverID]; exists {
-
-		client.Conn.WriteMessage(
-			gorilla.TextMessage,
-			messageJSON,
-		)
-	}
+	websocket.SendToUser(
+		receiverID,
+		message,
+	)
 
 	var unreadCount int
 
@@ -283,16 +274,13 @@ func SendMessage(
 
 	if err == nil {
 
-		if client, exists := websocket.WSHub.Clients[receiverID]; exists {
-
-			client.Conn.WriteJSON(
-				map[string]interface{}{
-					"type":  "unread_count",
-					"count": unreadCount,
-				},
-			)
-
-		}
+		websocket.SendToUser(
+			receiverID,
+			map[string]interface{}{
+				"type":  "unread_count",
+				"count": unreadCount,
+			},
+		)
 	}
 
 	var allowMessageNotifications bool
@@ -539,17 +527,14 @@ func GetConversation(
 		return
 	}
 
-	if client, exists := websocket.WSHub.Clients[targetUserID]; exists {
-
-		client.Conn.WriteJSON(
-			map[string]interface{}{
-				"type":               "read",
-				"readerId":           currentUserID,
-				"readUntilMessageId": readUntilMessageID,
-			},
-		)
-
-	}
+	websocket.SendToUser(
+		targetUserID,
+		map[string]interface{}{
+			"type":               "read",
+			"readerId":           currentUserID,
+			"readUntilMessageId": readUntilMessageID,
+		},
+	)
 
 	if err != nil {
 
@@ -578,16 +563,13 @@ func GetConversation(
 
 	if err == nil {
 
-		if client, exists := websocket.WSHub.Clients[currentUserID]; exists {
-
-			client.Conn.WriteJSON(
-				map[string]interface{}{
-					"type":  "unread_count",
-					"count": unreadCount,
-				},
-			)
-
-		}
+		websocket.SendToUser(
+			currentUserID,
+			map[string]interface{}{
+				"type":  "unread_count",
+				"count": unreadCount,
+			},
+		)
 	}
 
 	var notificationCount int
@@ -605,16 +587,15 @@ func GetConversation(
 	)
 
 	if err == nil {
-		if client, exists :=
-			websocket.WSHub.Clients[currentUserID]; exists {
 
-			client.Conn.WriteJSON(
-				map[string]interface{}{
-					"type":  "notification_count",
-					"count": notificationCount,
-				},
-			)
-		}
+		websocket.SendToUser(
+			currentUserID,
+			map[string]interface{}{
+				"type":  "notification_count",
+				"count": notificationCount,
+			},
+		)
+
 	}
 
 	rows, err := database.DB.Query(

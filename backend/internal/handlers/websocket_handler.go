@@ -26,8 +26,17 @@ func WebSocketHandler(
 	userIDParam :=
 		r.URL.Query().Get("userId")
 
-	userID, _ :=
+	userID, err :=
 		strconv.Atoi(userIDParam)
+
+	if err != nil || userID <= 0 {
+		http.Error(
+			w,
+			"Invalid user ID",
+			http.StatusBadRequest,
+		)
+		return
+	}
 
 	conn, err :=
 		upgrader.Upgrade(
@@ -40,15 +49,22 @@ func WebSocketHandler(
 		return
 	}
 
-	websocket.WSHub.Mutex.Lock()
-
-	websocket.WSHub.Clients[userID] =
+	client :=
 		&websocket.Client{
 			UserID: userID,
 			Conn:   conn,
 		}
 
-	onlineUsers := []int{}
+	websocket.WSHub.Mutex.Lock()
+
+	previousClient :=
+		websocket.WSHub.Clients[userID]
+
+	websocket.WSHub.Clients[userID] =
+		client
+
+	onlineUsers :=
+		make([]int, 0)
 
 	for id := range websocket.WSHub.Clients {
 
@@ -56,31 +72,40 @@ func WebSocketHandler(
 			continue
 		}
 
-		onlineUsers = append(
-			onlineUsers,
-			id,
-		)
+		onlineUsers =
+			append(
+				onlineUsers,
+				id,
+			)
 	}
 
-	conn.WriteJSON(
+	websocket.WSHub.Mutex.Unlock()
+
+	if previousClient != nil &&
+		previousClient.Conn != conn {
+		_ = previousClient.Conn.Close()
+	}
+
+	_ = client.WriteJSON(
 		map[string]interface{}{
 			"type":  "online_users",
 			"users": onlineUsers,
 		},
 	)
 
-	websocket.WSHub.Mutex.Unlock()
-
-	websocket.Broadcast(
-		map[string]interface{}{
-			"type":   "online",
-			"userId": userID,
-		},
-	)
+	if previousClient == nil {
+		websocket.Broadcast(
+			map[string]interface{}{
+				"type":   "online",
+				"userId": userID,
+			},
+		)
+	}
 
 	defer func() {
 
-		lastSeen := time.Now()
+		lastSeen :=
+			time.Now()
 
 		_, _ = database.DB.Exec(
 			`
@@ -92,24 +117,39 @@ WHERE id = $2
 			userID,
 		)
 
+		shouldBroadcastOffline :=
+			false
+
 		websocket.WSHub.Mutex.Lock()
 
-		delete(
-			websocket.WSHub.Clients,
-			userID,
-		)
+		currentClient :=
+			websocket.WSHub.Clients[userID]
+
+		if currentClient == client {
+
+			delete(
+				websocket.WSHub.Clients,
+				userID,
+			)
+
+			shouldBroadcastOffline =
+				true
+		}
 
 		websocket.WSHub.Mutex.Unlock()
 
-		websocket.Broadcast(
-			map[string]interface{}{
-				"type":     "offline",
-				"userId":   userID,
-				"lastSeen": lastSeen,
-			},
-		)
+		if shouldBroadcastOffline {
 
-		conn.Close()
+			websocket.Broadcast(
+				map[string]interface{}{
+					"type":     "offline",
+					"userId":   userID,
+					"lastSeen": lastSeen,
+				},
+			)
+		}
+
+		_ = conn.Close()
 
 	}()
 
@@ -124,16 +164,18 @@ WHERE id = $2
 
 		var data map[string]interface{}
 
-		err = json.Unmarshal(
-			message,
-			&data,
-		)
+		err =
+			json.Unmarshal(
+				message,
+				&data,
+			)
 
 		if err != nil {
 			continue
 		}
 
-		if data["type"] == "typing" {
+		if data["type"] ==
+			"typing" {
 
 			targetIDFloat, ok :=
 				data["targetUserId"].(float64)
@@ -149,7 +191,6 @@ WHERE id = $2
 					"userId": userID,
 				},
 			)
-
 		}
 	}
 }

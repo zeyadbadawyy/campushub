@@ -35,6 +35,9 @@ export function WebSocketProvider({
   const [onlineUsers, setOnlineUsers] =
     useState([]);
 
+  const typingTimeoutsRef =
+    useRef({});
+
   const [messages, setMessages] =
     useState([]);
 
@@ -224,53 +227,64 @@ export function WebSocketProvider({
 
       if (
         data.sender_id &&
-        data.receiver_id
+        data.receiver_id &&
+        data.id &&
+        typeof data.content === "string"
       ) {
+        setMessages((prev) => {
+          const exists =
+            prev.some(
+              (message) =>
+                message.id === data.id
+            );
 
-        setMessages(
-          (prev) => [
+          if (exists) {
+            return prev;
+          }
+
+          return [
+            data,
             ...prev,
-            data
-          ]
-        );
-
+          ];
+        });
       }
 
-      if (
-        data.type === "typing"
-      ) {
-
-        setTypingUsers(
-          (prev) => {
-
-            if (
-              prev.includes(
-                data.userId
-              )
-            ) {
-              return prev;
-            }
-
-            return [
-              ...prev,
-              data.userId
-            ];
-
+      if (data.type === "typing") {
+        
+        setTypingUsers((prev) => {
+          if (prev.includes(data.userId)) {
+            return prev;
           }
-        );
 
-        setTimeout(() => {
+          return [
+            ...prev,
+            data.userId,
+          ];
+        });
 
-          setTypingUsers(
-            (prev) =>
+        if (
+          typingTimeoutsRef.current[data.userId]
+        ) {
+          clearTimeout(
+            typingTimeoutsRef.current[
+              data.userId
+            ]
+          );
+        }
+
+        typingTimeoutsRef.current[data.userId] =
+          setTimeout(() => {
+            setTypingUsers((prev) =>
               prev.filter(
                 (id) =>
                   id !== data.userId
               )
-          );
+            );
 
-        }, 2500);
-
+            delete typingTimeoutsRef.current[
+              data.userId
+            ];
+          }, 2500);
       }
 
       if (data.type === "read") {
@@ -391,6 +405,19 @@ export function WebSocketProvider({
     
     return () => {
 
+      Object.values(
+        typingTimeoutsRef.current
+      ).forEach(
+        (timeout) =>
+          clearTimeout(timeout)
+      );
+
+      typingTimeoutsRef.current = {};
+
+      setTypingUsers([]);
+      setOnlineUsers([]);
+      setLastSeenUsers({});
+      
       ws.close();
 
     };

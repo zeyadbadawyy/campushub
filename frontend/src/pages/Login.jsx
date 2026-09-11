@@ -118,17 +118,7 @@ function Login() {
             />
           </div>
 
-          <h1 className="
-            mt-5
-            text-2xl
-            font-bold
-            tracking-tight
-          ">
-            Welcome back
-          </h1>
-
           <p className="
-            mt-2
             text-sm
             text-slate-500
             dark:text-slate-400

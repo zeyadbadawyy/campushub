@@ -22,16 +22,17 @@ export async function getCurrentUser() {
 
 }
 
-export async function getPosts() {
+export async function getPosts(
+  page = 1,
+  limit = 10
+) {
 
   const token =
-    localStorage.getItem(
-      "token"
-    );
+    localStorage.getItem("token");
 
   const response =
     await api.get(
-      "/posts?page=1&limit=10",
+      `/posts?page=${page}&limit=${limit}`,
       {
         headers: {
           Authorization:
@@ -41,7 +42,6 @@ export async function getPosts() {
     );
 
   return response.data;
-
 }
 
 export async function createPost(

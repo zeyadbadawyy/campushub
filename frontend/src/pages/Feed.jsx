@@ -1,4 +1,9 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import { motion } from "framer-motion";
 import {
   Newspaper,
@@ -17,8 +22,23 @@ import {
 } from "../contexts/WebSocketContext";
 
 function Feed() {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [loadingMore, setLoadingMore] =
+    useState(false);
+
+  const [page, setPage] =
+    useState(1);
+
+  const [hasMore, setHasMore] =
+    useState(true);
+
+  const loadMoreRef =
+    useRef(null);
 
   const {
     postLikes,
@@ -26,10 +46,18 @@ function Feed() {
     commentCounts,
   } = useWebSocket();
 
-  async function loadPosts() {
+  async function loadFirstPage() {
     try {
-      const data = await getPosts();
-      setPosts(data);
+      setLoading(true);
+
+      const data =
+        await getPosts(1, 10);
+
+      setPosts(data || []);
+      setPage(1);
+      setHasMore(
+        (data || []).length === 10
+      );
     } catch (error) {
       console.error(error);
     } finally {
@@ -37,9 +65,107 @@ function Feed() {
     }
   }
 
+  async function loadNextPage() {
+    if (
+      loading ||
+      loadingMore ||
+      !hasMore
+    ) {
+      return;
+    }
+
+    try {
+      setLoadingMore(true);
+
+      const nextPage =
+        page + 1;
+
+      const data =
+        await getPosts(
+          nextPage,
+          10
+        );
+
+      const nextPosts =
+        data || [];
+
+      setPosts((prev) => {
+        const existingIds =
+          new Set(
+            prev.map(
+              (post) => post.id
+            )
+          );
+
+        const uniquePosts =
+          nextPosts.filter(
+            (post) =>
+              !existingIds.has(
+                post.id
+              )
+          );
+
+        return [
+          ...prev,
+          ...uniquePosts,
+        ];
+      });
+
+      setPage(nextPage);
+
+      if (
+        nextPosts.length < 10
+      ) {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   useEffect(() => {
-    loadPosts();
+    loadFirstPage();
   }, []);
+
+  useEffect(() => {
+    const target =
+      loadMoreRef.current;
+
+    if (!target) {
+      return;
+    }
+
+    const observer =
+      new IntersectionObserver(
+        (entries) => {
+          const firstEntry =
+            entries[0];
+
+          if (
+            firstEntry.isIntersecting
+          ) {
+            loadNextPage();
+          }
+        },
+        {
+          root: null,
+          rootMargin: "500px",
+          threshold: 0,
+        }
+      );
+
+    observer.observe(target);
+
+    return () =>
+      observer.disconnect();
+  }, [
+    page,
+    hasMore,
+    loading,
+    loadingMore,
+  ]);
 
   useEffect(() => {
     if (!postLikes.length) {
@@ -63,17 +189,20 @@ function Feed() {
   }, [postLikes]);
 
   useEffect(() => {
+    
     if (!newPosts.length) {
       return;
     }
 
-    const newest = newPosts[0];
+    const newest =
+      newPosts[0];
 
     setPosts((prev) => {
-      const exists = prev.some(
-        (post) =>
-          post.id === newest.id
-      );
+      const exists =
+        prev.some(
+          (post) =>
+            post.id === newest.id
+        );
 
       if (exists) {
         return prev;
@@ -220,7 +349,7 @@ function Feed() {
 
         <div className="mb-6">
           <CreatePost
-            onPostCreated={loadPosts}
+            onPostCreated={loadFirstPage}
           />
         </div>
 
@@ -268,10 +397,53 @@ function Feed() {
               >
                 <PostCard
                   post={post}
-                  onLike={loadPosts}
+                  onLike={loadFirstPage}
                 />
               </motion.div>
             ))}
+
+            {loadingMore && (
+              <div className="
+                flex
+                items-center
+                justify-center
+                py-6
+              ">
+                <div className="
+                  h-7
+                  w-7
+                  animate-spin
+                  rounded-full
+                  border-2
+                  border-slate-200
+                  border-t-indigo-600
+                  dark:border-slate-700
+                  dark:border-t-indigo-400
+                " />
+              </div>
+            )}
+
+            {!loadingMore &&
+              hasMore && (
+                <div
+                  ref={loadMoreRef}
+                  className="h-10"
+                  aria-hidden="true"
+                />
+              )}
+
+            {!hasMore &&
+              posts.length > 0 && (
+                <div className="
+                  py-8
+                  text-center
+                  text-xs
+                  text-slate-400
+                ">
+                  You're all caught up.
+                </div>
+              )}
+
           </div>
         )}
 

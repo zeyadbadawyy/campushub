@@ -139,6 +139,7 @@ function Sidebar({ mobileOpen = false, onClose = () => {} }) {
                     w-50
                     object-contain
                     -ml-6
+                    -mt-1
                     invert dark:invert-0
                     drop-shadow-[0_0_1px_rgba(0,0,0,0.3)]
                   "

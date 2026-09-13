@@ -240,7 +240,15 @@ func GetPosts(
 						FROM likes l2
 						WHERE l2.post_id = posts.id
 						AND l2.user_id = $1
-				) AS liked_by_me
+				) AS liked_by_me,
+
+				EXISTS(
+					SELECT 1
+					FROM saved_posts sp2
+					WHERE sp2.post_id = posts.id
+					AND sp2.user_id = $1
+				) AS saved_by_me
+
 		FROM posts
 		JOIN users
 				ON posts.user_id = users.id
@@ -316,6 +324,7 @@ func GetPosts(
 			&post.Likes,
 			&post.Comments,
 			&post.LikedByMe,
+			&post.SavedByMe,
 		)
 
 		if err != nil {
@@ -429,7 +438,15 @@ func GetUserPosts(
 					FROM likes l2
 					WHERE l2.post_id = posts.id
 					AND l2.user_id = $2
-			) AS liked_by_me
+			) AS liked_by_me,
+
+			EXISTS(
+				SELECT 1
+				FROM saved_posts sp2
+				WHERE sp2.post_id = posts.id
+				AND sp2.user_id = $1
+			) AS saved_by_me
+
 		FROM posts
 		JOIN users
 			ON posts.user_id = users.id
@@ -482,6 +499,7 @@ func GetUserPosts(
 			&post.Likes,
 			&post.Comments,
 			&post.LikedByMe,
+			&post.SavedByMe,
 		)
 
 		if err != nil {
@@ -788,7 +806,15 @@ func GetPost(
 					FROM likes l2
 					WHERE l2.post_id = posts.id
 					AND l2.user_id = $2
-			) AS liked_by_me
+			) AS liked_by_me,
+
+			EXISTS(
+				SELECT 1
+				FROM saved_posts sp2
+				WHERE sp2.post_id = posts.id
+				AND sp2.user_id = $2
+			) AS saved_by_me
+
 		FROM posts
 		JOIN users
 			ON posts.user_id = users.id
@@ -819,6 +845,7 @@ func GetPost(
 		&post.Likes,
 		&post.Comments,
 		&post.LikedByMe,
+		&post.SavedByMe,
 	)
 
 	if err != nil {

@@ -15,4 +15,5 @@ type FeedPost struct {
 	Likes     int       `json:"likes"`
 	Comments  int       `json:"comments"`
 	LikedByMe bool      `json:"liked_by_me"`
+	SavedByMe bool      `json:"saved_by_me"`
 }

@@ -12,6 +12,7 @@ import {
   Users,
   UserPlus,
   UserCheck,
+  Bookmark,
 } from "lucide-react";
 
 import { useNavigate, useParams } from "react-router-dom";
@@ -25,6 +26,7 @@ import { useWebSocket } from "../contexts/WebSocketContext";
 import {
   getUserProfile,
   getUserPosts,
+  getSavedPosts,
   getFollowStats,
   getFollowStatus,
   toggleFollow,
@@ -42,6 +44,7 @@ function Profile() {
 
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [savedPosts, setSavedPosts] = useState([]);
   const [stats, setStats] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -146,6 +149,16 @@ function Profile() {
     }
   }
 
+  async function loadSavedPosts() {
+    try {
+      const data = await getSavedPosts();
+
+      setSavedPosts(data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async function handleFollow() {
     try {
       if (isRequested) {
@@ -171,6 +184,19 @@ function Profile() {
   useEffect(() => {
     loadProfile();
   }, [id]);
+
+  useEffect(() => {
+    if (
+      activeTab === "saved" &&
+      currentUser?.id === Number(id)
+    ) {
+      loadSavedPosts();
+    }
+  }, [
+    activeTab,
+    currentUser,
+    id,
+  ]);
 
   useEffect(() => {
     if (!newPosts.length) {
@@ -972,6 +998,46 @@ function Profile() {
             Posts
           </button>
 
+          {/* Saved is owner-only */}
+
+          {isOwnProfile && (
+            <button
+              type="button"
+              onClick={() =>
+                setActiveTab("saved")
+              }
+              className={`
+                flex flex-1
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                px-4 py-3
+                text-sm
+                font-semibold
+                transition
+                ${
+                  activeTab === "saved"
+                    ? `
+                      bg-slate-100
+                      text-slate-950
+                      dark:bg-slate-800
+                      dark:text-white
+                    `
+                    : `
+                      text-slate-500
+                      hover:text-slate-900
+                      dark:text-slate-400
+                      dark:hover:text-white
+                    `
+                }
+              `}
+            >
+              <Bookmark size={17} />
+              Saved
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() =>
@@ -1012,6 +1078,7 @@ function Profile() {
         {/* TAB CONTENT */}
 
         {activeTab === "posts" ? (
+
           <motion.div
             key="posts"
             initial={{
@@ -1075,7 +1142,134 @@ function Profile() {
               ))
             )}
           </motion.div>
+
+        ) : activeTab === "saved" ? (
+
+          <motion.div
+            key="saved"
+            initial={{
+              opacity: 0,
+              y: 8,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.25,
+            }}
+            className="space-y-4"
+          >
+            <div className="
+              flex items-center
+              justify-between
+            ">
+              <div>
+                <h2 className="
+                  text-lg
+                  font-bold
+                  tracking-tight
+                ">
+                  Saved Posts
+                </h2>
+
+                <p className="
+                  mt-1 text-xs
+                  text-slate-500
+                  dark:text-slate-400
+                ">
+                  {savedPosts.length}{" "}
+                  {savedPosts.length === 1
+                    ? "saved post"
+                    : "saved posts"}
+                </p>
+              </div>
+
+              <Bookmark
+                size={20}
+                className="
+                  text-yellow-500
+                "
+              />
+            </div>
+
+            {savedPosts.length === 0 ? (
+
+              <div className="
+                rounded-3xl
+                border
+                border-dashed
+                border-slate-300
+                bg-white
+                px-6 py-16
+                text-center
+                dark:border-slate-700
+                dark:bg-slate-900
+              ">
+                <div className="
+                  mx-auto
+                  flex h-14 w-14
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  bg-yellow-50
+                  text-yellow-500
+                  dark:bg-yellow-500/10
+                  dark:text-yellow-400
+                ">
+                  <Bookmark size={23} />
+                </div>
+
+                <h3 className="
+                  mt-4
+                  text-lg
+                  font-semibold
+                ">
+                  No saved posts yet
+                </h3>
+
+                <p className="
+                  mt-2
+                  text-sm
+                  text-slate-500
+                  dark:text-slate-400
+                ">
+                  Posts you save will appear here.
+                </p>
+              </div>
+
+            ) : (
+
+              savedPosts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onLike={() => {
+                    loadProfile();
+                    loadSavedPosts();
+                  }}
+                  onSavedChange={(
+                    postId,
+                    saved
+                  ) => {
+                    if (!saved) {
+                      setSavedPosts(
+                        (prev) =>
+                          prev.filter(
+                            (item) =>
+                              item.id !== postId
+                          )
+                      );
+                    }
+                  }}
+                />
+              ))
+
+            )}
+          </motion.div>
+
         ) : (
+
           <motion.div
             key="about"
             initial={{
@@ -1174,6 +1368,7 @@ function Profile() {
               </div>
             )}
           </motion.div>
+
         )}
       </div>
     </MainLayout>

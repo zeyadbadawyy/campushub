@@ -1323,3 +1323,34 @@ export async function searchConversation(
 
   return response.data;
 }
+
+export async function toggleSavePost(postId) {
+  const token = localStorage.getItem("token");
+
+  const response = await api.post(
+    `/posts/${postId}/save`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function getSavedPosts() {
+  const token = localStorage.getItem("token");
+
+  const response = await api.get(
+    "/posts/saved",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}

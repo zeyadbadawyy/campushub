@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Send,
   Maximize2,
+  Bookmark,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,7 @@ import Avatar from "./Avatar";
 
 import {
   toggleLike,
+  toggleSavePost,
   updatePost,
   deletePost,
   uploadPostImage,
@@ -29,7 +31,11 @@ import { getCurrentUser } from "../services/auth";
 
 import { useWebSocket } from "../contexts/WebSocketContext";
 
-function PostCard({ post, onLike }) {
+function PostCard({
+  post,
+  onLike,
+  onSavedChange,
+}) {
   const navigate = useNavigate();
 
   const { postLikes } = useWebSocket();
@@ -57,6 +63,10 @@ function PostCard({ post, onLike }) {
 
   const [liked, setLiked] = useState(
     post.liked_by_me || false
+  );
+
+  const [saved, setSaved] = useState(
+    post.saved_by_me || false
   );
 
   useEffect(() => {
@@ -91,6 +101,23 @@ function PostCard({ post, onLike }) {
   async function handleLike() {
     try {
       await toggleLike(post.id);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function handleSave() {
+    try {
+      const response = await toggleSavePost(
+        post.id
+      );
+
+      setSaved(response.saved);
+
+      onSavedChange?.(
+        post.id,
+        response.saved
+      );
     } catch (error) {
       console.error(error);
     }
@@ -271,94 +298,143 @@ function PostCard({ post, onLike }) {
             </div>
           </button>
 
-          {/* Post menu */}
+          {/* Header actions */}
 
-          {isOwner && !isEditing && (
-            <div className="relative shrink-0">
+          {!isEditing && (
+            <div className="flex items-center gap-1">
+
+              {/* Save */}
+
               <button
                 type="button"
-                onClick={() =>
-                  setShowMenu((prev) => !prev)
+                onClick={handleSave}
+                aria-label={
+                  saved
+                    ? "Unsave post"
+                    : "Save post"
                 }
-                className="
+                className={`
                   flex h-9 w-9 items-center
                   justify-center rounded-xl
-                  text-slate-400
                   transition
-                  hover:bg-slate-100
-                  hover:text-slate-700
-                  dark:hover:bg-slate-800
-                  dark:hover:text-slate-200
-                "
+                  ${
+                    saved
+                      ? `
+                        bg-yellow-50
+                        text-yellow-500
+                        dark:bg-yellow-500/10
+                        dark:text-yellow-400
+                      `
+                      : `
+                        text-slate-400
+                        hover:bg-slate-100
+                        hover:text-slate-700
+                        dark:hover:bg-slate-800
+                        dark:hover:text-slate-200
+                      `
+                  }
+                `}
               >
-                <MoreHorizontal size={19} />
+                <Bookmark
+                  size={18}
+                  fill={
+                    saved
+                      ? "currentColor"
+                      : "none"
+                  }
+                />
               </button>
 
-              <AnimatePresence>
-                {showMenu && (
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      scale: 0.96,
-                      y: -4,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      scale: 1,
-                      y: 0,
-                    }}
-                    exit={{
-                      opacity: 0,
-                      scale: 0.96,
-                      y: -4,
-                    }}
+              {/* Owner menu */}
+
+              {isOwner && (
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowMenu((prev) => !prev)
+                    }
                     className="
-                      absolute right-0 top-11 z-20
-                      w-44 overflow-hidden
-                      rounded-2xl border
-                      border-slate-200
-                      bg-white p-1.5
-                      shadow-xl
-                      dark:border-slate-800
-                      dark:bg-slate-900
+                      flex h-9 w-9 items-center
+                      justify-center rounded-xl
+                      text-slate-400
+                      transition
+                      hover:bg-slate-100
+                      hover:text-slate-700
+                      dark:hover:bg-slate-800
+                      dark:hover:text-slate-200
                     "
                   >
-                    <button
-                      type="button"
-                      onClick={startEditing}
-                      className="
-                        flex w-full items-center
-                        gap-3 rounded-xl px-3 py-2.5
-                        text-sm font-medium
-                        transition
-                        hover:bg-slate-100
-                        dark:hover:bg-slate-800
-                      "
-                    >
-                      <Pencil size={16} />
-                      Edit post
-                    </button>
+                    <MoreHorizontal size={19} />
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      className="
-                        flex w-full items-center
-                        gap-3 rounded-xl px-3 py-2.5
-                        text-sm font-medium
-                        text-red-600
-                        transition
-                        hover:bg-red-50
-                        dark:text-red-400
-                        dark:hover:bg-red-500/10
-                      "
-                    >
-                      <Trash2 size={16} />
-                      Delete post
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  <AnimatePresence>
+                    {showMenu && (
+                      <motion.div
+                        initial={{
+                          opacity: 0,
+                          scale: 0.96,
+                          y: -4,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          scale: 1,
+                          y: 0,
+                        }}
+                        exit={{
+                          opacity: 0,
+                          scale: 0.96,
+                          y: -4,
+                        }}
+                        className="
+                          absolute right-0 top-11 z-20
+                          w-44 overflow-hidden
+                          rounded-2xl border
+                          border-slate-200
+                          bg-white p-1.5
+                          shadow-xl
+                          dark:border-slate-800
+                          dark:bg-slate-900
+                        "
+                      >
+                        <button
+                          type="button"
+                          onClick={startEditing}
+                          className="
+                            flex w-full items-center
+                            gap-3 rounded-xl px-3 py-2.5
+                            text-sm font-medium
+                            transition
+                            hover:bg-slate-100
+                            dark:hover:bg-slate-800
+                          "
+                        >
+                          <Pencil size={16} />
+                          Edit post
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleDelete}
+                          className="
+                            flex w-full items-center
+                            gap-3 rounded-xl px-3 py-2.5
+                            text-sm font-medium
+                            text-red-600
+                            transition
+                            hover:bg-red-50
+                            dark:text-red-400
+                            dark:hover:bg-red-500/10
+                          "
+                        >
+                          <Trash2 size={16} />
+                          Delete post
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -471,6 +547,7 @@ function PostCard({ post, onLike }) {
                     "
                   >
                     <Camera size={15} />
+
                     {editedImage
                       ? "Change photo"
                       : "Add photo"}

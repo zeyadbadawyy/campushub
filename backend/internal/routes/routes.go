@@ -101,6 +101,20 @@ func RegisterRoutes() http.Handler {
 	r.With(
 		middleware.Auth,
 	).Get(
+		"/posts/saved",
+		handlers.GetSavedPosts,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/posts/{id}/save",
+		handlers.ToggleSavePost,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/posts/{id}",
 		handlers.GetPost,
 	)

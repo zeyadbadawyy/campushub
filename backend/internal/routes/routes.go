@@ -403,6 +403,55 @@ func RegisterRoutes() http.Handler {
 		handlers.UploadChatImage,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/stories",
+		handlers.GetStories,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/stories",
+		handlers.CreateStory,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/stories/{id}/view",
+		handlers.ViewStory,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Delete(
+		"/stories/{id}",
+		handlers.DeleteStory,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Post(
+		"/upload/story-image",
+		handlers.UploadStoryImage,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/stories/{id}/styling",
+		handlers.GetStoryStyling,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Put(
+		"/stories/{id}/styling",
+		handlers.UpdateStoryStyling,
+	)
+
 	r.Get(
 		"/swagger/*",
 		httpSwagger.Handler(

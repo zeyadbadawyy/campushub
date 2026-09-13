@@ -54,7 +54,7 @@ function Login() {
         password
       );
 
-      navigate("/dashboard");
+      navigate("/feed");
     } catch (error) {
       console.error(error);
 

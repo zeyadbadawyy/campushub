@@ -14,6 +14,7 @@ import {
 import MainLayout from "../layouts/MainLayout";
 import PostCard from "../components/PostCard";
 import CreatePost from "../components/CreatePost";
+import StoryBar from "../components/StoryBar";
 
 import { getPosts } from "../services/postService";
 
@@ -240,6 +241,8 @@ function Feed() {
     <MainLayout>
       <div className="mx-auto max-w-3xl">
 
+        <StoryBar />
+        
         {/* Page heading */}
 
         <motion.div

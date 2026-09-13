@@ -44,6 +44,197 @@ export async function getPosts(
   return response.data;
 }
 
+export async function getStories() {
+  const token =
+    localStorage.getItem("token");
+
+  const response = await api.get(
+    "/stories",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function createStory(
+  mediaUrl = "",
+  content = "",
+  styling = {}
+) {
+  const token =
+    localStorage.getItem("token");
+
+  const response = await api.post(
+    "/stories",
+    {
+      media_url: mediaUrl,
+      content,
+
+      styling: {
+        text_style:
+          styling.textStyle ||
+          "classic",
+
+        text_size:
+          Number(
+            styling.textSize
+          ) || 32,
+
+        text_x:
+          Number(
+            styling.textX
+          ) || 0,
+
+        text_y:
+          Number(
+            styling.textY
+          ) || 0,
+
+        background_index:
+          Number(
+            styling.backgroundIndex
+          ) || 0,
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function viewStory(
+  storyId
+) {
+  const token =
+    localStorage.getItem("token");
+
+  await api.post(
+    `/stories/${storyId}/view`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+}
+
+export async function deleteStory(
+  storyId
+) {
+  const token =
+    localStorage.getItem("token");
+
+  await api.delete(
+    `/stories/${storyId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+}
+
+export async function uploadStoryImage(
+  file
+) {
+  const token =
+    localStorage.getItem("token");
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "image",
+    file
+  );
+
+  const response =
+    await api.post(
+      "/upload/story-image",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+  return response.data;
+}
+
+export async function getStoryStyling(
+  storyId
+) {
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.get(
+      `/stories/${storyId}/styling`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+  return response.data;
+}
+
+export async function updateStoryStyling(
+  storyId,
+  styling
+) {
+  const token =
+    localStorage.getItem("token");
+
+  const response =
+    await api.put(
+      `/stories/${storyId}/styling`,
+      {
+        text_style:
+          styling.textStyle ||
+          "classic",
+
+        text_size:
+          Number(
+            styling.textSize
+          ) || 32,
+
+        text_x:
+          Number(
+            styling.textX
+          ) || 0,
+
+        text_y:
+          Number(
+            styling.textY
+          ) || 0,
+
+        background_index:
+          Number(
+            styling.backgroundIndex
+          ) || 0,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+  return response.data;
+}
+
 export async function createPost(
   content,
   imageUrl = "",

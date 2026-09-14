@@ -18,24 +18,21 @@ import { useNavigate } from "react-router-dom";
 
 import CommentSection from "./CommentSection";
 import Avatar from "./Avatar";
+import MentionText from "./MentionText";
 
 import {
   toggleLike,
-  toggleSavePost,
   updatePost,
   deletePost,
   uploadPostImage,
+  toggleSavePost,
 } from "../services/postService";
 
 import { getCurrentUser } from "../services/auth";
 
 import { useWebSocket } from "../contexts/WebSocketContext";
 
-function PostCard({
-  post,
-  onLike,
-  onSavedChange,
-}) {
+function PostCard({ post, onLike, onSavedChange }) {
   const navigate = useNavigate();
 
   const { postLikes } = useWebSocket();
@@ -108,16 +105,17 @@ function PostCard({
 
   async function handleSave() {
     try {
-      const response = await toggleSavePost(
-        post.id
-      );
+      const result = await toggleSavePost(post.id);
+      const nextSaved =
+        typeof result?.saved === "boolean"
+          ? result.saved
+          : !saved;
 
-      setSaved(response.saved);
+      setSaved(nextSaved);
 
-      onSavedChange?.(
-        post.id,
-        response.saved
-      );
+      if (!nextSaved) {
+        onSavedChange?.(post.id);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -298,143 +296,94 @@ function PostCard({
             </div>
           </button>
 
-          {/* Header actions */}
+          {/* Post menu */}
 
-          {!isEditing && (
-            <div className="flex items-center gap-1">
-
-              {/* Save */}
-
+          {isOwner && !isEditing && (
+            <div className="relative shrink-0">
               <button
                 type="button"
-                onClick={handleSave}
-                aria-label={
-                  saved
-                    ? "Unsave post"
-                    : "Save post"
+                onClick={() =>
+                  setShowMenu((prev) => !prev)
                 }
-                className={`
+                className="
                   flex h-9 w-9 items-center
                   justify-center rounded-xl
+                  text-slate-400
                   transition
-                  ${
-                    saved
-                      ? `
-                        bg-yellow-50
-                        text-yellow-500
-                        dark:bg-yellow-500/10
-                        dark:text-yellow-400
-                      `
-                      : `
-                        text-slate-400
-                        hover:bg-slate-100
-                        hover:text-slate-700
-                        dark:hover:bg-slate-800
-                        dark:hover:text-slate-200
-                      `
-                  }
-                `}
+                  hover:bg-slate-100
+                  hover:text-slate-700
+                  dark:hover:bg-slate-800
+                  dark:hover:text-slate-200
+                "
               >
-                <Bookmark
-                  size={18}
-                  fill={
-                    saved
-                      ? "currentColor"
-                      : "none"
-                  }
-                />
+                <MoreHorizontal size={19} />
               </button>
 
-              {/* Owner menu */}
-
-              {isOwner && (
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowMenu((prev) => !prev)
-                    }
+              <AnimatePresence>
+                {showMenu && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      scale: 0.96,
+                      y: -4,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      y: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      scale: 0.96,
+                      y: -4,
+                    }}
                     className="
-                      flex h-9 w-9 items-center
-                      justify-center rounded-xl
-                      text-slate-400
-                      transition
-                      hover:bg-slate-100
-                      hover:text-slate-700
-                      dark:hover:bg-slate-800
-                      dark:hover:text-slate-200
+                      absolute right-0 top-11 z-20
+                      w-44 overflow-hidden
+                      rounded-2xl border
+                      border-slate-200
+                      bg-white p-1.5
+                      shadow-xl
+                      dark:border-slate-800
+                      dark:bg-slate-900
                     "
                   >
-                    <MoreHorizontal size={19} />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={startEditing}
+                      className="
+                        flex w-full items-center
+                        gap-3 rounded-xl px-3 py-2.5
+                        text-sm font-medium
+                        transition
+                        hover:bg-slate-100
+                        dark:hover:bg-slate-800
+                      "
+                    >
+                      <Pencil size={16} />
+                      Edit post
+                    </button>
 
-                  <AnimatePresence>
-                    {showMenu && (
-                      <motion.div
-                        initial={{
-                          opacity: 0,
-                          scale: 0.96,
-                          y: -4,
-                        }}
-                        animate={{
-                          opacity: 1,
-                          scale: 1,
-                          y: 0,
-                        }}
-                        exit={{
-                          opacity: 0,
-                          scale: 0.96,
-                          y: -4,
-                        }}
-                        className="
-                          absolute right-0 top-11 z-20
-                          w-44 overflow-hidden
-                          rounded-2xl border
-                          border-slate-200
-                          bg-white p-1.5
-                          shadow-xl
-                          dark:border-slate-800
-                          dark:bg-slate-900
-                        "
-                      >
-                        <button
-                          type="button"
-                          onClick={startEditing}
-                          className="
-                            flex w-full items-center
-                            gap-3 rounded-xl px-3 py-2.5
-                            text-sm font-medium
-                            transition
-                            hover:bg-slate-100
-                            dark:hover:bg-slate-800
-                          "
-                        >
-                          <Pencil size={16} />
-                          Edit post
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={handleDelete}
-                          className="
-                            flex w-full items-center
-                            gap-3 rounded-xl px-3 py-2.5
-                            text-sm font-medium
-                            text-red-600
-                            transition
-                            hover:bg-red-50
-                            dark:text-red-400
-                            dark:hover:bg-red-500/10
-                          "
-                        >
-                          <Trash2 size={16} />
-                          Delete post
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="
+                        flex w-full items-center
+                        gap-3 rounded-xl px-3 py-2.5
+                        text-sm font-medium
+                        text-red-600
+                        transition
+                        hover:bg-red-50
+                        dark:text-red-400
+                        dark:hover:bg-red-500/10
+                      "
+                    >
+                      <Trash2 size={16} />
+                      Delete post
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
@@ -547,7 +496,6 @@ function PostCard({
                     "
                   >
                     <Camera size={15} />
-
                     {editedImage
                       ? "Change photo"
                       : "Add photo"}
@@ -666,7 +614,10 @@ function PostCard({
                     text-slate-700
                     dark:text-slate-200
                   ">
-                    {post.content}
+                    <MentionText
+                      text={post.content}
+                      mentions={post.mentions}
+                    />
                   </p>
                 )}
 
@@ -847,6 +798,42 @@ function PostCard({
             <span>
               Comment
             </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            className={`
+              flex flex-1 items-center
+              justify-center gap-2
+              rounded-xl px-3 py-2.5
+              text-sm font-medium
+              transition
+              ${
+                saved
+                  ? `
+                    bg-indigo-50
+                    text-indigo-600
+                    dark:bg-indigo-500/10
+                    dark:text-indigo-400
+                  `
+                  : `
+                    text-slate-500
+                    hover:bg-slate-100
+                    hover:text-slate-800
+                    dark:text-slate-400
+                    dark:hover:bg-slate-800
+                    dark:hover:text-slate-200
+                  `
+              }
+            `}
+            aria-label={saved ? "Unsave post" : "Save post"}
+          >
+            <Bookmark
+              size={18}
+              fill={saved ? "currentColor" : "none"}
+            />
+            <span>{saved ? "Saved" : "Save"}</span>
           </button>
         </div>
 

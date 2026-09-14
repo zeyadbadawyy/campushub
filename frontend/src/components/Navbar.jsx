@@ -7,6 +7,7 @@ import {
   Heart,
   MessageCircle,
   Mail,
+  AtSign,
   Settings,
   Pencil,
   LogOut,
@@ -143,29 +144,24 @@ function Navbar({ onMenuClick }) {
       return;
     }
 
-    const newest = notifications[0];
+    const incoming = notifications[0];
 
     setRecentNotifications((prev) => {
-
-      const exists =
-        prev.some(
-          (notification) =>
-            notification.id ===
-            newest.id
-        );
+      const exists = prev.some(
+        (notification) =>
+          notification.id === incoming.id
+      );
 
       if (exists) {
-        return prev.map(
-          (notification) =>
-            notification.id ===
-            newest.id
-              ? newest
-              : notification
+        return prev.map((notification) =>
+          notification.id === incoming.id
+            ? incoming
+            : notification
         );
       }
 
       return [
-        newest,
+        incoming,
         ...prev,
       ].slice(0, 5);
     });
@@ -186,7 +182,9 @@ function Navbar({ onMenuClick }) {
     setSearch("");
     setResults([]);
 
-    navigate(`/search?q=${encodeURIComponent(query)}`);
+    navigate(
+      `/search?q=${encodeURIComponent(query)}`
+    );
   }
 
   async function loadNotificationsPreview() {
@@ -246,6 +244,9 @@ function Navbar({ onMenuClick }) {
       case "message":
         return <Mail className={iconClass} />;
 
+      case "mention":
+        return <AtSign className={iconClass} />;
+
       default:
         return <Bell className={iconClass} />;
     }
@@ -255,6 +256,7 @@ function Navbar({ onMenuClick }) {
     switch (notification.type) {
       case "like":
       case "comment":
+      case "mention":
         return `/posts/${notification.target_id}`;
 
       case "message":
@@ -268,7 +270,7 @@ function Navbar({ onMenuClick }) {
         return "/notifications";
 
       default:
-        return "/";
+        return "/notifications";
     }
   }
 
@@ -321,7 +323,6 @@ function Navbar({ onMenuClick }) {
           gap-4 px-4 sm:px-6 lg:px-8
         "
       >
-
         {/* Mobile menu */}
 
         <button
@@ -475,10 +476,10 @@ function Navbar({ onMenuClick }) {
         {/* Right controls */}
 
         <div className="flex items-center gap-2">
-
           {/* Theme */}
 
           <button
+            type="button"
             onClick={toggleDarkMode}
             className="
               hidden h-10 w-10 items-center justify-center
@@ -507,6 +508,7 @@ function Navbar({ onMenuClick }) {
             className="relative"
           >
             <button
+              type="button"
               onClick={async () => {
                 if (!showNotifications) {
                   await loadNotificationsPreview();
@@ -518,6 +520,7 @@ function Navbar({ onMenuClick }) {
 
                 setShowAccountMenu(false);
               }}
+              aria-label="Notifications"
               className="
                 relative flex h-10 w-10
                 items-center justify-center
@@ -613,6 +616,7 @@ function Navbar({ onMenuClick }) {
                     recentNotifications.map(
                       (notification) => (
                         <button
+                          type="button"
                           key={notification.id}
                           onClick={() =>
                             handleNotificationClick(
@@ -661,22 +665,24 @@ function Navbar({ onMenuClick }) {
 
                               {notification.type === "message" &&
                                 notification.message_count > 1 && (
-                                  <span className="
-                                    absolute
-                                    -right-2
-                                    -top-2
-                                    flex
-                                    h-4
-                                    min-w-4
-                                    items-center
-                                    justify-center
-                                    rounded-full
-                                    bg-red-500
-                                    px-1
-                                    text-[8px]
-                                    font-bold
-                                    text-white
-                                  ">
+                                  <span
+                                    className="
+                                      absolute
+                                      -right-2
+                                      -top-2
+                                      flex
+                                      h-4
+                                      min-w-4
+                                      items-center
+                                      justify-center
+                                      rounded-full
+                                      bg-red-500
+                                      px-1
+                                      text-[8px]
+                                      font-bold
+                                      text-white
+                                    "
+                                  >
                                     {notification.message_count > 99
                                       ? "99+"
                                       : notification.message_count}
@@ -722,6 +728,7 @@ function Navbar({ onMenuClick }) {
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => {
                     setShowNotifications(false);
                     navigate("/notifications");
@@ -749,6 +756,7 @@ function Navbar({ onMenuClick }) {
             className="relative"
           >
             <button
+              type="button"
               onClick={() => {
                 setShowAccountMenu(
                   (prev) => !prev
@@ -805,8 +813,11 @@ function Navbar({ onMenuClick }) {
                 <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
 
                 <button
+                  type="button"
                   onClick={() => {
-                    navigate(`/profile/${user.id}`);
+                    navigate(
+                      `/profile/${user.id}`
+                    );
                     setShowAccountMenu(false);
                   }}
                   className="
@@ -823,6 +834,7 @@ function Navbar({ onMenuClick }) {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => {
                     navigate("/edit-profile");
                     setShowAccountMenu(false);
@@ -841,6 +853,7 @@ function Navbar({ onMenuClick }) {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => {
                     navigate("/settings");
                     setShowAccountMenu(false);
@@ -859,6 +872,7 @@ function Navbar({ onMenuClick }) {
                 </button>
 
                 <button
+                  type="button"
                   onClick={toggleDarkMode}
                   className="
                     flex w-full items-center gap-3
@@ -883,6 +897,7 @@ function Navbar({ onMenuClick }) {
                 <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
 
                 <button
+                  type="button"
                   onClick={handleLogout}
                   className="
                     flex w-full items-center gap-3

@@ -19,11 +19,13 @@ import {
   createPost,
   uploadPostImage,
   searchGifs,
+  searchMentionUsers,
 } from "../services/postService";
 
 function CreatePost({ onPostCreated }) {
   const fileInputRef = useRef(null);
   const pickerRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
@@ -38,6 +40,11 @@ function CreatePost({ onPostCreated }) {
 
   const [gifSearch, setGifSearch] = useState("");
   const [gifResults, setGifResults] = useState([]);
+
+  const [mentionQuery, setMentionQuery] = useState(null);
+  const [mentionUsers, setMentionUsers] = useState([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [mentions, setMentions] = useState([]);
 
   useEffect(() => {
     if (!gifSearch.trim()) {
@@ -56,6 +63,31 @@ function CreatePost({ onPostCreated }) {
 
     return () => clearTimeout(timer);
   }, [gifSearch]);
+
+  useEffect(() => {
+    if (mentionQuery === null) {
+      setMentionUsers([]);
+      setMentionIndex(0);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const users = await searchMentionUsers(
+          mentionQuery.query
+        );
+
+        setMentionUsers(users || []);
+        setMentionIndex(0);
+      } catch (error) {
+        console.error(error);
+        setMentionUsers([]);
+        setMentionIndex(0);
+      }
+    }, 180);
+
+    return () => clearTimeout(timer);
+  }, [mentionQuery]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -88,8 +120,144 @@ function CreatePost({ onPostCreated }) {
     };
   }, [preview]);
 
+  function getMentionContext(value, cursorPosition) {
+    const before = value.slice(0, cursorPosition);
+
+    const match = before.match(
+      /(^|\s)@([^\s@]*)$/
+    );
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      query: match[2],
+      start: before.lastIndexOf("@"),
+    };
+  }
+
+  function handleContentChange(event) {
+    const value = event.target.value;
+
+    setContent(value);
+
+    const context = getMentionContext(
+      value,
+      event.target.selectionStart
+    );
+
+    setMentionQuery(context);
+  }
+
+  function handleMentionSelect(user) {
+    const textarea = textareaRef.current;
+
+    if (!textarea || !mentionQuery) {
+      return;
+    }
+
+    const cursor = textarea.selectionStart;
+    const value = content;
+
+    const before = value.slice(
+      0,
+      mentionQuery.start
+    );
+
+    const after = value.slice(cursor);
+
+    const nextValue =
+      `${before}@${user.name} ${after}`;
+
+    setContent(nextValue);
+
+    setMentions((prev) => {
+      if (
+        prev.some(
+          (mention) => mention.id === user.id
+        )
+      ) {
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          id: user.id,
+          name: user.name,
+        },
+      ];
+    });
+
+    setMentionQuery(null);
+    setMentionUsers([]);
+    setMentionIndex(0);
+
+    requestAnimationFrame(() => {
+      const nextCursor =
+        before.length + user.name.length + 2;
+
+      textarea.focus();
+      textarea.setSelectionRange(
+        nextCursor,
+        nextCursor
+      );
+    });
+  }
+
+  function handleContentKeyDown(event) {
+    if (
+      mentionQuery &&
+      mentionUsers.length > 0
+    ) {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+
+        setMentionIndex((prev) =>
+          Math.min(
+            prev + 1,
+            mentionUsers.length - 1
+          )
+        );
+
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+
+        setMentionIndex((prev) =>
+          Math.max(prev - 1, 0)
+        );
+
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+
+        handleMentionSelect(
+          mentionUsers[mentionIndex]
+        );
+
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
+  }
+
   function handleEmojiClick(emojiData) {
     setContent((prev) => prev + emojiData.emoji);
+
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
   }
 
   function handleImageSelect(event) {
@@ -107,10 +275,7 @@ function CreatePost({ onPostCreated }) {
     }
 
     setImage(file);
-
-    setPreview(
-      URL.createObjectURL(file)
-    );
+    setPreview(URL.createObjectURL(file));
   }
 
   function removeImage() {
@@ -171,16 +336,27 @@ function CreatePost({ onPostCreated }) {
         imageUrl = uploadResult.url;
       }
 
+      const mentionIds = mentions
+        .filter((mention) =>
+          content.includes(`@${mention.name}`)
+        )
+        .map((mention) => mention.id);
+
       await createPost(
         content,
         imageUrl,
-        gifUrl
+        gifUrl,
+        mentionIds
       );
 
       setContent("");
       setImage(null);
       setGifUrl("");
       setPreview("");
+      setMentions([]);
+      setMentionQuery(null);
+      setMentionUsers([]);
+      setMentionIndex(0);
       setShowEmojiPicker(false);
       setShowGifInput(false);
 
@@ -197,8 +373,9 @@ function CreatePost({ onPostCreated }) {
     }
   }
 
-  const hasAttachment =
-    Boolean(preview || gifUrl);
+  const hasAttachment = Boolean(
+    preview || gifUrl
+  );
 
   return (
     <>
@@ -223,7 +400,6 @@ function CreatePost({ onPostCreated }) {
         "
       >
         <div className="p-5 sm:p-6">
-
           {/* Header */}
 
           <div className="mb-5 flex items-center gap-3">
@@ -254,6 +430,7 @@ function CreatePost({ onPostCreated }) {
 
           <div
             className="
+              relative
               rounded-2xl border border-slate-200
               bg-slate-50/70
               p-4 transition
@@ -266,20 +443,129 @@ function CreatePost({ onPostCreated }) {
               dark:focus-within:bg-slate-950
             "
           >
-            <textarea
-              value={content}
-              onChange={(e) =>
-                setContent(e.target.value)
-              }
-              placeholder="What's happening on campus?"
-              rows={3}
-              className="
-                min-h-[84px] w-full resize-none
-                border-0 bg-transparent
-                text-sm leading-6 outline-none
-                placeholder:text-slate-400
-              "
-            />
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={handleContentChange}
+                onKeyDown={handleContentKeyDown}
+                placeholder="What's happening on campus?"
+                rows={3}
+                className="
+                  min-h-[84px] w-full resize-none
+                  border-0 bg-transparent
+                  text-sm leading-6 outline-none
+                  placeholder:text-slate-400
+                "
+              />
+
+              {/* Mention suggestions */}
+
+              <AnimatePresence>
+                {mentionQuery && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      y: 6,
+                      scale: 0.98,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 6,
+                      scale: 0.98,
+                    }}
+                    className="
+                      absolute left-0 right-0
+                      top-[calc(100%+8px)] z-[100]
+                      overflow-hidden rounded-2xl
+                      border border-slate-200
+                      bg-white shadow-2xl
+                      dark:border-slate-700
+                      dark:bg-slate-900
+                    "
+                  >
+                    {mentionUsers.length > 0 ? (
+                      <div className="p-1.5">
+                        {mentionUsers.map((user, index) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            onMouseDown={(event) =>
+                              event.preventDefault()
+                            }
+                            onClick={() =>
+                              handleMentionSelect(user)
+                            }
+                            className={`
+                              flex w-full items-center
+                              gap-3 rounded-xl px-3 py-2.5
+                              text-left transition
+                              ${
+                                index === mentionIndex
+                                  ? `
+                                    bg-indigo-50
+                                    dark:bg-indigo-500/10
+                                  `
+                                  : `
+                                    hover:bg-slate-100
+                                    dark:hover:bg-slate-800
+                                  `
+                              }
+                            `}
+                          >
+                            {user.avatar_url ? (
+                              <img
+                                src={user.avatar_url}
+                                alt=""
+                                className="
+                                  h-9 w-9 shrink-0
+                                  rounded-full object-cover
+                                "
+                              />
+                            ) : (
+                              <div className="
+                                flex h-9 w-9 shrink-0
+                                items-center justify-center
+                                rounded-full
+                                bg-indigo-100
+                                text-sm font-bold
+                                text-indigo-600
+                                dark:bg-indigo-500/10
+                                dark:text-indigo-400
+                              ">
+                                {user.name
+                                  ?.charAt(0)
+                                  ?.toUpperCase()}
+                              </div>
+                            )}
+
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold">
+                                {user.name}
+                              </p>
+
+                              <p className="truncate text-xs text-slate-400">
+                                {user.faculty ||
+                                  "CampusHub User"}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-4 text-center text-xs text-slate-400">
+                        No users found
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Attachment preview */}
 
@@ -355,9 +641,7 @@ function CreatePost({ onPostCreated }) {
                   <input
                     type="text"
                     value={gifUrl}
-                    onChange={
-                      handleGifUrlChange
-                    }
+                    onChange={handleGifUrlChange}
                     placeholder="Paste a GIF URL..."
                     className="
                       h-11 w-full rounded-xl
@@ -384,7 +668,6 @@ function CreatePost({ onPostCreated }) {
               gap-3
             ">
               <div className="flex flex-wrap items-center gap-1.5">
-
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -417,9 +700,7 @@ function CreatePost({ onPostCreated }) {
                   variant="ghost"
                   size="sm"
                   onClick={() =>
-                    setShowGifInput(
-                      (prev) => !prev
-                    )
+                    setShowGifInput((prev) => !prev)
                   }
                   className="
                     rounded-xl text-slate-500
@@ -437,9 +718,7 @@ function CreatePost({ onPostCreated }) {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    setShowGiphy(true)
-                  }
+                  onClick={() => setShowGiphy(true)}
                   className="
                     rounded-xl text-slate-500
                     hover:bg-orange-50
@@ -461,9 +740,7 @@ function CreatePost({ onPostCreated }) {
                     variant="ghost"
                     size="sm"
                     onClick={() =>
-                      setShowEmojiPicker(
-                        (prev) => !prev
-                      )
+                      setShowEmojiPicker((prev) => !prev)
                     }
                     className="
                       rounded-xl text-slate-500
@@ -502,12 +779,8 @@ function CreatePost({ onPostCreated }) {
                         "
                       >
                         <EmojiPicker
-                          theme={
-                            "auto"
-                          }
-                          onEmojiClick={
-                            handleEmojiClick
-                          }
+                          theme="auto"
+                          onEmojiClick={handleEmojiClick}
                         />
                       </motion.div>
                     )}
@@ -520,11 +793,9 @@ function CreatePost({ onPostCreated }) {
                 onClick={handleSubmit}
                 disabled={
                   loading ||
-                  (
-                    !content.trim() &&
+                  (!content.trim() &&
                     !image &&
-                    !gifUrl.trim()
-                  )
+                    !gifUrl.trim())
                 }
                 className="
                   rounded-xl px-5
@@ -592,9 +863,7 @@ function CreatePost({ onPostCreated }) {
                 scale: 0.96,
                 y: 12,
               }}
-              onClick={(e) =>
-                e.stopPropagation()
-              }
+              onClick={(e) => e.stopPropagation()}
               className="
                 flex max-h-[80vh]
                 w-full max-w-2xl
@@ -606,22 +875,18 @@ function CreatePost({ onPostCreated }) {
                 dark:bg-slate-900
               "
             >
-              <div
-                className="
-                  flex items-center gap-3
-                  border-b border-slate-200
-                  p-4
-                  dark:border-slate-800
-                "
-              >
+              <div className="
+                flex items-center gap-3
+                border-b border-slate-200
+                p-4
+                dark:border-slate-800
+              ">
                 <div className="flex-1">
                   <input
                     type="text"
                     value={gifSearch}
                     onChange={(e) =>
-                      setGifSearch(
-                        e.target.value
-                      )
+                      setGifSearch(e.target.value)
                     }
                     placeholder="Search GIFs..."
                     autoFocus
@@ -657,20 +922,17 @@ function CreatePost({ onPostCreated }) {
                 </button>
               </div>
 
-              <div
-                className="
-                  grid
-                  max-h-[60vh]
-                  flex-1
-                  grid-cols-2
-                  gap-3
-                  overflow-y-auto
-                  p-4
-                  sm:grid-cols-3
-                  md:grid-cols-4
-                  custom-scrollbar
-                "
-              >
+              <div className="
+                grid
+                max-h-[60vh]
+                flex-1
+                grid-cols-2
+                gap-3
+                overflow-y-auto
+                p-4
+                sm:grid-cols-3
+                md:grid-cols-4
+              ">
                 {gifResults.length > 0 ? (
                   gifResults.map((gif) => (
                     <button
@@ -707,15 +969,13 @@ function CreatePost({ onPostCreated }) {
                     </button>
                   ))
                 ) : (
-                  <div
-                    className="
-                      col-span-full
-                      flex min-h-[280px]
-                      items-center
-                      justify-center
-                      text-center
-                    "
-                  >
+                  <div className="
+                    col-span-full
+                    flex min-h-[280px]
+                    items-center
+                    justify-center
+                    text-center
+                  ">
                     <div>
                       <Flame
                         size={30}

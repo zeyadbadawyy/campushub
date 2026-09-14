@@ -152,6 +152,27 @@ func CreateComment(
 	comment.PostID = postID
 	comment.UserID = userID
 
+	err = SaveCommentMentions(
+		comment.ID,
+		comment.MentionIDs,
+	)
+
+	if err != nil {
+		http.Error(
+			w,
+			"Could not save mentions",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	NotifyCommentMentions(
+		comment.ID,
+		postID,
+		userID,
+		comment.MentionIDs,
+	)
+
 	var commenterName string
 
 	database.DB.QueryRow(

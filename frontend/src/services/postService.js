@@ -238,9 +238,9 @@ export async function updateStoryStyling(
 export async function createPost(
   content,
   imageUrl = "",
-  gifUrl = ""
+  gifUrl = "",
+  mentionIds = []
 ) {
-
   const token =
     localStorage.getItem("token");
 
@@ -251,6 +251,7 @@ export async function createPost(
         content,
         image_url: imageUrl,
         gif_url: gifUrl,
+        mention_ids: mentionIds,
       },
       {
         headers: {
@@ -302,9 +303,9 @@ export async function getComments(
 export async function createComment(
   postId,
   content,
-  gifUrl = ""
+  gifUrl = "",
+  mentionIds = []
 ) {
-
   const token =
     localStorage.getItem("token");
 
@@ -312,18 +313,19 @@ export async function createComment(
     await api.post(
       `/posts/${postId}/comments`,
       {
-        content
+        content,
+        gif_url: gifUrl,
+        mention_ids: mentionIds,
       },
       {
         headers: {
           Authorization:
-            `Bearer ${token}`
-        }
+            `Bearer ${token}`,
+        },
       }
     );
 
   return response.data;
-
 }
 
 export async function getUserProfile(
@@ -1345,6 +1347,23 @@ export async function getSavedPosts() {
 
   const response = await api.get(
     "/posts/saved",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function searchMentionUsers(query) {
+  const token = localStorage.getItem("token");
+
+  const response = await api.get(
+    `/users/search-mentions?q=${encodeURIComponent(
+      query
+    )}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

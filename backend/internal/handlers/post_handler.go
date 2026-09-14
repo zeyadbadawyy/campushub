@@ -31,9 +31,10 @@ func CreatePost(
 ) {
 
 	type CreatePostRequest struct {
-		Content  string `json:"content"`
-		ImageURL string `json:"image_url"`
-		GIFURL   string `json:"gif_url"`
+		Content    string `json:"content"`
+		ImageURL   string `json:"image_url"`
+		GIFURL     string `json:"gif_url"`
+		MentionIDs []int  `json:"mention_ids"`
 	}
 
 	userID :=
@@ -135,6 +136,24 @@ WHERE id = $1
 		&authorName,
 		&faculty,
 		&avatarURL,
+	)
+
+	if err := SavePostMentions(
+		post.ID,
+		request.MentionIDs,
+	); err != nil {
+		http.Error(
+			w,
+			"Could not save mentions",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	NotifyPostMentions(
+		post.ID,
+		userID,
+		request.MentionIDs,
 	)
 
 	websocket.Broadcast(

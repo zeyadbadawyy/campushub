@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bell,
@@ -8,6 +8,7 @@ import {
   UserPlus,
   UserCheck,
   Mail,
+  AtSign,
   Check,
   X,
   Clock,
@@ -41,6 +42,9 @@ function Notifications() {
   const [loading, setLoading] =
     useState(true);
 
+  const [activeFilter, setActiveFilter] =
+    useState("all");
+
   const {
     notifications: wsNotifications,
     setNotificationCount,
@@ -51,11 +55,13 @@ function Notifications() {
   useEffect(() => {
     async function loadNotifications() {
       try {
-        const data =
-          await getNotifications();
-
-        const followRequests =
-          await getFollowRequests();
+        const [
+          data,
+          followRequests,
+        ] = await Promise.all([
+          getNotifications(),
+          getFollowRequests(),
+        ]);
 
         setRequests(
           followRequests || []
@@ -72,10 +78,9 @@ function Notifications() {
     }
 
     loadNotifications();
-  }, []);
+  }, [setRequests]);
 
   useEffect(() => {
-
     if (!wsNotifications.length) {
       return;
     }
@@ -103,7 +108,6 @@ function Notifications() {
         ...prev,
       ];
     });
-
   }, [wsNotifications]);
 
   async function handleMarkRead() {
@@ -182,6 +186,9 @@ function Notifications() {
       case "message":
         return <Mail size={16} />;
 
+      case "mention":
+        return <AtSign size={16} />;
+
       default:
         return <Bell size={16} />;
     }
@@ -193,6 +200,7 @@ function Notifications() {
     switch (notification.type) {
       case "like":
       case "comment":
+      case "mention":
         return `/posts/${notification.target_id}`;
 
       case "message":
@@ -206,7 +214,7 @@ function Notifications() {
         return "/notifications";
 
       default:
-        return "/";
+        return "/notifications";
     }
   }
 
@@ -293,14 +301,62 @@ function Notifications() {
         !notification.is_read
     ).length;
 
+  const mentionCount =
+    notifications.filter(
+      (notification) =>
+        notification.type === "mention"
+    ).length;
+
+  const filteredNotifications =
+    useMemo(() => {
+      switch (activeFilter) {
+        case "unread":
+          return notifications.filter(
+            (notification) =>
+              !notification.is_read
+          );
+
+        case "mentions":
+          return notifications.filter(
+            (notification) =>
+              notification.type === "mention"
+          );
+
+        default:
+          return notifications;
+      }
+    }, [
+      activeFilter,
+      notifications,
+    ]);
+
+  const filterOptions = [
+    {
+      id: "all",
+      label: "All",
+      count: notifications.length,
+    },
+    {
+      id: "unread",
+      label: "Unread",
+      count: unreadCount,
+    },
+    {
+      id: "mentions",
+      label: "Mentions",
+      count: mentionCount,
+    },
+  ];
+
   return (
     <MainLayout>
-      <div className="
-        mx-auto
-        w-full
-        max-w-4xl
-      ">
-
+      <div
+        className="
+          mx-auto
+          w-full
+          max-w-4xl
+        "
+      >
         {/* Header */}
 
         <motion.div
@@ -321,39 +377,47 @@ function Notifications() {
             sm:justify-between
           "
         >
-          <div className="
-            flex items-center gap-3
-          ">
-            <div className="
-              flex h-11 w-11
-              items-center
-              justify-center
-              rounded-2xl
-              bg-indigo-50
-              text-indigo-600
-              dark:bg-indigo-500/10
-              dark:text-indigo-400
-            ">
+          <div
+            className="
+              flex items-center gap-3
+            "
+          >
+            <div
+              className="
+                flex h-11 w-11
+                items-center
+                justify-center
+                rounded-2xl
+                bg-indigo-50
+                text-indigo-600
+                dark:bg-indigo-500/10
+                dark:text-indigo-400
+              "
+            >
               <Bell size={21} />
             </div>
 
             <div>
-              <h1 className="
-                text-2xl
-                font-bold
-                tracking-tight
-              ">
+              <h1
+                className="
+                  text-2xl
+                  font-bold
+                  tracking-tight
+                "
+              >
                 Notifications
               </h1>
 
-              <p className="
-                mt-1
-                text-sm
-                text-slate-500
-                dark:text-slate-400
-              ">
-                Stay up to date with
-                your campus activity.
+              <p
+                className="
+                  mt-1
+                  text-sm
+                  text-slate-500
+                  dark:text-slate-400
+                "
+              >
+                Likes, comments, follows,
+                messages and mentions.
               </p>
             </div>
           </div>
@@ -389,6 +453,90 @@ function Notifications() {
           )}
         </motion.div>
 
+        {/* Filters */}
+
+        {!loading && (
+          <div
+            className="
+              mb-5
+              flex
+              flex-wrap
+              items-center
+              gap-2
+            "
+          >
+            {filterOptions.map(
+              (filter) => {
+                const active =
+                  activeFilter ===
+                  filter.id;
+
+                return (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    onClick={() =>
+                      setActiveFilter(
+                        filter.id
+                      )
+                    }
+                    className={`
+                      inline-flex
+                      items-center
+                      gap-2
+                      rounded-xl
+                      px-3.5
+                      py-2
+                      text-xs
+                      font-semibold
+                      transition
+
+                      ${
+                        active
+                          ? `
+                            bg-indigo-600
+                            text-white
+                            shadow-sm
+                          `
+                          : `
+                            border
+                            border-slate-200
+                            bg-white
+                            text-slate-600
+                            hover:bg-slate-50
+                            dark:border-slate-800
+                            dark:bg-slate-900
+                            dark:text-slate-300
+                            dark:hover:bg-slate-800
+                          `
+                      }
+                    `}
+                  >
+                    {filter.label}
+
+                    <span
+                      className={`
+                        rounded-full
+                        px-1.5 py-0.5
+                        text-[9px]
+                        font-bold
+
+                        ${
+                          active
+                            ? "bg-white/15 text-white"
+                            : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                        }
+                      `}
+                    >
+                      {filter.count}
+                    </span>
+                  </button>
+                );
+              }
+            )}
+          </div>
+        )}
+
         {/* Follow Requests */}
 
         <AnimatePresence>
@@ -417,62 +565,74 @@ function Notifications() {
                 dark:bg-indigo-500/5
               "
             >
-              <div className="
-                flex items-center gap-3
-                border-b
-                border-indigo-100
-                px-5 py-4
-                dark:border-indigo-500/20
-              ">
-                <div className="
-                  flex h-9 w-9
-                  items-center
-                  justify-center
-                  rounded-xl
-                  bg-white
-                  text-indigo-600
-                  shadow-sm
-                  dark:bg-slate-900
-                  dark:text-indigo-400
-                ">
+              <div
+                className="
+                  flex items-center gap-3
+                  border-b
+                  border-indigo-100
+                  px-5 py-4
+                  dark:border-indigo-500/20
+                "
+              >
+                <div
+                  className="
+                    flex h-9 w-9
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-white
+                    text-indigo-600
+                    shadow-sm
+                    dark:bg-slate-900
+                    dark:text-indigo-400
+                  "
+                >
                   <UserPlus size={17} />
                 </div>
 
                 <div>
-                  <h2 className="
-                    text-sm font-semibold
-                  ">
+                  <h2
+                    className="
+                      text-sm font-semibold
+                    "
+                  >
                     Follow Requests
                   </h2>
 
-                  <p className="
-                    text-xs
-                    text-slate-500
-                    dark:text-slate-400
-                  ">
+                  <p
+                    className="
+                      text-xs
+                      text-slate-500
+                      dark:text-slate-400
+                    "
+                  >
                     People who want
                     to connect with you
                   </p>
                 </div>
 
-                <span className="
-                  ml-auto
-                  rounded-full
-                  bg-indigo-600
-                  px-2 py-1
-                  text-[10px]
-                  font-bold
-                  text-white
-                ">
+                <span
+                  className="
+                    ml-auto
+                    rounded-full
+                    bg-indigo-600
+                    px-2 py-1
+                    text-[10px]
+                    font-bold
+                    text-white
+                  "
+                >
                   {requests.length}
                 </span>
               </div>
 
-              <div className="
-                divide-y
-                divide-indigo-100
-                dark:divide-indigo-500/10
-              ">
+              <div
+                className="
+                  divide-y
+                  divide-indigo-100
+                  dark:divide-indigo-500/10
+                "
+              >
                 {requests.map(
                   (request) => (
                     <motion.div
@@ -516,30 +676,36 @@ function Notifications() {
                         />
 
                         <div className="min-w-0">
-                          <p className="
-                            truncate
-                            text-sm
-                            font-semibold
-                          ">
+                          <p
+                            className="
+                              truncate
+                              text-sm
+                              font-semibold
+                            "
+                          >
                             {request.name}
                           </p>
 
-                          <p className="
-                            mt-1
-                            text-xs
-                            text-slate-500
-                            dark:text-slate-400
-                          ">
+                          <p
+                            className="
+                              mt-1
+                              text-xs
+                              text-slate-500
+                              dark:text-slate-400
+                            "
+                          >
                             Wants to follow you
                           </p>
                         </div>
                       </button>
 
-                      <div className="
-                        flex
-                        shrink-0
-                        gap-2
-                      ">
+                      <div
+                        className="
+                          flex
+                          shrink-0
+                          gap-2
+                        "
+                      >
                         <button
                           type="button"
                           onClick={() =>
@@ -609,14 +775,18 @@ function Notifications() {
         {/* Notification summary */}
 
         {!loading && (
-          <div className="
-            mb-3
-            flex items-center
-            justify-between
-          ">
-            <div className="
-              flex items-center gap-2
-            ">
+          <div
+            className="
+              mb-3
+              flex items-center
+              justify-between
+            "
+          >
+            <div
+              className="
+                flex items-center gap-2
+              "
+            >
               <Inbox
                 size={16}
                 className="
@@ -624,19 +794,27 @@ function Notifications() {
                 "
               />
 
-              <span className="
-                text-sm
-                font-semibold
-              ">
-                Recent activity
+              <span
+                className="
+                  text-sm
+                  font-semibold
+                "
+              >
+                {activeFilter === "all"
+                  ? "Recent activity"
+                  : activeFilter === "unread"
+                  ? "Unread notifications"
+                  : "Mentions"}
               </span>
             </div>
 
-            <span className="
-              text-xs
-              text-slate-400
-            ">
-              {notifications.length} total
+            <span
+              className="
+                text-xs
+                text-slate-400
+              "
+            >
+              {filteredNotifications.length} shown
             </span>
           </div>
         )}
@@ -668,7 +846,7 @@ function Notifications() {
         {/* Empty */}
 
         {!loading &&
-          notifications.length === 0 && (
+          filteredNotifications.length === 0 && (
             <motion.div
               initial={{
                 opacity: 0,
@@ -690,37 +868,49 @@ function Notifications() {
                 dark:bg-slate-900
               "
             >
-              <div className="
-                mx-auto
-                flex h-14 w-14
-                items-center
-                justify-center
-                rounded-2xl
-                bg-slate-100
-                text-slate-400
-                dark:bg-slate-800
-              ">
+              <div
+                className="
+                  mx-auto
+                  flex h-14 w-14
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  bg-slate-100
+                  text-slate-400
+                  dark:bg-slate-800
+                "
+              >
                 <Bell size={24} />
               </div>
 
-              <h2 className="
-                mt-4
-                text-lg
-                font-semibold
-              ">
-                You're all caught up
+              <h2
+                className="
+                  mt-4
+                  text-lg
+                  font-semibold
+                "
+              >
+                {activeFilter === "all"
+                  ? "You're all caught up"
+                  : activeFilter === "unread"
+                  ? "No unread notifications"
+                  : "No mentions yet"}
               </h2>
 
-              <p className="
-                mx-auto mt-2
-                max-w-sm
-                text-sm
-                text-slate-500
-                dark:text-slate-400
-              ">
-                New likes, comments,
-                follows and messages
-                will appear here.
+              <p
+                className="
+                  mx-auto mt-2
+                  max-w-sm
+                  text-sm
+                  text-slate-500
+                  dark:text-slate-400
+                "
+              >
+                {activeFilter === "all"
+                  ? "New likes, comments, follows, messages and mentions will appear here."
+                  : activeFilter === "unread"
+                  ? "You're completely caught up."
+                  : "When someone mentions you in a post or comment, it will appear here."}
               </p>
             </motion.div>
           )}
@@ -728,9 +918,9 @@ function Notifications() {
         {/* Notifications */}
 
         {!loading &&
-          notifications.length > 0 && (
+          filteredNotifications.length > 0 && (
             <div className="space-y-2">
-              {notifications.map(
+              {filteredNotifications.map(
                 (
                   notification,
                   index
@@ -795,10 +985,12 @@ function Notifications() {
                   >
                     {/* Avatar */}
 
-                    <div className="
-                      relative
-                      shrink-0
-                    ">
+                    <div
+                      className="
+                        relative
+                        shrink-0
+                      "
+                    >
                       <Avatar
                         user={{
                           id: notification.sender_id,
@@ -810,43 +1002,47 @@ function Notifications() {
                         size="md"
                       />
 
-                      <span className="
-                        absolute
-                        -bottom-1
-                        -right-1
-                        flex
-                        h-6 w-6
-                        items-center
-                        justify-center
-                        rounded-full
-                        border-2
-                        border-white
-                        bg-indigo-600
-                        text-white
-                        dark:border-slate-900
-                      ">
+                      <span
+                        className="
+                          absolute
+                          -bottom-1
+                          -right-1
+                          flex
+                          h-6 w-6
+                          items-center
+                          justify-center
+                          rounded-full
+                          border-2
+                          border-white
+                          bg-indigo-600
+                          text-white
+                          dark:border-slate-900
+                        "
+                      >
                         {getNotificationIcon(
                           notification.type
                         )}
 
                         {notification.type === "message" &&
                           notification.message_count > 1 && (
-                            <span className="
-                              absolute
-                              -right-2
-                              -top-2
-                              flex
-                              h-4
-                              min-w-4
-                              items-center
-                              justify-center
-                              rounded-full
-                              bg-red-500
-                              px-1
-                              text-[8px]
-                              font-bold
-                              text-white
-                            ">
+                            <span
+                              className="
+                                absolute
+                                -right-2
+                                -top-2
+                                flex
+                                h-4
+                                min-w-4
+                                items-center
+                                justify-center
+                                rounded-full
+                                bg-red-500
+                                px-1
+                                text-[8px]
+                                font-bold
+                                text-white
+                              "
+                            >
                               {notification.message_count > 99
                                 ? "99+"
                                 : notification.message_count}
@@ -857,27 +1053,35 @@ function Notifications() {
 
                     {/* Content */}
 
-                    <div className="
-                      min-w-0
-                      flex-1
-                    ">
-                      <div className="
-                        flex
-                        items-start
-                        justify-between
-                        gap-3
-                      ">
-                        <p className="
-                          text-sm
-                          leading-5
-                          text-slate-700
-                          dark:text-slate-200
-                        ">
-                          <strong className="
-                            font-semibold
-                            text-slate-950
-                            dark:text-white
-                          ">
+                    <div
+                      className="
+                        min-w-0
+                        flex-1
+                      "
+                    >
+                      <div
+                        className="
+                          flex
+                          items-start
+                          justify-between
+                          gap-3
+                        "
+                      >
+                        <p
+                          className="
+                            text-sm
+                            leading-5
+                            text-slate-700
+                            dark:text-slate-200
+                          "
+                        >
+                          <strong
+                            className="
+                              font-semibold
+                              text-slate-950
+                              dark:text-white
+                            "
+                          >
                             {
                               notification.sender_name
                             }
@@ -888,24 +1092,28 @@ function Notifications() {
                         </p>
 
                         {!notification.is_read && (
-                          <span className="
-                            mt-1
-                            h-2
-                            w-2
-                            shrink-0
-                            rounded-full
-                            bg-indigo-600
-                          " />
+                          <span
+                            className="
+                              mt-1
+                              h-2
+                              w-2
+                              shrink-0
+                              rounded-full
+                              bg-indigo-600
+                            "
+                          />
                         )}
                       </div>
 
-                      <div className="
-                        mt-2
-                        flex items-center
-                        gap-2
-                        text-xs
-                        text-slate-400
-                      ">
+                      <div
+                        className="
+                          mt-2
+                          flex items-center
+                          gap-2
+                          text-xs
+                          text-slate-400
+                        "
+                      >
                         <Clock size={13} />
 
                         <span>
@@ -916,13 +1124,22 @@ function Notifications() {
 
                         <span>•</span>
 
-                        <span className="
-                          capitalize
-                        ">
+                        <span className="capitalize">
                           {
                             notification.type
                           }
                         </span>
+
+                        {notification.type ===
+                          "mention" && (
+                          <>
+                            <span>•</span>
+                            <AtSign
+                              size={12}
+                              className="text-indigo-500"
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
                   </motion.button>

@@ -141,6 +141,13 @@ func RegisterRoutes() http.Handler {
 	r.With(
 		middleware.Auth,
 	).Get(
+		"/users/search-mentions",
+		handlers.SearchMentionUsers,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
 		"/users/{id}/posts",
 		handlers.GetUserPosts,
 	)

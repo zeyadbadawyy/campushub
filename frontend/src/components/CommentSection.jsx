@@ -9,13 +9,15 @@ import {
   AnimatePresence,
 } from "framer-motion";
 
+import { createPortal } from "react-dom";
+
 import {
   Smile,
   Send,
   MoreHorizontal,
   Trash2,
   MessageCircle,
-  Image as ImageIcon,
+  X,
 } from "lucide-react";
 
 import EmojiPicker from "emoji-picker-react";
@@ -26,6 +28,7 @@ import {
   getUserProfile,
   deleteComment,
   searchGifs,
+  searchMentionUsers,
 } from "../services/postService";
 
 import {
@@ -75,17 +78,30 @@ function CommentSection({
   const [gifLoading, setGifLoading] =
     useState(false);
 
-  const pickerRef = useRef(null);
+  const [mentionQuery, setMentionQuery] =
+    useState(null);
 
+  const [mentionUsers, setMentionUsers] =
+    useState([]);
+
+  const [mentionIndex, setMentionIndex] =
+    useState(0);
+
+  const [mentions, setMentions] =
+    useState([]);
+
+  const pickerRef = useRef(null);
   const inputRef = useRef(null);
+
+  const [mentionMenuPosition, setMentionMenuPosition] =
+    useState(null);
 
   const {
     comments: wsComments,
   } = useWebSocket();
 
   useEffect(() => {
-    const query =
-      gifSearch.trim();
+    const query = gifSearch.trim();
 
     if (!showGifPicker || !query) {
       setGifResults([]);
@@ -100,9 +116,7 @@ function CommentSection({
           const results =
             await searchGifs(query);
 
-          setGifResults(
-            results || []
-          );
+          setGifResults(results || []);
         } catch (error) {
           console.error(error);
           setGifResults([]);
@@ -111,12 +125,219 @@ function CommentSection({
         }
       }, 300);
 
-    return () =>
-      clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [
     gifSearch,
     showGifPicker,
   ]);
+
+  useEffect(() => {
+    if (!mentionQuery || !inputRef.current) {
+      setMentionMenuPosition(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      const rect = inputRef.current?.getBoundingClientRect();
+
+      if (!rect) {
+        return;
+      }
+
+      const gap = 10;
+      const top = rect.bottom + gap;
+
+      setMentionMenuPosition({
+        top,
+        left: rect.left,
+        width: rect.width,
+        maxHeight: Math.max(180, window.innerHeight - top - 16),
+      });
+    };
+
+    updatePosition();
+
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [mentionQuery]);
+
+  useEffect(() => {
+    if (mentionQuery === null) {
+      setMentionUsers([]);
+      setMentionIndex(0);
+      return;
+    }
+
+    const timer =
+      setTimeout(async () => {
+        try {
+          const users =
+            await searchMentionUsers(
+              mentionQuery.query
+            );
+
+          setMentionUsers(users || []);
+          setMentionIndex(0);
+        } catch (error) {
+          console.error(error);
+          setMentionUsers([]);
+          setMentionIndex(0);
+        }
+      }, 180);
+
+    return () => clearTimeout(timer);
+  }, [mentionQuery]);
+
+  function getMentionContext(
+    value,
+    cursorPosition
+  ) {
+    const before = value.slice(
+      0,
+      cursorPosition
+    );
+
+    const match = before.match(
+      /(^|\s)@([^\s@]*)$/
+    );
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      query: match[2],
+      start: before.lastIndexOf("@"),
+    };
+  }
+
+  function handleContentChange(event) {
+    const value = event.target.value;
+
+    setContent(value);
+
+    const context =
+      getMentionContext(
+        value,
+        event.target.selectionStart
+      );
+
+    setMentionQuery(context);
+  }
+
+  function handleMentionSelect(user) {
+    const input = inputRef.current;
+
+    if (!input || !mentionQuery) {
+      return;
+    }
+
+    const cursor = input.selectionStart;
+
+    const before = content.slice(
+      0,
+      mentionQuery.start
+    );
+
+    const after = content.slice(cursor);
+
+    const nextValue =
+      `${before}@${user.name} ${after}`;
+
+    setContent(nextValue);
+
+    setMentions((prev) => {
+      if (
+        prev.some(
+          (mention) => mention.id === user.id
+        )
+      ) {
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          id: user.id,
+          name: user.name,
+        },
+      ];
+    });
+
+    setMentionQuery(null);
+    setMentionUsers([]);
+    setMentionIndex(0);
+
+    requestAnimationFrame(() => {
+      const nextCursor =
+        before.length + user.name.length + 2;
+
+      input.focus();
+      input.setSelectionRange(
+        nextCursor,
+        nextCursor
+      );
+    });
+  }
+
+  function handleContentKeyDown(event) {
+    if (
+      mentionQuery &&
+      mentionUsers.length > 0
+    ) {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+
+        setMentionIndex((prev) =>
+          Math.min(
+            prev + 1,
+            mentionUsers.length - 1
+          )
+        );
+
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+
+        setMentionIndex((prev) =>
+          Math.max(prev - 1, 0)
+        );
+
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+
+        handleMentionSelect(
+          mentionUsers[mentionIndex]
+        );
+
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
+
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+      handleComment();
+    }
+  }
 
   function handleGifSelect(gif) {
     const url =
@@ -137,9 +358,7 @@ function CommentSection({
   useEffect(() => {
     async function loadUser() {
       try {
-        const user =
-          await getCurrentUser();
-
+        const user = await getCurrentUser();
         setCurrentUser(user);
       } catch (error) {
         console.error(error);
@@ -183,9 +402,7 @@ function CommentSection({
           )
         );
 
-      setComments(
-        commentsWithUsers
-      );
+      setComments(commentsWithUsers);
     } catch (error) {
       console.error(error);
     }
@@ -200,22 +417,17 @@ function CommentSection({
       return;
     }
 
-    const newest =
-      wsComments[0];
+    const newest = wsComments[0];
 
-    if (
-      newest.post_id !== postId
-    ) {
+    if (newest.post_id !== postId) {
       return;
     }
 
     setComments((prev) => {
-      const exists =
-        prev.some(
-          (comment) =>
-            comment.id ===
-            newest.id
-        );
+      const exists = prev.some(
+        (comment) =>
+          comment.id === newest.id
+      );
 
       if (exists) {
         return prev;
@@ -225,8 +437,7 @@ function CommentSection({
         {
           ...newest,
           avatar_url:
-            newest.avatar_url ||
-            null,
+            newest.avatar_url || null,
         },
         ...prev,
       ];
@@ -273,13 +484,24 @@ function CommentSection({
     try {
       setSubmitting(true);
 
+      const mentionIds = mentions
+        .filter((mention) =>
+          content.includes(`@${mention.name}`)
+        )
+        .map((mention) => mention.id);
+
       await createComment(
         postId,
         content.trim(),
-        gifUrl
+        gifUrl,
+        mentionIds
       );
 
       setContent("");
+      setMentions([]);
+      setMentionQuery(null);
+      setMentionUsers([]);
+      setMentionIndex(0);
       setShowEmojiPicker(false);
       setGifUrl("");
       setShowGifPicker(false);
@@ -305,9 +527,7 @@ function CommentSection({
     }
 
     try {
-      await deleteComment(
-        commentId
-      );
+      await deleteComment(commentId);
 
       setOpenMenu(null);
 
@@ -321,12 +541,9 @@ function CommentSection({
     }
   }
 
-  function handleEmojiClick(
-    emojiData
-  ) {
+  function handleEmojiClick(emojiData) {
     setContent(
-      (prev) =>
-        prev + emojiData.emoji
+      (prev) => prev + emojiData.emoji
     );
 
     inputRef.current?.focus();
@@ -334,14 +551,9 @@ function CommentSection({
 
   return (
     <div className="relative space-y-4 overflow-visible">
-
       {/* Composer */}
 
-      <div className="
-        flex
-        items-end
-        gap-2
-      ">
+      <div className="flex items-end gap-2">
         <div className="shrink-0">
           <Avatar
             user={currentUser}
@@ -349,11 +561,7 @@ function CommentSection({
           />
         </div>
 
-        <div className="
-          relative
-          flex-1
-        ">
-
+        <div className="relative flex-1">
           {/* Selected GIF preview */}
 
           <AnimatePresence>
@@ -451,20 +659,8 @@ function CommentSection({
             <input
               ref={inputRef}
               value={content}
-              onChange={(e) =>
-                setContent(
-                  e.target.value
-                )
-              }
-              onKeyDown={(e) => {
-                if (
-                  e.key === "Enter" &&
-                  !e.shiftKey
-                ) {
-                  e.preventDefault();
-                  handleComment();
-                }
-              }}
+              onChange={handleContentChange}
+              onKeyDown={handleContentKeyDown}
               placeholder="Write a comment..."
               className="
                 min-w-0
@@ -529,6 +725,7 @@ function CommentSection({
                     (prev) => !prev
                   );
                   setShowEmojiPicker(false);
+                  setMentionQuery(null);
                 }}
                 className="
                   flex
@@ -749,8 +946,7 @@ function CommentSection({
               onClick={handleComment}
               disabled={
                 submitting ||
-                (!content.trim() &&
-                  !gifUrl)
+                (!content.trim() && !gifUrl)
               }
               className="
                 flex
@@ -773,67 +969,125 @@ function CommentSection({
           </div>
         </div>
       </div>
-
-      {/* Comments */}
-
-      <AnimatePresence>
-        {gifUrl && (
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 6,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            exit={{
-              opacity: 0,
-              y: 6,
-            }}
-            className="
-              mb-3
-              relative
-              w-fit
-              overflow-hidden
-              rounded-2xl
-              border
-              border-slate-200
-              dark:border-slate-800
-            "
-          >
-            <img
-              src={gifUrl}
-              alt=""
+      {mentionQuery &&
+        mentionMenuPosition &&
+        createPortal(
+          <AnimatePresence>
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 6,
+                scale: 0.98,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+              }}
+              exit={{
+                opacity: 0,
+                y: 6,
+                scale: 0.98,
+              }}
+              style={{
+                position: "fixed",
+                top: mentionMenuPosition.top,
+                left: mentionMenuPosition.left,
+                width: mentionMenuPosition.width,
+                maxHeight: mentionMenuPosition.maxHeight,
+                zIndex: 2147483647,
+              }}
               className="
-                h-24
-                w-36
-                object-cover
-              "
-            />
-
-            <button
-              type="button"
-              onClick={() =>
-                setGifUrl("")
-              }
-              className="
-                absolute
-                right-1.5
-                top-1.5
-                flex h-7 w-7
-                items-center
-                justify-center
-                rounded-full
-                bg-black/60
-                text-white
+                z-[2147483647]
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                shadow-2xl
+                dark:border-slate-700
+                dark:bg-slate-900
               "
             >
-              ×
-            </button>
-          </motion.div>
+              {mentionUsers.length > 0 ? (
+                <div className="p-1.5">
+                  {mentionUsers.map((user, index) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onMouseDown={(event) =>
+                        event.preventDefault()
+                      }
+                      onClick={() =>
+                        handleMentionSelect(user)
+                      }
+                      className={`
+                        flex w-full items-center
+                        gap-3 rounded-xl px-3 py-2.5
+                        text-left transition
+                        ${
+                          index === mentionIndex
+                            ? `
+                              bg-indigo-50
+                              dark:bg-indigo-500/10
+                            `
+                            : `
+                              hover:bg-slate-100
+                              dark:hover:bg-slate-800
+                            `
+                        }
+                      `}
+                    >
+                      {user.avatar_url ? (
+                        <img
+                          src={user.avatar_url}
+                          alt=""
+                          className="
+                            h-9 w-9 shrink-0
+                            rounded-full object-cover
+                          "
+                        />
+                      ) : (
+                        <div className="
+                          flex h-9 w-9 shrink-0
+                          items-center justify-center
+                          rounded-full
+                          bg-indigo-100
+                          text-sm font-bold
+                          text-indigo-600
+                          dark:bg-indigo-500/10
+                          dark:text-indigo-400
+                        ">
+                          {user.name
+                            ?.charAt(0)
+                            ?.toUpperCase()}
+                        </div>
+                      )}
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
+                          {user.name}
+                        </p>
+
+                        <p className="truncate text-xs text-slate-400">
+                          {user.faculty ||
+                            "CampusHub User"}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-4 py-4 text-center text-xs text-slate-400">
+                  No users found
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
+
+      {/* Comments */}
 
       {comments.length === 0 ? (
         <div className="
@@ -858,258 +1112,220 @@ function CommentSection({
             text-slate-400
             dark:bg-slate-800
           ">
-            <MessageCircle
-              size={18}
-            />
+            <MessageCircle size={18} />
           </div>
 
-          <p className="
-            mt-3
-            text-sm
-            font-medium
-          ">
+          <p className="mt-3 text-sm font-medium">
             No comments yet
           </p>
 
-          <p className="
-            mt-1
-            text-xs
-            text-slate-400
-          ">
+          <p className="mt-1 text-xs text-slate-400">
             Start the conversation.
           </p>
         </div>
       ) : (
         <div className="space-y-1">
-
-          {comments.map(
-            (comment) => (
-              <motion.div
-                layout
-                key={comment.id}
-                initial={{
-                  opacity: 0,
-                  y: 6,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                className="
-                  group
-                  flex
-                  items-start
-                  gap-3
-                  rounded-2xl
-                  px-2
-                  py-3
-                  transition
-                  hover:bg-slate-50
-                  dark:hover:bg-slate-800/50
-                "
+          {comments.map((comment) => (
+            <motion.div
+              layout
+              key={comment.id}
+              initial={{
+                opacity: 0,
+                y: 6,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              className="
+                group
+                flex
+                items-start
+                gap-3
+                rounded-2xl
+                px-2
+                py-3
+                transition
+                hover:bg-slate-50
+                dark:hover:bg-slate-800/50
+              "
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  window.location.href =
+                    `/profile/${comment.user_id}`
+                }
+                className="shrink-0"
               >
-                <button
-                  type="button"
-                  onClick={() =>
-                    window.location.href =
-                      `/profile/${comment.user_id}`
-                  }
-                  className="
-                    shrink-0
-                  "
-                >
-                  <Avatar
-                    user={{
-                      id: comment.user_id,
-                      name: comment.author,
-                      avatar_url:
-                        comment.avatar_url,
-                    }}
-                    size="sm"
-                  />
-                </button>
+                <Avatar
+                  user={{
+                    id: comment.user_id,
+                    name: comment.author,
+                    avatar_url:
+                      comment.avatar_url,
+                  }}
+                  size="sm"
+                />
+              </button>
 
-                <div className="
-                  min-w-0
-                  flex-1
-                ">
-                  <div className="
-                    flex
-                    items-center
-                    gap-2
-                  ">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        window.location.href =
-                          `/profile/${comment.user_id}`
-                      }
-                      className="
-                        truncate
-                        text-sm
-                        font-semibold
-                        hover:underline
-                      "
-                    >
-                      {comment.author}
-                    </button>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      window.location.href =
+                        `/profile/${comment.user_id}`
+                    }
+                    className="
+                      truncate
+                      text-sm
+                      font-semibold
+                      hover:underline
+                    "
+                  >
+                    {comment.author}
+                  </button>
 
-                    <span className="
-                      text-[10px]
-                      text-slate-400
-                    ">
-                      •
-                    </span>
+                  <span className="text-[10px] text-slate-400">
+                    •
+                  </span>
 
-                    <span className="
-                      text-[10px]
-                      text-slate-400
-                    ">
-                      student
-                    </span>
+                  <span className="text-[10px] text-slate-400">
+                    student
+                  </span>
 
-                    {currentUser?.id ===
-                      comment.user_id && (
-                      <div className="
-                        relative
-                        ml-auto
-                        shrink-0
-                      ">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setOpenMenu(
-                              openMenu ===
-                                comment.id
-                                ? null
-                                : comment.id
-                            )
-                          }
-                          className="
-                            flex
-                            h-8
-                            w-8
-                            items-center
-                            justify-center
-                            rounded-lg
-                            text-slate-400
-                            opacity-0
-                            transition
-                            group-hover:opacity-100
-                            hover:bg-slate-200
-                            hover:text-slate-700
-                            dark:hover:bg-slate-700
-                            dark:hover:text-white
-                          "
-                        >
-                          <MoreHorizontal
-                            size={17}
-                          />
-                        </button>
+                  {currentUser?.id ===
+                    comment.user_id && (
+                    <div className="relative ml-auto shrink-0">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenMenu(
+                            openMenu === comment.id
+                              ? null
+                              : comment.id
+                          )
+                        }
+                        className="
+                          flex
+                          h-8
+                          w-8
+                          items-center
+                          justify-center
+                          rounded-lg
+                          text-slate-400
+                          opacity-0
+                          transition
+                          group-hover:opacity-100
+                          hover:bg-slate-200
+                          hover:text-slate-700
+                          dark:hover:bg-slate-700
+                          dark:hover:text-white
+                        "
+                      >
+                        <MoreHorizontal size={17} />
+                      </button>
 
-                        <AnimatePresence>
-                          {openMenu ===
-                            comment.id && (
-                            <motion.div
-                              initial={{
-                                opacity: 0,
-                                scale: 0.97,
-                                y: -4,
-                              }}
-                              animate={{
-                                opacity: 1,
-                                scale: 1,
-                                y: 0,
-                              }}
-                              exit={{
-                                opacity: 0,
-                                scale: 0.97,
-                                y: -4,
-                              }}
+                      <AnimatePresence>
+                        {openMenu === comment.id && (
+                          <motion.div
+                            initial={{
+                              opacity: 0,
+                              scale: 0.97,
+                              y: -4,
+                            }}
+                            animate={{
+                              opacity: 1,
+                              scale: 1,
+                              y: 0,
+                            }}
+                            exit={{
+                              opacity: 0,
+                              scale: 0.97,
+                              y: -4,
+                            }}
+                            className="
+                              absolute
+                              right-0
+                              top-9
+                              z-20
+                              w-36
+                              overflow-hidden
+                              rounded-xl
+                              border
+                              border-slate-200
+                              bg-white
+                              p-1
+                              shadow-xl
+                              dark:border-slate-800
+                              dark:bg-slate-900
+                            "
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleDeleteComment(
+                                  comment.id
+                                )
+                              }
                               className="
-                                absolute
-                                right-0
-                                top-9
-                                z-20
-                                w-36
-                                overflow-hidden
-                                rounded-xl
-                                border
-                                border-slate-200
-                                bg-white
-                                p-1
-                                shadow-xl
-                                dark:border-slate-800
-                                dark:bg-slate-900
+                                flex
+                                w-full
+                                items-center
+                                gap-2
+                                rounded-lg
+                                px-3
+                                py-2
+                                text-xs
+                                font-medium
+                                text-red-600
+                                transition
+                                hover:bg-red-50
+                                dark:text-red-400
+                                dark:hover:bg-red-500/10
                               "
                             >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleDeleteComment(
-                                    comment.id
-                                  )
-                                }
-                                className="
-                                  flex
-                                  w-full
-                                  items-center
-                                  gap-2
-                                  rounded-lg
-                                  px-3
-                                  py-2
-                                  text-xs
-                                  font-medium
-                                  text-red-600
-                                  transition
-                                  hover:bg-red-50
-                                  dark:text-red-400
-                                  dark:hover:bg-red-500/10
-                                "
-                              >
-                                <Trash2
-                                  size={14}
-                                />
-                                Delete
-                              </button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    )}
-                  </div>
-
-                  {comment.content && (
-                    <p className="
-                      mt-1
-                      whitespace-pre-wrap
-                      break-words
-                      text-sm
-                      leading-6
-                      text-slate-600
-                      dark:text-slate-300
-                    ">
-                      {comment.content}
-                    </p>
-                  )}
-
-                  {comment.gif_url && (
-                    <img
-                      src={comment.gif_url}
-                      alt=""
-                      className="
-                        mt-2
-                        max-h-[240px]
-                        max-w-[280px]
-                        rounded-xl
-                        object-cover
-                      "
-                    />
+                              <Trash2 size={14} />
+                              Delete
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   )}
                 </div>
-              </motion.div>
-            )
-          )}
+
+                {comment.content && (
+                  <p className="
+                    mt-1
+                    whitespace-pre-wrap
+                    break-words
+                    text-sm
+                    leading-6
+                    text-slate-600
+                    dark:text-slate-300
+                  ">
+                    {comment.content}
+                  </p>
+                )}
+
+                {comment.gif_url && (
+                  <img
+                    src={comment.gif_url}
+                    alt=""
+                    className="
+                      mt-2
+                      max-h-[240px]
+                      max-w-[280px]
+                      rounded-xl
+                      object-cover
+                    "
+                  />
+                )}
+              </div>
+            </motion.div>
+          ))}
         </div>
       )}
     </div>

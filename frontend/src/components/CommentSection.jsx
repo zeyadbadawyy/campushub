@@ -36,6 +36,7 @@ import {
 } from "../services/auth";
 
 import Avatar from "./Avatar";
+import MentionText from "./MentionText";
 
 import {
   useWebSocket,
@@ -144,14 +145,14 @@ function CommentSection({
         return;
       }
 
-      const gap = 10;
-      const top = rect.bottom + gap;
+      const top = rect.bottom + 8;
+      const availableBelow = Math.max(120, window.innerHeight - top - 16);
 
       setMentionMenuPosition({
         top,
-        left: rect.left,
-        width: rect.width,
-        maxHeight: Math.max(180, window.innerHeight - top - 16),
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - Math.min(rect.width, window.innerWidth - 16) - 8)),
+        width: Math.min(rect.width, window.innerWidth - 16),
+        maxHeight: Math.min(320, availableBelow),
       });
     };
 
@@ -976,17 +977,14 @@ function CommentSection({
             <motion.div
               initial={{
                 opacity: 0,
-                y: 6,
                 scale: 0.98,
               }}
               animate={{
                 opacity: 1,
-                y: 0,
                 scale: 1,
               }}
               exit={{
                 opacity: 0,
-                y: 6,
                 scale: 0.98,
               }}
               style={{
@@ -994,11 +992,9 @@ function CommentSection({
                 top: mentionMenuPosition.top,
                 left: mentionMenuPosition.left,
                 width: mentionMenuPosition.width,
-                maxHeight: mentionMenuPosition.maxHeight,
-                zIndex: 2147483647,
               }}
               className="
-                z-[2147483647]
+                z-[10000]
                 overflow-hidden
                 rounded-2xl
                 border
@@ -1038,31 +1034,7 @@ function CommentSection({
                         }
                       `}
                     >
-                      {user.avatar_url ? (
-                        <img
-                          src={user.avatar_url}
-                          alt=""
-                          className="
-                            h-9 w-9 shrink-0
-                            rounded-full object-cover
-                          "
-                        />
-                      ) : (
-                        <div className="
-                          flex h-9 w-9 shrink-0
-                          items-center justify-center
-                          rounded-full
-                          bg-indigo-100
-                          text-sm font-bold
-                          text-indigo-600
-                          dark:bg-indigo-500/10
-                          dark:text-indigo-400
-                        ">
-                          {user.name
-                            ?.charAt(0)
-                            ?.toUpperCase()}
-                        </div>
-                      )}
+                      <Avatar user={user} size="sm" />
 
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold">
@@ -1306,7 +1278,10 @@ function CommentSection({
                     text-slate-600
                     dark:text-slate-300
                   ">
-                    {comment.content}
+                    <MentionText
+                      text={comment.content}
+                      mentions={comment.mentions || []}
+                    />
                   </p>
                 )}
 

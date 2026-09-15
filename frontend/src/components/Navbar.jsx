@@ -47,6 +47,7 @@ import {
 } from "../services/postService";
 
 import Avatar from "./Avatar";
+import BrandLogo from "./BrandLogo";
 
 function Navbar({ onMenuClick }) {
   const {
@@ -341,6 +342,12 @@ function Navbar({ onMenuClick }) {
         >
           <Menu size={20} />
         </button>
+
+        <BrandLogo
+          variant="navbar"
+          markOnly
+          className="lg:hidden"
+        />
 
         {/* Welcome */}
 

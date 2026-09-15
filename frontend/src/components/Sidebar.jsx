@@ -16,20 +16,26 @@ import { useEffect, useState } from "react";
 import { getCurrentUser } from "../services/postService";
 import { useWebSocket } from "../contexts/WebSocketContext";
 
-import logo from "../assets/logo/t_logo.png";
-import label from "../assets/logo/t_label.png";
+import BrandLogo from "./BrandLogo";
 
-function Sidebar({ mobileOpen = false, onClose = () => {} }) {
+function Sidebar({
+  mobileOpen = false,
+  onClose = () => {},
+}) {
   const navigate = useNavigate();
 
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] =
+    useState(null);
 
-  const { unreadCount } = useWebSocket();
+  const { unreadCount } =
+    useWebSocket();
 
   useEffect(() => {
     async function loadUser() {
       try {
-        const user = await getCurrentUser();
+        const user =
+          await getCurrentUser();
+
         setCurrentUser(user);
       } catch (error) {
         console.error(error);
@@ -67,8 +73,6 @@ function Sidebar({ mobileOpen = false, onClose = () => {} }) {
 
   return (
     <>
-      {/* Mobile overlay */}
-
       {mobileOpen && (
         <button
           type="button"
@@ -82,8 +86,6 @@ function Sidebar({ mobileOpen = false, onClose = () => {} }) {
           "
         />
       )}
-
-      {/* Sidebar */}
 
       <aside
         className={`
@@ -101,72 +103,49 @@ function Sidebar({ mobileOpen = false, onClose = () => {} }) {
           lg:translate-x-0
         `}
       >
-        <div className="flex h-full flex-col px-4 py-5">
+        <div className="
+          flex h-full flex-col
+          px-4 py-5
+        ">
+          <div className="
+            mb-8 flex items-center
+            justify-between px-2
+          ">
+            <button
+              type="button"
+              onClick={() => {
+                navigate("/feed");
+                onClose();
+              }}
+              aria-label="Go to feed"
+              className="
+                rounded-2xl
+                transition
+                hover:opacity-90
+              "
+            >
+              <BrandLogo variant="sidebar" />
+            </button>
 
-          {/* Branding */}
-
-            <div className="mb-8 flex items-center justify-between px-3">
-              <button
-                type="button"
-                onClick={() => {
-                  navigate("/feed");
-                  onClose();
-                }}
-                className="
-                  group
-                  flex
-                  items-center
-                  rounded-2xl
-                  text-left
-                "
-              >
-                <img
-                  src={logo}
-                  alt="CampusHub"
-                  className="
-                    h-10
-                    w-10
-                    object-contain
-                    ml-2
-                  "
-                />
-
-                <img
-                  src={label}
-                  alt="CampusHub"
-                  className="
-                    h-10
-                    w-50
-                    object-contain
-                    -ml-6
-                    -mt-1
-                    invert dark:invert-0
-                    drop-shadow-[0_0_1px_rgba(0,0,0,0.3)]
-                  "
-                />
-
-              </button>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="
-                  flex h-9 w-9 items-center
-                  justify-center rounded-xl
-                  text-slate-400
-                  hover:bg-slate-100
-                  hover:text-slate-700
-                  dark:hover:bg-slate-900
-                  dark:hover:text-white
-                  lg:hidden
-                "
-                aria-label="Close navigation"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-          {/* Navigation */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="
+                flex h-9 w-9
+                items-center justify-center
+                rounded-xl
+                text-slate-400
+                hover:bg-slate-100
+                hover:text-slate-700
+                dark:hover:bg-slate-900
+                dark:hover:text-white
+                lg:hidden
+              "
+              aria-label="Close navigation"
+            >
+              <X size={18} />
+            </button>
+          </div>
 
           <nav className="space-y-1">
             {navigation.map((item) => {
@@ -219,7 +198,8 @@ function Sidebar({ mobileOpen = false, onClose = () => {} }) {
                     <span
                       className="
                         flex h-5 min-w-5
-                        items-center justify-center
+                        items-center
+                        justify-center
                         rounded-full
                         bg-indigo-600
                         px-1.5
@@ -237,8 +217,6 @@ function Sidebar({ mobileOpen = false, onClose = () => {} }) {
             })}
           </nav>
 
-          {/* Bottom card */}
-
           <div className="mt-auto">
             <div
               className="
@@ -249,13 +227,23 @@ function Sidebar({ mobileOpen = false, onClose = () => {} }) {
                 dark:bg-slate-900/70
               "
             >
-              <p className="
-                text-xs font-medium
-                text-slate-500
-                dark:text-slate-400
+              <div className="
+                mb-2 flex items-center
+                gap-2
               ">
-                CampusHub
-              </p>
+                <BrandLogo
+                  variant="compact"
+                  markOnly
+                />
+
+                <p className="
+                  text-xs font-semibold
+                  text-slate-500
+                  dark:text-slate-400
+                ">
+                  CampusHub
+                </p>
+              </div>
 
               <p className="mt-1 text-sm font-semibold">
                 Connect. Share. Belong.

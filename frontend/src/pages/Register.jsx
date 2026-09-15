@@ -9,8 +9,6 @@ import {
   motion,
 } from "framer-motion";
 
-import logo from "../assets/logo/t_full_logo.png";
-
 import {
   UserRound,
   Mail,
@@ -26,6 +24,8 @@ import AuthLayout from "../layouts/AuthLayout";
 import {
   registerUser,
 } from "../services/auth";
+
+import BrandLogo from "../components/BrandLogo";
 
 function Register() {
   const navigate =
@@ -60,12 +60,16 @@ function Register() {
       formData.password;
 
     if (!name) {
-      alert("Name is required.");
+      alert(
+        "Name is required."
+      );
       return;
     }
 
     if (!email) {
-      alert("Email is required.");
+      alert(
+        "Email is required."
+      );
       return;
     }
 
@@ -150,9 +154,6 @@ function Register() {
           sm:p-8
         "
       >
-
-        {/* Brand */}
-
         <div className="
           mb-7
           text-center
@@ -161,17 +162,8 @@ function Register() {
             flex
             items-center
             justify-center
-            rounded-2xl
           ">
-            <img
-              src={logo}
-              alt="CampusHub"
-              className="
-                h-50
-                w-50
-                object-contain
-              "
-            />
+            <BrandLogo variant="auth" />
           </div>
 
           <h1 className="
@@ -197,7 +189,6 @@ function Register() {
           onSubmit={handleSubmit}
           className="space-y-4"
         >
-
           <AuthField
             id="register-name"
             name="name"

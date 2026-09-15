@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   Link,
   useNavigate,
@@ -7,8 +8,6 @@ import {
 import {
   motion,
 } from "framer-motion";
-
-import logo from "../assets/logo/t_full_logo.png";
 
 import {
   Mail,
@@ -22,6 +21,8 @@ import AuthLayout from "../layouts/AuthLayout";
 import {
   useAuth,
 } from "../contexts/AuthContext";
+
+import BrandLogo from "../components/BrandLogo";
 
 function Login() {
   const [email, setEmail] =
@@ -94,31 +95,16 @@ function Login() {
           sm:p-8
         "
       >
-
-        {/* Brand */}
-
         <div className="
           mb-8
+          flex flex-col
+          items-center
           text-center
         ">
-          <div className="        
-            flex
-            items-center
-            justify-center
-            rounded-2xl
-          ">
-            <img
-              src={logo}
-              alt="CampusHub"
-              className="
-                h-50
-                w-50
-                object-contain
-              "
-            />
-          </div>
+          <BrandLogo variant="auth" />
 
           <p className="
+            mt-4
             text-sm
             text-slate-500
             dark:text-slate-400
@@ -127,15 +113,10 @@ function Login() {
           </p>
         </div>
 
-        {/* Form */}
-
         <form
           onSubmit={handleLogin}
           className="space-y-4"
         >
-
-          {/* Email */}
-
           <div>
             <label
               htmlFor="login-email"
@@ -198,8 +179,6 @@ function Login() {
               />
             </div>
           </div>
-
-          {/* Password */}
 
           <div>
             <label
@@ -264,8 +243,6 @@ function Login() {
             </div>
           </div>
 
-          {/* Submit */}
-
           <button
             type="submit"
             disabled={loading}
@@ -308,8 +285,6 @@ function Login() {
             )}
           </button>
         </form>
-
-        {/* Register */}
 
         <div className="
           mt-6

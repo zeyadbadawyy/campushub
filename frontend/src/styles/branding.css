@@ -1,0 +1,108 @@
+/* CampusHub brand system
+   Centralized logo behavior and brand tokens.
+*/
+
+:root {
+  --campushub-blue: #2563eb;
+  --campushub-blue-strong: #1d4ed8;
+  --campushub-navy: #0f172a;
+  --campushub-slate: #64748b;
+}
+
+.campushub-brand {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.campushub-brand__mark {
+  display: block;
+  flex: 0 0 auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+.campushub-brand__label {
+  display: block;
+  flex: 0 0 auto;
+  object-fit: contain;
+  object-position: center;
+  /*
+    t_label.png is white.
+    Light mode: invert to a professional dark wordmark.
+    Dark mode: keep the original white wordmark.
+  */
+  filter: invert(1);
+}
+
+body.dark-mode .campushub-brand__label {
+  filter: none;
+}
+
+.campushub-brand--sidebar {
+  gap: 0.05rem;
+}
+
+.campushub-brand--sidebar .campushub-brand__mark {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.campushub-brand--sidebar .campushub-brand__label {
+  width: 8.5rem;
+  height: 2.5rem;
+  margin-left: -0.95rem;
+}
+
+.campushub-brand--auth {
+  gap: 0.1rem;
+  justify-content: center;
+}
+
+.campushub-brand--auth .campushub-brand__mark {
+  width: 5rem;
+  height: 5rem;
+}
+
+.campushub-brand--auth .campushub-brand__label {
+  width: 11rem;
+  height: 5rem;
+  margin-left: -1.15rem;
+}
+
+.campushub-brand--navbar .campushub-brand__mark {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.campushub-brand--compact .campushub-brand__mark {
+  width: 2.15rem;
+  height: 2.15rem;
+}
+
+.campushub-brand--footer {
+  gap: 0.05rem;
+}
+
+.campushub-brand--footer .campushub-brand__mark {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+.campushub-brand--footer .campushub-brand__label {
+  width: 6.8rem;
+  height: 1.9rem;
+  margin-left: -0.7rem;
+}
+
+.campushub-mention-menu {
+  position: fixed !important;
+  pointer-events: auto;
+  transform-origin: top left;
+  z-index: 2147483647 !important;
+  isolation: isolate;
+  max-width: calc(100vw - 1rem);
+}

@@ -11,6 +11,8 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import Avatar from "./Avatar";
+
 import EmojiPicker from "emoji-picker-react";
 
 import { Button } from "./ui/button";
@@ -394,7 +396,7 @@ function CreatePost({ onPostCreated }) {
         className="
           relative overflow-visible rounded-3xl
           border border-slate-200/80
-          bg-white shadow-sm
+          bg-slate-50/80 shadow-sm
           dark:border-slate-800
           dark:bg-slate-900
         "
@@ -435,7 +437,7 @@ function CreatePost({ onPostCreated }) {
               bg-slate-50/70
               p-4 transition
               focus-within:border-indigo-400
-              focus-within:bg-white
+              focus-within:bg-slate-50/90
               focus-within:ring-4
               focus-within:ring-indigo-500/5
               dark:border-slate-800
@@ -484,7 +486,7 @@ function CreatePost({ onPostCreated }) {
                       top-[calc(100%+8px)] z-[100]
                       overflow-hidden rounded-2xl
                       border border-slate-200
-                      bg-white shadow-2xl
+                      bg-slate-50 shadow-2xl
                       dark:border-slate-700
                       dark:bg-slate-900
                     "
@@ -518,31 +520,7 @@ function CreatePost({ onPostCreated }) {
                               }
                             `}
                           >
-                            {user.avatar_url ? (
-                              <img
-                                src={user.avatar_url}
-                                alt=""
-                                className="
-                                  h-9 w-9 shrink-0
-                                  rounded-full object-cover
-                                "
-                              />
-                            ) : (
-                              <div className="
-                                flex h-9 w-9 shrink-0
-                                items-center justify-center
-                                rounded-full
-                                bg-indigo-100
-                                text-sm font-bold
-                                text-indigo-600
-                                dark:bg-indigo-500/10
-                                dark:text-indigo-400
-                              ">
-                                {user.name
-                                  ?.charAt(0)
-                                  ?.toUpperCase()}
-                              </div>
-                            )}
+                            <Avatar user={user} size="sm" />
 
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold">
@@ -870,7 +848,7 @@ function CreatePost({ onPostCreated }) {
                 flex-col overflow-hidden
                 rounded-3xl border
                 border-slate-200
-                bg-white shadow-2xl
+                bg-slate-50 shadow-2xl
                 dark:border-slate-800
                 dark:bg-slate-900
               "

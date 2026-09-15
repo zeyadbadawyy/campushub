@@ -18,6 +18,7 @@ import MainLayout from "../layouts/MainLayout";
 import {
   getConversations,
   searchUsersForChats,
+  getUserProfile,
 } from "../services/postService";
 
 import Avatar from "../components/Avatar";
@@ -90,54 +91,116 @@ function Messages() {
     const latestMessage =
       wsMessages[wsMessages.length - 1];
 
-    setConversations((prev) => {
-      const existing = prev.find(
-        (conversation) =>
-          conversation.user_id ===
-          latestMessage.sender_id
-      );
+    let isCancelled = false;
 
-      if (!existing) {
-        return prev;
-      }
+    async function handleMessage() {
+      let conversationExists = false;
 
-      const updated = prev.map(
-        (conversation) => {
-          if (
-            conversation.user_id !==
-            latestMessage.sender_id
-          ) {
-            return conversation;
-          }
+      setConversations((prev) => {
+        conversationExists =
+          prev.some(
+            (conversation) =>
+              conversation.user_id ===
+              latestMessage.sender_id
+          );
 
-          return {
-            ...conversation,
-            last_message:
-              latestMessage.content,
-            last_message_time:
-              latestMessage.created_at,
-            unread_count:
-              conversation.unread_count + 1,
-          };
+        if (!conversationExists) {
+          return prev;
         }
-      );
 
-      const updatedConversation =
-        updated.find(
-          (conversation) =>
-            conversation.user_id ===
-            latestMessage.sender_id
+        const updated = prev.map(
+          (conversation) => {
+            if (
+              conversation.user_id !==
+              latestMessage.sender_id
+            ) {
+              return conversation;
+            }
+
+            return {
+              ...conversation,
+              last_message:
+                latestMessage.content,
+              last_message_time:
+                latestMessage.created_at,
+              unread_count:
+                conversation.unread_count + 1,
+            };
+          }
         );
 
-      return [
-        updatedConversation,
-        ...updated.filter(
-          (conversation) =>
-            conversation.user_id !==
+        const updatedConversation =
+          updated.find(
+            (conversation) =>
+              conversation.user_id ===
+              latestMessage.sender_id
+          );
+
+        return [
+          updatedConversation,
+          ...updated.filter(
+            (conversation) =>
+              conversation.user_id !==
+              latestMessage.sender_id
+          ),
+        ];
+      });
+
+      if (conversationExists) {
+        return;
+      }
+
+      try {
+        const user =
+          await getUserProfile(
             latestMessage.sender_id
-        ),
-      ];
-    });
+          );
+
+        if (isCancelled || !user) {
+          return;
+        }
+
+        setConversations((prev) => {
+          const alreadyExists =
+            prev.some(
+              (conversation) =>
+                conversation.user_id ===
+                latestMessage.sender_id
+            );
+
+          if (alreadyExists) {
+            return prev;
+          }
+
+          return [
+            {
+              user_id:
+                latestMessage.sender_id,
+              name: user.name,
+              avatar_url:
+                user.avatar_url,
+              last_message:
+                latestMessage.content,
+              last_message_time:
+                latestMessage.created_at,
+              unread_count: 1,
+            },
+            ...prev,
+          ];
+        });
+      } catch (error) {
+        console.error(
+          "Failed to load new conversation:",
+          error
+        );
+      }
+    }
+
+    handleMessage();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [wsMessages]);
 
   function formatTime(date) {

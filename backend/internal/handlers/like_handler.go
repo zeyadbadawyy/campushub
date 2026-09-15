@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -192,6 +193,16 @@ func ToggleLike(
 		&postOwnerID,
 	)
 
+	if err != nil {
+		http.Error(
+			w,
+			"Could not find post owner",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
 	var allowLikeNotifications bool
 
 	err = database.DB.QueryRow(
@@ -199,7 +210,7 @@ func ToggleLike(
 		SELECT like_notifications
 		FROM user_settings
 		WHERE user_id = $1
-	`,
+		`,
 		postOwnerID,
 	).Scan(
 		&allowLikeNotifications,
@@ -211,36 +222,155 @@ func ToggleLike(
 
 		var notificationID int
 		var createdAt string
+		var messageCount int
 
-		err = database.DB.QueryRow(
+		tx, err := database.DB.Begin()
+
+		if err != nil {
+
+			http.Error(
+				w,
+				"Could not create notification",
+				http.StatusInternalServerError,
+			)
+
+			return
+		}
+
+		defer tx.Rollback()
+
+		// Prevent two simultaneous likes on the same post
+		// from creating separate notification groups.
+		_, err = tx.Exec(
 			`
-	INSERT INTO notifications
-	(
-		user_id,
-		sender_id,
-		type,
-		message,
-		target_id
-	)
-	VALUES
-	(
-		$1,
-		$2,
-		$3,
-		$4,
-		$5
-	)
-	RETURNING id, created_at
-	`,
+			SELECT pg_advisory_xact_lock(
+				hashtext($1)
+			)
+			`,
+			fmt.Sprintf(
+				"like-notification:%d:%d",
+				postOwnerID,
+				postID,
+			),
+		)
+
+		if err != nil {
+
+			http.Error(
+				w,
+				"Could not create notification",
+				http.StatusInternalServerError,
+			)
+
+			return
+		}
+
+		err = tx.QueryRow(
+			`
+			SELECT
+				id,
+				created_at,
+				COALESCE(message_count, 1)
+			FROM notifications
+			WHERE user_id = $1
+			AND type = 'like'
+			AND target_id = $2
+			AND is_read = FALSE
+			ORDER BY created_at DESC
+			LIMIT 1
+			FOR UPDATE
+			`,
 			postOwnerID,
-			userID,
-			"like",
-			"liked your post",
 			postID,
 		).Scan(
 			&notificationID,
 			&createdAt,
+			&messageCount,
 		)
+
+		if err == nil {
+
+			messageCount++
+
+			message := "liked your post"
+
+			if messageCount > 1 {
+				message = fmt.Sprintf(
+					"liked your post and %d others",
+					messageCount-1,
+				)
+			}
+
+			err = tx.QueryRow(
+				`
+				UPDATE notifications
+				SET
+					sender_id = $1,
+					message = $2,
+					message_count = $3,
+					created_at = CURRENT_TIMESTAMP
+				WHERE id = $4
+				RETURNING created_at
+				`,
+				userID,
+				message,
+				messageCount,
+				notificationID,
+			).Scan(
+				&createdAt,
+			)
+
+		} else {
+
+			messageCount = 1
+
+			err = tx.QueryRow(
+				`
+				INSERT INTO notifications
+				(
+					user_id,
+					sender_id,
+					type,
+					message,
+					target_id,
+					message_count
+				)
+				VALUES
+				(
+					$1,
+					$2,
+					$3,
+					$4,
+					$5,
+					$6
+				)
+				RETURNING id, created_at
+				`,
+				postOwnerID,
+				userID,
+				"like",
+				"liked your post",
+				postID,
+				1,
+			).Scan(
+				&notificationID,
+				&createdAt,
+			)
+
+		}
+
+		if err != nil {
+
+			http.Error(
+				w,
+				"Could not create notification",
+				http.StatusInternalServerError,
+			)
+
+			return
+		}
+
+		err = tx.Commit()
 
 		if err != nil {
 
@@ -258,15 +388,24 @@ func ToggleLike(
 
 		database.DB.QueryRow(
 			`
-SELECT name, avatar_url
-FROM users
-WHERE id = $1
-`,
+			SELECT name, avatar_url
+			FROM users
+			WHERE id = $1
+			`,
 			userID,
 		).Scan(
 			&senderName,
 			&senderAvatarURL,
 		)
+
+		message := "liked your post"
+
+		if messageCount > 1 {
+			message = fmt.Sprintf(
+				"liked your post and %d others",
+				messageCount-1,
+			)
+		}
 
 		websocket.SendNotification(
 			postOwnerID,
@@ -279,14 +418,15 @@ WHERE id = $1
 					"sender_name":       senderName,
 					"sender_avatar_url": senderAvatarURL,
 					"type":              "like",
-					"message":           "liked your post",
+					"message":           message,
+					"message_count":     messageCount,
 					"is_read":           false,
 					"target_id":         postID,
 				},
 			},
 		)
-
 	}
+
 	json.NewEncoder(
 		w,
 	).Encode(

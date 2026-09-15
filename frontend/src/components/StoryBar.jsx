@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import Avatar from "./Avatar";
+import UserListModal from "./UserListModal";
 
 import {
   getStories,
@@ -32,6 +33,7 @@ import {
   uploadStoryImage,
   viewStory,
   deleteStory,
+  getStoryViewers,
 } from "../services/postService";
 
 const STORY_DURATION = 5000;
@@ -600,6 +602,9 @@ function StoryBar() {
     setSwipeDirection,
   ] = useState(1);
 
+  const [showStoryViewers, setShowStoryViewers] = useState(false);
+  const [storyViewers, setStoryViewers] = useState([]);
+
   const progressRef =
     useRef(0);
 
@@ -1123,6 +1128,7 @@ function StoryBar() {
   }
 
   function closeStory() {
+    setShowStoryViewers(false);
     setActiveUserIndex(null);
     setActiveStoryIndex(null);
     setProgressMs(0);
@@ -1320,6 +1326,21 @@ function StoryBar() {
    * DELETE
    * ==========================================================
    */
+
+  async function handleShowStoryViewers() {
+    if (!activeStory?.is_owner) {
+      return;
+    }
+
+    try {
+      const users = await getStoryViewers(activeStory.id);
+      setStoryViewers(users || []);
+      setShowStoryViewers(true);
+      setIsPaused(true);
+    } catch (error) {
+      console.error("Could not load story viewers:", error);
+    }
+  }
 
   async function handleDeleteStory() {
     if (
@@ -2645,6 +2666,25 @@ function StoryBar() {
                 {activeStory.is_owner && (
                   <button
                     type="button"
+                    onClick={handleShowStoryViewers}
+                    className="
+                      flex h-9 items-center gap-2 rounded-full
+                      bg-white/10 px-3 text-white backdrop-blur-md
+                      transition hover:bg-white/20
+                    "
+                  >
+                    <span className="text-xs font-semibold">
+                      {activeStory.view_count || 0}
+                    </span>
+                    <span className="text-xs font-medium">
+                      views
+                    </span>
+                  </button>
+                )}
+
+                {activeStory.is_owner && (
+                  <button
+                    type="button"
                     onClick={
                       handleDeleteStory
                     }
@@ -2833,6 +2873,17 @@ function StoryBar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showStoryViewers && (
+        <UserListModal
+          title="Story viewers"
+          users={storyViewers}
+          onClose={() => {
+            setShowStoryViewers(false);
+            setIsPaused(false);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import CommentSection from "./CommentSection";
 import Avatar from "./Avatar";
 import MentionText from "./MentionText";
+import UserListModal from "./UserListModal";
 
 import {
   toggleLike,
@@ -26,6 +27,7 @@ import {
   deletePost,
   uploadPostImage,
   toggleSavePost,
+  getPostLikes,
 } from "../services/postService";
 
 import { getCurrentUser } from "../services/auth";
@@ -43,6 +45,9 @@ function PostCard({ post, onLike, onSavedChange }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showImage, setShowImage] = useState(false);
+  const [showLikes, setShowLikes] = useState(false);
+  const [likeUsers, setLikeUsers] = useState([]);
+  const [loadingLikes, setLoadingLikes] = useState(false);
 
   const [editedContent, setEditedContent] = useState(
     post.content || ""
@@ -100,6 +105,23 @@ function PostCard({ post, onLike, onSavedChange }) {
       await toggleLike(post.id);
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  async function handleShowLikes() {
+    if (!post.likes) {
+      return;
+    }
+
+    try {
+      setLoadingLikes(true);
+      const users = await getPostLikes(post.id);
+      setLikeUsers(users || []);
+      setShowLikes(true);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingLikes(false);
     }
   }
 
@@ -688,12 +710,17 @@ function PostCard({ post, onLike, onSavedChange }) {
             text-xs
             text-slate-400
           ">
-            <span>
+            <button
+              type="button"
+              disabled={!post.likes || loadingLikes}
+              onClick={handleShowLikes}
+              className="transition hover:text-slate-700 disabled:cursor-default disabled:hover:text-slate-400 dark:hover:text-slate-200 dark:disabled:hover:text-slate-400"
+            >
               {post.likes || 0}{" "}
               {post.likes === 1
                 ? "like"
                 : "likes"}
-            </span>
+            </button>
 
             <button
               type="button"
@@ -951,6 +978,14 @@ function PostCard({ post, onLike, onSavedChange }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showLikes && (
+        <UserListModal
+          title="Likes"
+          users={likeUsers}
+          onClose={() => setShowLikes(false)}
+        />
+      )}
     </>
   );
 }

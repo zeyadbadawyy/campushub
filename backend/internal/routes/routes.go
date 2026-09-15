@@ -192,6 +192,13 @@ func RegisterRoutes() http.Handler {
 		handlers.ToggleLike,
 	)
 
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/posts/{id}/likes",
+		handlers.GetPostLikes,
+	)
+
 	r.Get(
 		"/stats",
 		handlers.GetStats,
@@ -214,6 +221,20 @@ func RegisterRoutes() http.Handler {
 	r.Get(
 		"/users/{id}/follow-stats",
 		handlers.GetFollowStats,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/users/{id}/followers",
+		handlers.GetFollowers,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/users/{id}/following",
+		handlers.GetFollowing,
 	)
 
 	r.With(
@@ -443,6 +464,13 @@ func RegisterRoutes() http.Handler {
 	).Post(
 		"/stories/{id}/view",
 		handlers.ViewStory,
+	)
+
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/stories/{id}/viewers",
+		handlers.GetStoryViewers,
 	)
 
 	r.With(

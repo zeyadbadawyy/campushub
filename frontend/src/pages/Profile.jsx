@@ -20,6 +20,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import PostCard from "../components/PostCard";
 import Avatar from "../components/Avatar";
+import UserListModal from "../components/UserListModal";
 
 import { useWebSocket } from "../contexts/WebSocketContext";
 
@@ -34,6 +35,8 @@ import {
   getFollowRequestStatus,
   cancelFollowRequest,
   getUserVisibility,
+  getFollowers,
+  getFollowing,
 } from "../services/postService";
 
 import { getCurrentUser } from "../services/auth";
@@ -61,6 +64,10 @@ function Profile() {
 
   const [showMessageTooltip, setShowMessageTooltip] =
     useState(false);
+
+  const [connectionList, setConnectionList] = useState(null);
+  const [connectionUsers, setConnectionUsers] = useState([]);
+  const [loadingConnections, setLoadingConnections] = useState(false);
 
   const [, forceUpdate] = useState(0);
 
@@ -156,6 +163,27 @@ function Profile() {
       setSavedPosts(data || []);
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  async function openConnections(type) {
+    if (loadingConnections) {
+      return;
+    }
+
+    try {
+      setLoadingConnections(true);
+      const users =
+        type === "followers"
+          ? await getFollowers(id)
+          : await getFollowing(id);
+
+      setConnectionUsers(users || []);
+      setConnectionList(type);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingConnections(false);
     }
   }
 
@@ -792,50 +820,43 @@ function Profile() {
                 dark:border-slate-800
                 dark:bg-slate-950/50
               ">
-                <div className="
-                  px-3 py-4
-                  text-center
-                ">
-                  <strong className="
-                    block text-lg
-                    font-bold
-                  ">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (canViewContent) {
+                      openConnections("followers");
+                    }
+                  }}
+                  disabled={loadingConnections || !canViewContent}
+                  className="px-3 py-4 text-center transition hover:bg-white dark:hover:bg-slate-900"
+                >
+                  <strong className="block text-lg font-bold">
                     {stats.followers}
                   </strong>
 
-                  <span className="
-                    mt-1 block
-                    text-xs
-                    text-slate-500
-                    dark:text-slate-400
-                  ">
+                  <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
                     Followers
                   </span>
-                </div>
+                </button>
 
-                <div className="
-                  border-x
-                  border-slate-200
-                  px-3 py-4
-                  text-center
-                  dark:border-slate-800
-                ">
-                  <strong className="
-                    block text-lg
-                    font-bold
-                  ">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (canViewContent) {
+                      openConnections("following");
+                    }
+                  }}
+                  disabled={loadingConnections || !canViewContent}
+                  className="border-x border-slate-200 px-3 py-4 text-center transition hover:bg-white disabled:cursor-default dark:border-slate-800 dark:hover:bg-slate-900"
+                >
+                  <strong className="block text-lg font-bold">
                     {stats.following}
                   </strong>
 
-                  <span className="
-                    mt-1 block
-                    text-xs
-                    text-slate-500
-                    dark:text-slate-400
-                  ">
+                  <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
                     Following
                   </span>
-                </div>
+                </button>
 
                 <div className="
                   px-3 py-4
@@ -1380,7 +1401,19 @@ function Profile() {
 
         )}
       </div>
-    </MainLayout>
+
+
+      {connectionList && (
+        <UserListModal
+          title={
+            connectionList === "followers"
+              ? "Followers"
+              : "Following"
+          }
+          users={connectionUsers}
+          onClose={() => setConnectionList(null)}
+        />
+      )}    </MainLayout>
   );
 }
 

@@ -127,6 +127,21 @@ export async function viewStory(
   );
 }
 
+export async function getStoryViewers(storyId) {
+  const token = localStorage.getItem("token");
+
+  const response = await api.get(
+    `/stories/${storyId}/viewers`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
 export async function deleteStory(
   storyId
 ) {
@@ -264,6 +279,21 @@ export async function createPost(
   return response.data;
 }
 
+export async function getPostLikes(postId) {
+  const token = localStorage.getItem("token");
+
+  const response = await api.get(
+    `/posts/${postId}/likes`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
 export async function toggleLike(
   postId
 ) {
@@ -376,6 +406,36 @@ export async function getFollowStats(
 
   return response.data;
 
+}
+
+export async function getFollowers(userId) {
+  const token = localStorage.getItem("token");
+
+  const response = await api.get(
+    `/users/${userId}/followers`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function getFollowing(userId) {
+  const token = localStorage.getItem("token");
+
+  const response = await api.get(
+    `/users/${userId}/following`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
 }
 
 export async function searchUsers(
